@@ -405,8 +405,8 @@ function renderModels(filter=''){
 function filterModels(v){ renderModels(v) }
 
 // ── CREATE MODEL ──
-function openNewModel(){ document.getElementById('modal-new').classList.add('open') }
-function openNewModelWithType(t){ document.getElementById('new-type').value=t; openNewModel() }
+function openNewModel(){ window.location.href='nuevo_modelo.html' }
+function openNewModelWithType(t){ window.location.href='nuevo_modelo.html?tipo='+t }
 function closeNewModel(){ document.getElementById('modal-new').classList.remove('open') }
 
 function createModel(){
