@@ -1214,57 +1214,234 @@ function saveAndFinish(){
 function exportExcel(){
   if(!calcResults) calcResults = calcModel()
   const R = calcResults
-  const empresa = document.getElementById('f-empresa').value || 'Cliente'
+  const empresa  = document.getElementById('f-empresa').value  || 'Cliente'
+  const analista = document.getElementById('f-analista').value || 'Darwin Torres'
+  const sector   = document.getElementById('f-sector').value   || ''
+  const moneda   = document.getElementById('f-moneda').value   || 'USD'
+  const fecha    = new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'})
   const wb = XLSX.utils.book_new()
 
-  // Sheet 1: Resumen
-  const resumen = [
-    ['DT Models — Modelo Financiero','','','',''],
-    ['Cliente:', empresa,'','',''],
-    ['Fecha:', new Date().toLocaleDateString('es-CO'),'','',''],
-    ['Analista:', document.getElementById('f-analista').value,'','',''],
-    ['','','','',''],
-    ['PARÁMETROS DEL CRÉDITO','','','',''],
-    ['Monto (USD)', R.params.monto,'','',''],
-    ['Tasa N.A.', R.params.tasa_na*100+'%','','',''],
-    ['Plazo (meses)', R.params.plazo,'','',''],
-    ['Gracia (meses)', R.params.gracia,'','',''],
-    ['','','','',''],
-    ['SCORE CREDITICIO', R.score+'/100','','',''],
-    ['Veredicto', R.verdict,'','',''],
-    ['DSCR Mínimo', R.dscrMin.toFixed(2)+'x','','',''],
-    ['Capacidad Máx. (USD)', R.montoMax.toFixed(0),'','',''],
-  ]
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumen), 'Resumen')
+  // ── STYLE HELPERS ──
+  const BG_DARK='0E1620', BG_MID='131E2E', BG_LIGHT='1C2D42'
+  const ACCENT='00D4A8', BLUE='3B9EFF', OK='22C55E', WARN='F59E0B', DANGER='EF4444', WHITE='FFFFFF'
+  const LIGHT='F8FAFC', CALC='F0FFF8', ALT='F5F7FA'
 
-  // Sheet 2: Proyecciones
-  const header = ['Métrica', ...R.years]
-  const rows = [
-    header,
-    ['Ingresos ($)', ...R.ingresos.map(v=>+(v).toFixed(0))],
-    ['Costos ($)',   ...R.costos.map(v=>+(v).toFixed(0))],
-    ['EBITDA ($)',   ...R.ebitda.map(v=>+(v).toFixed(0))],
-    ['Margen EBITDA', ...R.mEbitda.map(v=>+((v*100)).toFixed(1))],
-    ['Intereses ($)', ...R.intereses.map(v=>+(v).toFixed(0))],
-    ['Capital ($)',   ...R.capital.map(v=>+(v).toFixed(0))],
-    ['Serv. Deuda ($)',...R.servDeuda.map(v=>+(v).toFixed(0))],
-    ['DSCR (x)',      ...R.dscr.map(v=>v!==null?+v.toFixed(3):'-')],
-    ['ICR (x)',       ...R.icr.map(v=>v!==null?+v.toFixed(3):'-')],
-    ['Activos ($)',   ...R.activos.map(v=>+(v).toFixed(0))],
-    ['Pasivos ($)',   ...R.pasivos.map(v=>+(v).toFixed(0))],
-    ['Patrimonio ($)',...R.patrimonio.map(v=>+(v).toFixed(0))],
-    ['D/Patrimonio',  ...R.dPat.map(v=>v!==null?+v.toFixed(3):'-')],
-  ]
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Proyecciones')
+  const fnt=(bold,sz,color,italic)=>({font:{name:'Arial',bold:!!bold,sz:sz||10,color:{rgb:color||'000000'},italic:!!italic}})
+  const fill=c=>({fill:{patternType:'solid',fgColor:{rgb:c}}})
+  const aln=(h,v,wrap)=>({alignment:{horizontal:h||'left',vertical:v||'center',wrapText:!!wrap}})
+  const bdr=()=>({border:{left:{style:'thin',color:{rgb:'CCCCCC'}},right:{style:'thin',color:{rgb:'CCCCCC'}},top:{style:'thin',color:{rgb:'CCCCCC'}},bottom:{style:'thin',color:{rgb:'CCCCCC'}}}})
+  const cell=(v,bold,sz,color,bg,halign,wrap,fmt)=>{
+    const s={...fnt(bold,sz,color),...fill(bg||WHITE),...aln(halign||'left','center',wrap),...bdr()}
+    const o={v:v,s}
+    if(fmt) o.z=fmt
+    if(typeof v==='number') o.t='n'
+    else if(v===null||v===undefined){o.v='';o.t='s'}
+    else o.t='s'
+    return o
+  }
 
-  // Sheet 3: Stress Test
-  const stressRows = [
-    ['Escenario',...R.years],
-    ['Caso Base',...R.stress.base.map(v=>v!==null?+v.toFixed(3):'-')],
-    ['Downside Moderado',...R.stress.moderate.map(v=>v!==null?+v.toFixed(3):'-')],
-    ['Downside Severo',...R.stress.severe.map(v=>v!==null?+v.toFixed(3):'-')],
+  const dscrColor=v=>v===null?'AAAAAA':v>=1.5?OK:v>=1.0?WARN:DANGER
+  const scoreColor=s=>s>=70?OK:s>=55?WARN:DANGER
+  const fmtNum=v=>v===null||v===undefined?'—':typeof v==='number'?v.toLocaleString('es-CO'):v
+
+  // ════════════════════
+  // SHEET 1 — RESUMEN
+  // ════════════════════
+  const ws1data = []
+  const addRow=(...cells)=>ws1data.push(cells)
+  const hdr=(txt,col)=>cell(txt,true,9,WHITE,col,'left')
+  const lbl=(txt)=>cell(txt,false,9,'555555',LIGHT,'left')
+  const val=(txt,color,bg)=>cell(txt,true,10,color||'111111',bg||WHITE,'center')
+  const sectionHdr=txt=>[cell(txt,true,9,WHITE,BG_MID,'left'),cell('',false,9,WHITE,BG_MID),cell('',false,9,WHITE,BG_MID),cell('',false,9,WHITE,BG_MID),cell('',false,9,WHITE,BG_MID),cell('',false,9,WHITE,BG_MID),cell('',false,9,WHITE,BG_MID),cell('',false,9,WHITE,BG_MID)]
+
+  // Title
+  addRow(cell('DT MODELS  ·  MODELO FINANCIERO DE VIABILIDAD CREDITICIA',true,16,ACCENT,BG_DARK,'left'),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK))
+  addRow(cell(`${empresa}  ·  ${sector}  ·  Analista: ${analista}`,false,10,'8BA8C4',BG_DARK,'left'),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK))
+  addRow(cell(`Fecha: ${fecha}  ·  Moneda: ${moneda}  ·  dtmodels.com`,false,9,'4D6A88',BG_DARK,'left'),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK),cell('',false,9,WHITE,BG_DARK))
+  addRow([]) // spacer
+
+  // Score block
+  const sc=scoreColor(R.score)
+  addRow(
+    cell('SCORE CREDITICIO',true,9,WHITE,BG_MID,'center'),
+    cell(`${R.score}/100`,true,22,sc,'F0FFF4','center'),
+    cell(R.verdict,true,14,sc,'F0FFF4','center'),
+    cell(`DSCR Mínimo: ${R.dscrMin.toFixed(2)}x`,true,11,BLUE,'EFF6FF','center'),
+    cell(`Capacidad Máx: ${(R.montoMax/1e6).toFixed(1)}M ${moneda}`,true,10,BLUE,'EFF6FF','center'),
+    cell('',false,9,WHITE,BG_MID),cell('',false,9,WHITE,BG_MID),cell('',false,9,WHITE,BG_MID)
+  )
+  addRow([]) // spacer
+
+  // Params
+  addRow(...sectionHdr('PARÁMETROS DEL CRÉDITO'))
+  const params=[
+    ['Monto Solicitado', `${(R.params.monto/1e6).toFixed(2)}M ${moneda}`, BLUE],
+    ['Tasa Anual N.A.', `${(R.params.tasa_na*100).toFixed(1)}%`, '333333'],
+    ['Plazo Total', `${R.params.plazo} meses`, '333333'],
+    ['Período de Gracia', `${R.params.gracia} meses`, '333333'],
   ]
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stressRows), 'Stress Test')
+  params.forEach(([l,v,c],i)=>{
+    addRow(cell(l,false,9,'555555',i%2?WHITE:LIGHT,'left'),cell(v,true,10,c,i%2?WHITE:LIGHT,'center'),
+      cell('',false,9,WHITE,i%2?WHITE:LIGHT),cell('',false,9,WHITE,i%2?WHITE:LIGHT),
+      cell('',false,9,WHITE,i%2?WHITE:LIGHT),cell('',false,9,WHITE,i%2?WHITE:LIGHT),
+      cell('',false,9,WHITE,i%2?WHITE:LIGHT),cell('',false,9,WHITE,i%2?WHITE:LIGHT))
+  })
+  addRow([])
+
+  // Metrics table
+  addRow(...sectionHdr('MÉTRICAS CLAVE DE VIABILIDAD  (2026–2030)'))
+  addRow(cell('MÉTRICA',true,8,WHITE,BG_LIGHT,'left'),...R.years.slice(0,5).map(y=>cell(y,true,8,ACCENT,BG_LIGHT,'center')),cell('MÍN/MÁX',true,8,WHITE,BG_LIGHT,'center'),cell('SEMÁFORO',true,8,WHITE,BG_LIGHT,'center'),cell('',false,8,WHITE,BG_LIGHT))
+
+  const metrics=[
+    {l:'DSCR (x)', vals:R.dscr, fmt:v=>v?v.toFixed(2)+'x':'—', minv:R.dscrMin, colorFn:dscrColor},
+    {l:'ICR (x)',  vals:R.icr,  fmt:v=>v?v.toFixed(2)+'x':'—', minv:Math.min(...R.icr.filter(v=>v)), colorFn:v=>v>=2?OK:v>=1?WARN:DANGER},
+    {l:'Margen EBITDA (%)', vals:R.mEbitda, fmt:v=>(v*100).toFixed(1)+'%', minv:Math.min(...R.mEbitda.slice(0,5)), colorFn:v=>v>=0.3?OK:v>=0.1?WARN:DANGER},
+    {l:'Deuda/Patrimonio (x)', vals:R.dPat, fmt:v=>v!==null?v.toFixed(2)+'x':'—', minv:null, colorFn:v=>v<0.5?OK:v<1?WARN:DANGER},
+    {l:`Ingresos (M ${moneda})`, vals:R.ingresos, fmt:v=>'$'+(v/1e6).toFixed(1)+'M', minv:null, colorFn:()=>'333333'},
+    {l:`EBITDA (M ${moneda})`, vals:R.ebitda, fmt:v=>'$'+(v/1e6).toFixed(1)+'M', minv:null, colorFn:v=>v>0?OK:DANGER},
+  ]
+  metrics.forEach((m,mi)=>{
+    const bg=mi%2?WHITE:ALT
+    const minDisplay=m.minv!==null?m.fmt(m.minv):'—'
+    const minColor=m.minv!==null?m.colorFn(m.minv):'444444'
+    const sem=m.l.includes('DSCR')?(m.minv>=1.5?'🟢 VERDE':m.minv>=1.0?'🟡 AMARILLO':'🔴 ROJO'):'—'
+    addRow(
+      cell(m.l,false,9,'333333',bg,'left'),
+      ...m.vals.slice(0,5).map(v=>cell(m.fmt(v),m.l.includes('DSCR'),9,m.colorFn(v),bg,'center')),
+      cell(minDisplay,true,9,minColor,bg,'center'),
+      cell(sem,true,9,minColor,bg,'center'),
+      cell('',false,9,WHITE,bg)
+    )
+  })
+  addRow([])
+
+  // Stress test
+  addRow(...sectionHdr('STRESS TEST — DSCR POR ESCENARIO'))
+  addRow(cell('ESCENARIO',true,8,WHITE,BG_LIGHT,'left'),cell('SHOCKS',true,8,WHITE,BG_LIGHT,'left'),...R.years.slice(0,5).map(y=>cell(y,true,8,ACCENT,BG_LIGHT,'center')),cell('',false,8,WHITE,BG_LIGHT))
+  const stressD=[
+    {name:'📊 Caso Base',shocks:'Sin shocks',vals:R.stress.base,bg:'F0FFF4',color:OK},
+    {name:'⚠️ Downside Moderado',shocks:'−10% Ing · −5pp MB · +200bps · +10% OPEX',vals:R.stress.moderate,bg:'FFFBEB',color:WARN},
+    {name:'🔴 Downside Severo',shocks:'−20% Ing · −10pp MB · +400bps · +20% OPEX',vals:R.stress.severe,bg:'FFF5F5',color:DANGER},
+  ]
+  stressD.forEach(s=>{
+    addRow(
+      cell(s.name,true,9,s.color,s.bg,'left'),
+      cell(s.shocks,false,8,'666666',s.bg,'left',true),
+      ...s.vals.slice(0,5).map(v=>cell(v!==null?v.toFixed(2)+'x':'—',true,10,dscrColor(v),s.bg,'center')),
+      cell('',false,9,WHITE,s.bg)
+    )
+  })
+  addRow([])
+
+  // Dictamen
+  addRow(...sectionHdr('DICTAMEN DEL ANALISTA'))
+  const dictamen=`El modelo financiero proyectado muestra VIABILIDAD CREDITICIA con Score de ${R.score}/100. ` +
+    `El DSCR mínimo proyectado es ${R.dscrMin.toFixed(2)}x, ${R.dscrMin>=1.3?'superando':'por debajo de'} el umbral mínimo de 1.30x. ` +
+    `El EBITDA proyectado crece de forma ${R.ebitda[1]>R.ebitda[0]?'sostenida':'variable'} durante el horizonte del modelo. ` +
+    `Analista: ${analista}  ·  ${fecha}  ·  dtmodels.com`
+  addRow(cell(dictamen,false,9,'333333','FAFFFE','left',true),cell('',false,9,WHITE,'FAFFFE'),cell('',false,9,WHITE,'FAFFFE'),cell('',false,9,WHITE,'FAFFFE'),cell('',false,9,WHITE,'FAFFFE'),cell('',false,9,WHITE,'FAFFFE'),cell('',false,9,WHITE,'FAFFFE'),cell('',false,9,WHITE,'FAFFFE'))
+  addRow([])
+  addRow(cell(`DT Models  ·  dtmodels.com  ·  ${analista}  ·  Barranquilla, Colombia  ·  ${fecha}`,false,8,'AAAAAA',WHITE,'center',false))
+
+  const sheet1 = XLSX.utils.aoa_to_sheet(ws1data)
+  // Merges for title rows
+  sheet1['!merges']=[
+    {s:{r:0,c:1},e:{r:0,c:7}},{s:{r:1,c:1},e:{r:1,c:7}},{s:{r:2,c:1},e:{r:2,c:7}},
+    {s:{r:4,c:2},e:{r:4,c:2}},{s:{r:4,c:3},e:{r:4,c:3}},
+  ]
+  sheet1['!cols']=[{wch:2},{wch:30},{wch:20},{wch:16},{wch:16},{wch:16},{wch:16},{wch:20}]
+  sheet1['!rows']=[{hpt:28},{hpt:20},{hpt:16},{hpt:6},{hpt:42},{hpt:8}]
+  XLSX.utils.book_append_sheet(wb, sheet1, 'Resumen Ejecutivo')
+
+  // ════════════════════════
+  // SHEET 2 — PROYECCIONES
+  // ════════════════════════
+  const ws2data=[]
+  const addR2=(...c)=>ws2data.push(c)
+
+  addR2(cell(`DT MODELS  ·  PROYECCIONES FINANCIERAS ${R.years[0]}–${R.years[R.years.length-1]}  ·  ${empresa}  ·  Cifras en M ${moneda}`,true,11,ACCENT,BG_DARK,'left'),
+    ...R.years.map(()=>cell('',false,9,WHITE,BG_DARK)))
+  addR2(cell('CONCEPTO',true,9,WHITE,BG_MID,'left'),...R.years.map(y=>cell(y,true,9,ACCENT,BG_MID,'center')))
+
+  const proj=[
+    {label:'ESTADO DE RESULTADOS',section:true},
+    {label:'Ingresos Netos',vals:R.ingresos,fmt:'M'},
+    {label:'(-) Costos de Operación',vals:R.costos,fmt:'M'},
+    {label:'Utilidad Bruta',vals:R.ingresos.map((v,i)=>v-R.costos[i]),fmt:'M',calc:true},
+    {label:'  Margen Bruto (%)',vals:R.ingresos.map((v,i)=>v>0?(v-R.costos[i])/v:0),fmt:'%'},
+    {label:'(-) OPEX',vals:R.opex,fmt:'M'},
+    {label:'EBITDA',vals:R.ebitda,fmt:'M',calc:true},
+    {label:'  Margen EBITDA (%)',vals:R.mEbitda,fmt:'%'},
+    {label:'(-) Gastos Financieros',vals:R.intereses,fmt:'M'},
+    {label:'Utilidad Neta Estimada',vals:R.uan,fmt:'M',calc:true},
+    {label:'',blank:true},
+    {label:'SERVICIO DE LA DEUDA',section:true},
+    {label:'Intereses',vals:R.intereses,fmt:'M'},
+    {label:'Amortización Capital',vals:R.capital,fmt:'M'},
+    {label:'Total Servicio Deuda',vals:R.servDeuda,fmt:'M',calc:true},
+    {label:'CFADS (≈ EBITDA)',vals:R.cfads,fmt:'M'},
+    {label:'',blank:true},
+    {label:'RATIOS DE COBERTURA',section:true},
+    {label:'DSCR (x)',vals:R.dscr,fmt:'x',dscr:true},
+    {label:'ICR (x)',vals:R.icr,fmt:'x'},
+    {label:'',blank:true},
+    {label:'BALANCE SIMPLIFICADO',section:true},
+    {label:'Total Activos',vals:R.activos,fmt:'M'},
+    {label:'Total Pasivos (Deuda)',vals:R.pasivos,fmt:'M'},
+    {label:'Patrimonio',vals:R.patrimonio,fmt:'M',calc:true},
+    {label:'Deuda / Patrimonio (x)',vals:R.dPat,fmt:'x'},
+  ]
+
+  proj.forEach((p,pi)=>{
+    if(p.blank){addR2(cell('',false,9,WHITE,WHITE),...R.years.map(()=>cell('',false,9,WHITE,WHITE)));return}
+    if(p.section){addR2(cell(p.label,true,9,WHITE,BG_MID,'left'),...R.years.map(()=>cell('',false,9,WHITE,BG_MID)));return}
+    const bg=p.calc?CALC:(pi%2?WHITE:ALT)
+    const fmtV=v=>{
+      if(v===null||v===undefined) return '—'
+      if(p.fmt==='M') return '$'+(v/1e6).toFixed(2)+'M'
+      if(p.fmt==='%') return (v*100).toFixed(1)+'%'
+      if(p.fmt==='x') return v!==null?v.toFixed(2)+'x':'—'
+      return v
+    }
+    addR2(
+      cell(p.label,p.calc,9,p.calc?'006400':'333333',bg,'left'),
+      ...p.vals.map(v=>{
+        const c2=p.dscr?dscrColor(v):(p.calc?'006400':'333333')
+        return cell(fmtV(v),p.calc||p.dscr,9,c2,bg,'center')
+      })
+    )
+  })
+
+  const sheet2=XLSX.utils.aoa_to_sheet(ws2data)
+  sheet2['!cols']=[{wch:28},...R.years.map(()=>({wch:13}))]
+  sheet2['!merges']=[{s:{r:0,c:0},e:{r:0,c:R.years.length}}]
+  XLSX.utils.book_append_sheet(wb, sheet2, 'Proyecciones Financieras')
+
+  // ════════════════════════
+  // SHEET 3 — STRESS TEST
+  // ════════════════════════
+  const ws3data=[]
+  ws3data.push([cell(`DT MODELS  ·  STRESS TEST — DSCR POR ESCENARIO  ·  ${empresa}`,true,11,ACCENT,BG_DARK,'left'),cell('',false,9,WHITE,BG_DARK),...R.years.map(()=>cell('',false,9,WHITE,BG_DARK))])
+  ws3data.push([cell('ESCENARIO',true,9,WHITE,BG_MID,'left'),cell('SHOCKS APLICADOS',true,9,WHITE,BG_MID,'left'),...R.years.map(y=>cell(y,true,9,ACCENT,BG_MID,'center'))])
+
+  stressD.forEach(s=>{
+    ws3data.push([
+      cell(s.name,true,10,s.color,s.bg,'left'),
+      cell(s.shocks,false,8,'555555',s.bg,'left',true),
+      ...s.vals.map(v=>cell(v!==null?v.toFixed(2)+'x':'—',true,10,dscrColor(v),s.bg,'center'))
+    ])
+    ws3data.push([
+      cell('Semáforo',false,8,'888888',WHITE,'left'),
+      cell('≥1.50x = 🟢 VERDE  ·  1.00–1.49x = 🟡 AMARILLO  ·  <1.00x = 🔴 ROJO',false,8,'888888',WHITE,'left'),
+      ...s.vals.map(v=>cell(v===null?'—':v>=1.5?'🟢':v>=1.0?'🟡':'🔴',false,11,WHITE,WHITE,'center'))
+    ])
+    ws3data.push([cell('',false,9,WHITE,WHITE),cell('',false,9,WHITE,WHITE),...R.years.map(()=>cell('',false,9,WHITE,WHITE))])
+  })
+
+  const sheet3=XLSX.utils.aoa_to_sheet(ws3data)
+  sheet3['!cols']=[{wch:26},{wch:50},...R.years.map(()=>({wch:13}))]
+  sheet3['!merges']=[{s:{r:0,c:0},e:{r:0,c:R.years.length+1}}]
+  XLSX.utils.book_append_sheet(wb, sheet3, 'Stress Test')
 
   XLSX.writeFile(wb, `DT_Models_${empresa.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`)
 }
