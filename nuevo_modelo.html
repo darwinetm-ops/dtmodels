@@ -776,34 +776,190 @@ function calcBalance(){
   document.getElementById('b-pat').value = pat.toFixed(0)
 }
 
-// ── EXCEL UPLOAD ──
+// ── EXCEL UPLOAD — Auto-fill real ──
+// Reads both DT Models standard template AND generic client Excel files
 function handleExcelUpload(input){
   const file = input.files[0]
   if(!file) return
   const status = document.getElementById('excel-status')
-  status.style.display = 'block'
-  status.textContent   = '⏳ Leyendo archivo...'
+  status.style.display='block'
+  status.textContent='⏳ Leyendo archivo...'
   const reader = new FileReader()
   reader.onload = function(e){
     try{
-      const wb = XLSX.read(e.target.result, {type:'binary'})
-      let loaded = 0
-      // Try to find P&L sheet
-      const plSheet = wb.SheetNames.find(n=>
-        /p.l|resultado|income|utilidad|ganancias/i.test(n)
-      )
-      if(plSheet){
-        const ws = wb.Sheets[plSheet]
-        const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:0})
-        status.textContent = `✅ Archivo leído: "${file.name}" · Hoja P&L detectada: "${plSheet}" · Revisa los datos en el Paso 3`
-        loaded++
+      const wb = XLSX.read(e.target.result,{type:'binary'})
+      let msg = []
+
+      // Helper: sum all numeric values in a column for a range of rows
+      const sumRows = (raw, rowIdxs, col) =>
+        rowIdxs.reduce((s,r)=>s+(typeof raw[r]?.[col]==='number'?Math.abs(raw[r][col]):0),0)
+
+      // Helper: find first row index matching any keyword in column 1
+      const findRowIdx = (raw, keywords) => {
+        for(let r=0;r<raw.length;r++){
+          const lbl = String(raw[r]?.[1]||'').toUpperCase().trim()
+          if(keywords.some(k=>lbl.includes(k.toUpperCase()))) return r
+        }
+        return -1
       }
-      if(!loaded){
-        status.textContent = `✅ Archivo "${file.name}" cargado. No se detectó hoja P&L automáticamente — ingresa los datos en el Paso 3`
+
+      // Helper: get numeric value from row/col
+      const getN = (raw,r,c) => typeof raw[r]?.[c]==='number' ? Math.abs(raw[r][c]) : 0
+
+      // Helper: set input field value (divide by 1000 for "miles")
+      const setK = (id,val) => {
+        const el = document.getElementById(id)
+        if(el) el.value = val>0 ? Math.round(val/1000) : ''
       }
-      goStep(3)
+
+      // ── Detect year columns ──
+      const getYearCols = (raw) => {
+        for(let r=0;r<raw.length;r++){
+          const yCols=[]
+          raw[r].forEach((v,i)=>{
+            const n = parseInt(v)
+            if(n>=2018&&n<=2035) yCols.push(i)
+          })
+          if(yCols.length>=2) return {headerRowIdx:r, yearCols:yCols}
+        }
+        return {headerRowIdx:-1, yearCols:[]}
+      }
+
+      // ── Detect if DT Models standard template ──
+      const isDTTemplate = wb.SheetNames.some(n=>/instrucciones/i.test(n))
+
+      // ══ P&L SHEET ══
+      const plName = wb.SheetNames.find(n=>/resultado|p.l|income|utilidad|ganancias/i.test(n))
+      if(plName){
+        const ws  = wb.Sheets[plName]
+        const raw = XLSX.utils.sheet_to_json(ws,{header:1,defval:null})
+        const {headerRowIdx, yearCols} = getYearCols(raw)
+        const y3 = yearCols.slice(-3) // last 3 year columns
+
+        // Detect currency
+        for(let r=0;r<Math.min(raw.length,5);r++){
+          const cell = String(raw[r]?.[1]||'')
+          if(/COP|PESOS/i.test(cell)){
+            document.getElementById('f-moneda').value='COP'
+            document.getElementById('c-moneda-unit').textContent='COP'
+            break
+          }
+        }
+
+        // Update year headers from column labels
+        if(headerRowIdx>=0 && y3.length>=3){
+          const yrs = y3.map(c=>raw[headerRowIdx][c])
+          if(yrs[0]) document.getElementById('yr-h-1').textContent = yrs[0]
+          if(yrs[1]) document.getElementById('yr-h-2').textContent = yrs[1]
+          if(yrs[2]) document.getElementById('yr-h-3').textContent = yrs[2]+' (último)'
+        }
+
+        if(isDTTemplate && y3.length>=3){
+          // ── DT Models template: read by exact row numbers (0-indexed) ──
+          // Row 7 (idx 7): Ingresos ordinarios
+          // Row 8 (idx 8): Devoluciones
+          // Row 12 (idx 12): Costos directos
+          // Row 13 (idx 13): Costos indirectos
+          // Row 19 (idx 19): Gastos admin
+          // Row 20 (idx 20): Gastos ventas
+          // Row 21 (idx 21): Depreciaciones
+          // Row 29 (idx 29): Gastos financieros
+          // Row 34 (idx 34): Impuestos
+          for(let i=0;i<3;i++){
+            const c = y3[i], yi = i+1
+            const ing  = getN(raw,7,c) - getN(raw,8,c)
+            const cv   = getN(raw,12,c) + getN(raw,13,c)
+            const go   = getN(raw,19,c) + getN(raw,20,c)
+            const dep  = getN(raw,21,c)
+            const gf   = getN(raw,29,c)
+            const isr  = getN(raw,34,c)
+            setK(`pl-ing-${yi}`, ing)
+            setK(`pl-cv-${yi}`,  cv)
+            setK(`pl-go-${yi}`,  go)
+            setK(`pl-dep-${yi}`, dep)
+            setK(`pl-gf-${yi}`,  gf)
+            if(isr>0){
+              // Calculate effective ISR rate from last year
+              const uai = ing - cv - go - dep - gf
+              if(uai>0) document.getElementById(`pl-isr-${yi}`).value = Math.round(isr/uai*100)
+            }
+          }
+          msg.push(`✅ P&L cargado desde plantilla DT Models`)
+
+        } else if(y3.length>=3){
+          // ── Generic Excel: search by keywords ──
+          const rIng = findRowIdx(raw,['INGRESOS DE ACTIVIDADES','INGRESOS NETOS','VENTAS NETAS','INGRESOS ORDINARIOS'])
+          const rCV  = findRowIdx(raw,['GASTOS DE OPERACIÓN DIRECTOS','COSTO DE VENTAS','COSTOS DIRECTOS','OPERACIÓN DIRECTOS'])
+          const rGA  = findRowIdx(raw,['GASTOS DE ADMINISTRACIÓN','GASTOS ADMIN','GASTOS OPERATIVOS'])
+          const rDep = findRowIdx(raw,['DEPRECIACIONES','DEPRECIACIÓN'])
+          const rGF  = findRowIdx(raw,['COSTOS FINANCIEROS','GASTOS FINANCIEROS','INTERESES'])
+          const rISR = findRowIdx(raw,['IMPUESTO DE RENTA','IMPUESTOS,','IMPUESTO CORRIENTE'])
+          for(let i=0;i<3;i++){
+            const c=y3[i], yi=i+1
+            if(rIng>=0) setK(`pl-ing-${yi}`, getN(raw,rIng,c))
+            if(rCV>=0)  setK(`pl-cv-${yi}`,  getN(raw,rCV,c))
+            if(rGA>=0)  setK(`pl-go-${yi}`,  getN(raw,rGA,c))
+            if(rDep>=0) setK(`pl-dep-${yi}`, getN(raw,rDep,c))
+            if(rGF>=0)  setK(`pl-gf-${yi}`,  getN(raw,rGF,c))
+          }
+          msg.push(`✅ P&L cargado desde "${plName}"`)
+        }
+        calcPL()
+      }
+
+      // ══ BALANCE SHEET ══
+      const balName = wb.SheetNames.find(n=>/balance|situacion|posicion/i.test(n))
+      if(balName){
+        const ws  = wb.Sheets[balName]
+        const raw = XLSX.utils.sheet_to_json(ws,{header:1,defval:null})
+        const {yearCols} = getYearCols(raw)
+        const lastCol = yearCols.length ? yearCols[yearCols.length-1] : 4
+
+        const setB = (id,val) => {
+          const el=document.getElementById(id)
+          if(el) el.value = val>0 ? Math.round(val/1000) : ''
+        }
+
+        if(isDTTemplate){
+          // ── DT Models template: sum input rows by section ──
+          // Activo corriente input rows (0-indexed): 8,9,10,11,12,13 → rows 9-14
+          const ac  = sumRows(raw,[8,9,10,11,12,13], lastCol)
+          // Activo no corriente input rows: 17,18,19 → rows 18-20
+          const anc = sumRows(raw,[17,18,19], lastCol)
+          // Pasivo corriente input rows: 25,26,27,28,29 → rows 26-30
+          const pc  = sumRows(raw,[25,26,27,28,29], lastCol)
+          // Pasivo no corriente input rows: 33,34 → rows 34-35
+          const pnc = sumRows(raw,[33,34], lastCol)
+          setB('b-ac',  ac)
+          setB('b-anc', anc)
+          setB('b-pc',  pc)
+          setB('b-pnc', pnc)
+          msg.push('Balance cargado desde plantilla DT Models')
+        } else {
+          // Generic: find by keywords
+          const findR=(kws)=>findRowIdx(raw,kws)
+          const getV =(r)=>r>=0&&raw[r]?.[lastCol]!=null?Math.abs(Number(raw[r][lastCol])||0):0
+          const rAC  = findR(['ACTIVOS CORRIENTES','ACTIVO CORRIENTE','TOTAL ACTIVO CORRIENTE'])
+          const rANC = findR(['ACTIVOS NO CORRIENTES','ACTIVO NO CORRIENTE','TOTAL ACTIVO NO CORRIENTE'])
+          const rPC  = findR(['PASIVOS CORRIENTES','PASIVO CORRIENTE','TOTAL PASIVO CORRIENTE'])
+          const rPNC = findR(['PASIVOS NO CORRIENTES','PASIVO NO CORRIENTE','TOTAL PASIVO NO CORRIENTE'])
+          setB('b-ac',  getV(rAC))
+          setB('b-anc', getV(rANC))
+          setB('b-pc',  getV(rPC))
+          setB('b-pnc', getV(rPNC))
+          msg.push(`Balance cargado desde "${balName}"`)
+        }
+        calcBalance()
+      }
+
+      status.textContent = msg.length
+        ? msg.join(' · ') + ' · Revisa los datos en el Paso 3'
+        : `✅ "${file.name}" leído. Verifica los datos en el Paso 3`
+      setTimeout(()=>goStep(3), 600)
+
     }catch(err){
-      status.textContent = '❌ Error leyendo el archivo. Intenta con otro formato.'
+      console.error(err)
+      status.textContent = '❌ Error leyendo el archivo. Intenta con otro formato o ingresa manualmente.'
     }
   }
   reader.readAsBinaryString(file)
