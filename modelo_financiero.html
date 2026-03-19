@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinModel Pro — Agroindustrias de Animales S.A.</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ==============================
+   DESIGN SYSTEM
+============================== */
+:root {
+  --bg:        #080c12;
+  --surface:   #0e1620;
+  --surface2:  #131e2e;
+  --surface3:  #192538;
+  --border:    #1c2d42;
+  --border2:   #243852;
+  --accent:    #00d4a8;
+  --accent-dim:rgba(0,212,168,0.12);
+  --blue:      #3b9eff;
+  --blue-dim:  rgba(59,158,255,0.12);
+  --gold:      #f0c040;
+  --gold-dim:  rgba(240,192,64,0.12);
+  --ok:        #22c55e;
+  --warn:      #f59e0b;
+  --danger:    #ef4444;
+  --text:      #e2ecf8;
+  --text2:     #8ba8c4;
+  --text3:     #4d6a88;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-sans: 'IBM Plex Sans', sans-serif;
+  --font-serif:'Playfair Display', serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:var(--font-sans); font-size:14px;
+  min-height:100vh; overflow-x:hidden;
+}
+
+/* ── Nav ── */
+#nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  height:54px; display:flex; align-items:stretch;
+  background:rgba(8,12,18,0.95); backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.nav-brand{
+  display:flex;align-items:center;padding:0 20px;
+  border-right:1px solid var(--border); gap:10px; min-width:180px;
+}
+.nav-brand-icon{
+  width:28px;height:28px;border-radius:6px;
+  background:linear-gradient(135deg,var(--accent),var(--blue));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-size:11px;font-weight:600;color:#080c12;
+}
+.nav-brand-text{font-family:var(--font-mono);font-size:11px;letter-spacing:.15em;color:var(--accent);text-transform:uppercase}
+.nav-tabs{display:flex;flex:1}
+.nav-tab{
+  display:flex;align-items:center;padding:0 16px;gap:6px;cursor:pointer;
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:500;
+  color:var(--text3);border-bottom:2px solid transparent;
+  transition:all .2s; background:none;border-top:none;border-left:none;border-right:none;
+}
+.nav-tab:hover{color:var(--text2)}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-badge{
+  padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;
+  background:var(--accent);color:#080c12;
+}
+.nav-right{
+  display:flex;align-items:center;gap:12px;padding:0 16px;
+  border-left:1px solid var(--border);
+}
+.score-badge{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:20px;
+  background:var(--accent-dim);border:1px solid rgba(0,212,168,.25);
+}
+.score-num{font-family:var(--font-mono);font-size:16px;font-weight:600;color:var(--accent)}
+.score-label{font-size:10px;color:var(--text3)}
+.btn{
+  padding:6px 14px;border-radius:5px;cursor:pointer;font-size:11px;
+  font-family:var(--font-mono);letter-spacing:.04em;transition:all .2s;
+}
+.btn-primary{background:var(--accent);color:#080c12;border:none;font-weight:600}
+.btn-primary:hover{background:#00f0c0}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── Recalc indicator ── */
+#recalc-flash{
+  position:fixed;top:54px;left:0;right:0;height:2px;z-index:300;
+  background:linear-gradient(90deg,var(--accent),var(--blue),var(--accent));
+  transform:scaleX(0);transform-origin:left;transition:transform .4s ease;
+}
+#recalc-flash.active{transform:scaleX(1)}
+
+/* ── Pages ── */
+.main{padding-top:54px}
+.page{display:none}
+.page.active{display:block;animation:pageIn .25s ease}
+@keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Hero ── */
+.hero{
+  padding:32px 32px 24px;border-bottom:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.hero::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 80% at 90% -10%,rgba(0,212,168,.06),transparent),
+    radial-gradient(ellipse 40% 50% at 5% 110%,rgba(59,158,255,.05),transparent);
+}
+.hero-eyebrow{
+  font-family:var(--font-mono);font-size:10px;color:var(--accent);
+  letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px;
+}
+.hero-title{
+  font-family:var(--font-serif);font-size:clamp(1.5rem,2.5vw,2.2rem);
+  font-weight:700;line-height:1.15;margin-bottom:4px;
+}
+.hero-sub{font-size:12px;color:var(--text3);margin-bottom:24px}
+.kpi-row{
+  display:flex;flex-wrap:wrap;gap:1px;
+  border:1px solid var(--border);border-radius:8px;overflow:hidden;
+}
+.kpi{
+  flex:1;min-width:140px;padding:16px 18px;
+  background:var(--surface);cursor:default;
+  transition:background .15s;
+}
+.kpi:hover{background:var(--surface2)}
+.kpi-label{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.kpi-value{font-family:var(--font-mono);font-size:1.3rem;font-weight:600;line-height:1}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.c-accent{color:var(--accent)} .c-ok{color:var(--ok)} .c-warn{color:var(--warn)} .c-danger{color:var(--danger)} .c-gold{color:var(--gold)} .c-blue{color:var(--blue)}
+
+/* ── Content ── */
+.content{padding:24px 32px 80px}
+.section-head{
+  display:flex;align-items:center;gap:8px;margin-bottom:16px;margin-top:8px;
+  font-family:var(--font-mono);font-size:10px;color:var(--accent);
+  letter-spacing:.18em;text-transform:uppercase;padding-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+.section-head::before{content:'▎';opacity:.5}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+@media(max-width:1000px){.grid-2,.grid-3{grid-template-columns:1fr}.grid-4{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.grid-4{grid-template-columns:1fr}}
+
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:20px;position:relative;overflow:hidden;
+}
+.card-title{
+  font-family:var(--font-mono);font-size:10px;color:var(--text3);
+  letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;
+}
+.chart-box{position:relative;height:220px}
+.chart-box-tall{position:relative;height:300px}
+
+/* ── Tables ── */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{
+  font-family:var(--font-mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--text3);padding:7px 10px;text-align:right;
+  border-bottom:1px solid var(--border);background:var(--surface2);
+}
+.data-table th:first-child{text-align:left}
+.data-table td{
+  font-family:var(--font-mono);font-size:11.5px;padding:7px 10px;
+  text-align:right;border-bottom:1px solid rgba(28,45,66,.5);
+}
+.data-table td:first-child{text-align:left;color:var(--text2);font-size:11px}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(255,255,255,.015)}
+.data-table .row-head td{background:var(--surface2);color:var(--text2);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+
+/* ── Semaforo bars ── */
+.sem-list{display:flex;flex-direction:column;gap:10px}
+.sem-row{display:flex;align-items:center;gap:10px}
+.sem-name{font-size:11px;color:var(--text2);width:140px;flex-shrink:0}
+.sem-track{flex:1;height:4px;background:var(--border);border-radius:2px}
+.sem-fill{height:100%;border-radius:2px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.sem-val{font-family:var(--font-mono);font-size:11px;width:56px;text-align:right}
+
+/* ── Stress cols ── */
+.stress-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:7px;overflow:hidden}
+.stress-col{background:var(--surface2);padding:16px}
+.stress-col-head{font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.stress-col-desc{font-size:10px;color:var(--text3);margin-bottom:10px;line-height:1.5}
+.stress-rows{display:flex;flex-direction:column;gap:4px}
+.stress-r{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px}
+.stress-r span:first-child{color:var(--text3)}
+
+/* ── Input form ── */
+.input-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.input-group{display:flex;flex-direction:column;gap:5px}
+.input-label{font-size:10px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase}
+.input-field{
+  padding:8px 10px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:5px;color:var(--text);font-family:var(--font-mono);font-size:12px;
+  outline:none;transition:border-color .15s;width:100%;
+}
+.input-field:focus{border-color:var(--accent)}
+.input-note{font-size:10px;color:var(--text3)}
+.input-unit{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  font-family:var(--font-mono);font-size:10px;color:var(--text3);pointer-events:none;
+}
+.input-wrap{position:relative}
+.recalc-btn{
+  width:100%;padding:11px;font-size:12px;font-weight:700;
+  background:linear-gradient(90deg,var(--accent),var(--blue));
+  color:#080c12;border:none;border-radius:6px;cursor:pointer;
+  font-family:var(--font-mono);letter-spacing:.06em;
+  transition:opacity .15s;margin-top:8px;
+}
+.recalc-btn:hover{opacity:.88}
+.recalc-btn:active{opacity:.7}
+.changed-hint{
+  font-size:10px;color:var(--warn);display:none;
+  font-family:var(--font-mono);margin-top:4px;
+}
+
+/* ── Vientres editor ── */
+.vientres-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.v-cell{display:flex;flex-direction:column;gap:4px}
+.v-yr{font-size:9px;color:var(--text3);font-family:var(--font-mono);text-align:center}
+.v-inp{
+  text-align:center;padding:6px 4px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:4px;
+  color:var(--text);font-family:var(--font-mono);font-size:12px;outline:none;
+}
+.v-inp:focus{border-color:var(--accent)}
+
+/* ── Presentation Mode ── */
+#page-pres{background:var(--bg)}
+.pres-cover{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;padding:60px 40px;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 10%, rgba(0,212,168,.08), transparent),
+    radial-gradient(ellipse 50% 40% at 85% 80%, rgba(59,158,255,.06), transparent),
+    linear-gradient(180deg,#080c12 0%,#0c1824 50%,#080c12 100%);
+  position:relative;overflow:hidden;
+}
+.pres-cover::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(28,45,66,.3) 39px,rgba(28,45,66,.3) 40px),
+    repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(28,45,66,.3) 39px,rgba(28,45,66,.3) 40px);
+  pointer-events:none;opacity:.4;
+}
+.pres-overline{
+  font-family:var(--font-mono);font-size:10px;color:var(--accent);
+  letter-spacing:.3em;text-transform:uppercase;margin-bottom:16px;position:relative;
+}
+.pres-company{
+  font-family:var(--font-serif);font-size:clamp(2.2rem,5vw,4rem);
+  font-weight:700;color:var(--text);line-height:1.1;margin-bottom:8px;position:relative;
+}
+.pres-tagline{font-size:16px;color:var(--text3);margin-bottom:6px;position:relative}
+.pres-date{font-family:var(--font-mono);font-size:11px;color:var(--text3);position:relative;margin-bottom:40px}
+.pres-score-box{
+  display:inline-flex;flex-direction:column;align-items:center;
+  background:rgba(0,212,168,.07);border:1px solid rgba(0,212,168,.25);
+  border-radius:14px;padding:24px 40px;position:relative;
+}
+.pres-score-big{font-family:var(--font-mono);font-size:4rem;font-weight:600;color:var(--accent);line-height:1}
+.pres-score-sub{font-size:11px;color:var(--text3);margin-top:4px;letter-spacing:.05em;text-transform:uppercase}
+.pres-verdict{font-size:15px;font-weight:600;color:var(--ok);margin-top:8px}
+
+.pres-section{padding:48px 56px;border-bottom:1px solid var(--border)}
+.pres-section-title{
+  font-family:var(--font-serif);font-size:1.6rem;font-weight:600;
+  color:var(--gold);margin-bottom:24px;
+  display:flex;align-items:center;gap:12px;
+}
+.pres-section-num{
+  font-family:var(--font-mono);font-size:11px;color:var(--text3);
+  border:1px solid var(--border);padding:2px 8px;border-radius:3px;
+}
+.pres-highlight{
+  background:linear-gradient(135deg,rgba(0,212,168,.06),rgba(59,158,255,.04));
+  border:1px solid rgba(0,212,168,.15);border-radius:8px;padding:20px 24px;
+  font-size:13px;line-height:1.8;color:var(--text2);margin-top:16px;
+}
+.pres-highlight strong{color:var(--text)}
+
+/* ── Status dots ── */
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.dot-ok{background:var(--ok)} .dot-warn{background:var(--warn)} .dot-danger{background:var(--danger)}
+
+/* ── Desembolsos pills ── */
+.pill-row{display:flex;flex-wrap:wrap;gap:8px}
+.desembolso-pill{
+  padding:8px 12px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:5px;display:flex;flex-direction:column;gap:2px;
+}
+.d-tag{font-family:var(--font-mono);font-size:9px;color:var(--accent)}
+.d-amt{font-family:var(--font-mono);font-size:13px;font-weight:600}
+.d-date{font-size:10px;color:var(--text3)}
+
+/* ── Footer status bar ── */
+#footer{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;height:32px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;background:rgba(8,12,18,.96);backdrop-filter:blur(10px);
+  border-top:1px solid var(--border);
+  font-family:var(--font-mono);font-size:10px;color:var(--text3);
+}
+.footer-stats{display:flex;gap:20px}
+.footer-stat{display:flex;gap:6px;align-items:center}
+.footer-stat strong{color:var(--text)}
+#last-updated{transition:color .3s}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── Animations ── */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.loading{animation:pulse 1s infinite}
+</style>
+</head>
+<body>
+
+<!-- Recalc flash bar -->
+<div id="recalc-flash"></div>
+
+<!-- ═══════════════════ NAV ═══════════════════ -->
+<nav id="nav">
+  <div class="nav-brand">
+    <div class="nav-brand-icon">FM</div>
+    <div class="nav-brand-text">FinModel Pro</div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="goPage('dashboard',this)">Dashboard</button>
+    <button class="nav-tab" onclick="goPage('viabilidad',this)">Viabilidad<span class="nav-badge" id="score-badge">80</span></button>
+    <button class="nav-tab" onclick="goPage('stress',this)">Stress Test</button>
+    <button class="nav-tab" onclick="goPage('ratios',this)">Ratios</button>
+    <button class="nav-tab" onclick="goPage('inputs',this)">
+      Inputs &amp; Recálculo
+      <span id="inputs-dot" style="display:none;width:6px;height:6px;background:var(--warn);border-radius:50%"></span>
+    </button>
+    <button class="nav-tab" onclick="goPage('pres',this)">Presentación Cliente</button>
+  </div>
+  <div class="nav-right">
+    <div class="score-badge">
+      <span class="score-num" id="score-main">80</span>
+      <span class="score-label">/ 100</span>
+    </div>
+    <button class="btn btn-primary" onclick="goPage('pres',document.querySelector('.nav-tab:last-child'))">▶ Presentar</button>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ═══════════════════ DASHBOARD ═══════════════════ -->
+<div id="page-dashboard" class="page active">
+  <div class="hero">
+    <div class="hero-eyebrow">Modelo Financiero Proyectado · Confidencial · v3.5</div>
+    <div class="hero-title">Agroindustrias de Animales S.A.</div>
+    <div class="hero-sub">Dashboard Financiero · Horizonte 2026–2035 · Módulo de Proyección Dinámica</div>
+    <div class="kpi-row" id="kpi-row">
+      <div class="kpi"><div class="kpi-label">Monto Solicitado</div><div class="kpi-value c-accent" id="kpi-monto">$19.45M</div><div class="kpi-sub">USD · 6 desembolsos</div></div>
+      <div class="kpi"><div class="kpi-label">Score Crediticio</div><div class="kpi-value" id="kpi-score">80/100</div><div class="kpi-sub" id="kpi-verdict">✅ Aprobable</div></div>
+      <div class="kpi"><div class="kpi-label">DSCR Mínimo (2027–31)</div><div class="kpi-value" id="kpi-dscr-min">—</div><div class="kpi-sub">Año ramp-up</div></div>
+      <div class="kpi"><div class="kpi-label">EBITDA Pico</div><div class="kpi-value c-ok" id="kpi-ebitda-peak">—</div><div class="kpi-sub" id="kpi-ebitda-yr">2028</div></div>
+      <div class="kpi"><div class="kpi-label">Tasa / Plazo</div><div class="kpi-value c-blue" id="kpi-tasa">14% / 90M</div><div class="kpi-sub">N.A.</div></div>
+      <div class="kpi"><div class="kpi-label">Capacidad Máx.</div><div class="kpi-value" id="kpi-capmax">$11.46M</div><div class="kpi-sub" id="kpi-deficit">Déficit vs. solicitado</div></div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="section-head">Evolución Financiera 2026–2035</div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">EBITDA Proyectado (USD M)</div><div class="chart-box"><canvas id="c-ebitda"></canvas></div></div>
+      <div class="card"><div class="card-title">Estructura Balance (USD M)</div><div class="chart-box"><canvas id="c-balance"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">Ingresos vs. Costos (USD M)</div><div class="chart-box"><canvas id="c-ing-cos"></canvas></div></div>
+      <div class="card"><div class="card-title">Servicio de Deuda vs. CFADS (USD M)</div><div class="chart-box"><canvas id="c-deuda"></canvas></div></div>
+    </div>
+    <div class="section-head">Desembolsos &amp; Línea de Tiempo</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Estructura de Desembolsos</div>
+        <div class="pill-row" style="margin-bottom:14px">
+          <div class="desembolso-pill"><div class="d-tag">D1</div><div class="d-amt">$3.87M</div><div class="d-date">Jun-2026</div></div>
+          <div class="desembolso-pill"><div class="d-tag">D2</div><div class="d-amt">$2.90M</div><div class="d-date">Jul-2026</div></div>
+          <div class="desembolso-pill"><div class="d-tag">D3</div><div class="d-amt">$2.90M</div><div class="d-date">Sep-2026</div></div>
+          <div class="desembolso-pill"><div class="d-tag">D4</div><div class="d-amt">$3.91M</div><div class="d-date">Jun-2026</div></div>
+          <div class="desembolso-pill"><div class="d-tag">D5</div><div class="d-amt">$2.93M</div><div class="d-date">Jul-2026</div></div>
+          <div class="desembolso-pill"><div class="d-tag">D6</div><div class="d-amt">$2.93M</div><div class="d-date">Sep-2026</div></div>
+        </div>
+        <div id="debt-warning" style="padding:10px 14px;border-radius:5px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);font-size:11px;color:var(--text2);line-height:1.6"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Línea de Tiempo Operativa</div>
+        <table class="data-table">
+          <thead><tr><th>Concepto</th><th>Inicio</th><th>2026</th><th>2027</th><th>2028+</th></tr></thead>
+          <tbody>
+            <tr><td>Venta de productos</td><td style="color:var(--text3);text-align:right">Sep-27</td><td style="text-align:right;color:var(--text3)">—</td><td style="text-align:right;color:var(--accent)">▶</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
+            <tr><td>Otros ingresos (Energía)</td><td style="color:var(--text3);text-align:right">Jul-27</td><td style="text-align:right;color:var(--text3)">—</td><td style="text-align:right;color:var(--accent)">▶</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
+            <tr><td>Costos por ventas</td><td style="color:var(--text3);text-align:right">Jun-27</td><td style="text-align:right;color:var(--text3)">—</td><td style="text-align:right;color:var(--accent)">▶</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
+            <tr><td>Gastos operativos</td><td style="color:var(--text3);text-align:right">Jul-26</td><td style="text-align:right;color:var(--accent)">▶</td><td style="text-align:right;color:var(--ok)">━━</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
+            <tr><td>Pago intereses</td><td style="color:var(--text3);text-align:right">Jun-28</td><td style="text-align:right;color:var(--text3)">—</td><td style="text-align:right;color:var(--text3)">—</td><td style="text-align:right;color:var(--accent)">▶</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);line-height:1.6">
+          ⚠️ Período ~13 meses sin ingresos principales (Jun-2026→Sep-2027). Ingresos de energía mitigan desde Jul-2027.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ VIABILIDAD ═══════════════════ -->
+<div id="page-viabilidad" class="page">
+  <div class="hero">
+    <div class="hero-eyebrow">Viabilidad Crediticia · Pre-Screening Bancario</div>
+    <div class="hero-title">Análisis de Viabilidad</div>
+    <div class="hero-sub">Banco Comercial · <span id="v-monto-sub">USD 19,449,494</span> · Tasa <span id="v-tasa-sub">14%</span> N.A.</div>
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-label">Score</div><div class="kpi-value" id="v-score">80/100</div><div class="kpi-sub" id="v-verdict">✅ Aprobable</div></div>
+      <div class="kpi"><div class="kpi-label">DSCR Mínimo</div><div class="kpi-value" id="v-dscr-min">—</div><div class="kpi-sub">2027–2031</div></div>
+      <div class="kpi"><div class="kpi-label">ICR Mínimo</div><div class="kpi-value" id="v-icr-min">—</div><div class="kpi-sub">EBITDA/Intereses</div></div>
+      <div class="kpi"><div class="kpi-label">Deuda/Patrimonio</div><div class="kpi-value c-ok" id="v-dp">—</div><div class="kpi-sub">2028</div></div>
+      <div class="kpi"><div class="kpi-label">Margen EBITDA</div><div class="kpi-value c-ok" id="v-mebitda">—</div><div class="kpi-sub">Mínimo 2027–31</div></div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="section-head">Métricas Clave 2027–2031</div>
+    <div class="card" style="margin-bottom:16px;overflow-x:auto">
+      <table class="data-table" id="t-viabilidad">
+        <thead><tr><th>Métrica</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th><th>2031</th><th>Mín/Máx</th><th>Semáforo</th></tr></thead>
+        <tbody id="tbody-viabilidad"></tbody>
+      </table>
+    </div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">DSCR Proyectado (2027–2031)</div><div class="chart-box-tall"><canvas id="c-dscr"></canvas></div></div>
+      <div class="card">
+        <div class="card-title">Viabilidad Aval — MARTESA (datos históricos)</div>
+        <div class="sem-list">
+          <div class="sem-row"><span class="sem-name">Margen Bruto 2025</span><div class="sem-track"><div class="sem-fill" style="width:86%;background:var(--ok)"></div></div><span class="sem-val c-ok">48.6%</span></div>
+          <div class="sem-row"><span class="sem-name">Margen EBITDA 2025</span><div class="sem-track"><div class="sem-fill" style="width:72%;background:var(--ok)"></div></div><span class="sem-val c-ok">35.9%</span></div>
+          <div class="sem-row"><span class="sem-name">Margen Neto 2025</span><div class="sem-track"><div class="sem-fill" style="width:50%;background:var(--ok)"></div></div><span class="sem-val c-ok">24.8%</span></div>
+          <div class="sem-row"><span class="sem-name">D/Patrimonio 2025</span><div class="sem-track"><div class="sem-fill" style="width:8%;background:var(--ok)"></div></div><span class="sem-val c-ok">0.04x</span></div>
+          <div class="sem-row"><span class="sem-name">Current Ratio 2025</span><div class="sem-track"><div class="sem-fill" style="width:75%;background:var(--ok)"></div></div><span class="sem-val c-ok">3.74x</span></div>
+          <div class="sem-row"><span class="sem-name">ICR 2025</span><div class="sem-track"><div class="sem-fill" style="width:100%;background:var(--ok)"></div></div><span class="sem-val c-ok">10.2x</span></div>
+          <div class="sem-row"><span class="sem-name">Patr/Crédito 2025</span><div class="sem-track"><div class="sem-fill" style="width:47%;background:var(--warn)"></div></div><span class="sem-val c-warn">0.47x</span></div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text3)">
+          Score Avalista: <strong style="color:var(--ok)">76.6/100 · ✅ Puede Avalar</strong><br>
+          Patrimonio cubre 47% del crédito. Complementar con garantía hipotecaria sobre PPE Q68.4M.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ STRESS TEST ═══════════════════ -->
+<div id="page-stress" class="page">
+  <div class="hero">
+    <div class="hero-eyebrow">Análisis de Sensibilidad · Estructuración</div>
+    <div class="hero-title">Stress Test — DSCR por Escenario</div>
+    <div class="hero-sub">Shocks aplicados sobre ingresos, margen bruto, tasa de interés y OPEX</div>
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-label">Caso Base 2027</div><div class="kpi-value" id="st-base-27">—</div></div>
+      <div class="kpi"><div class="kpi-label">Downside Mod. 2027</div><div class="kpi-value c-warn" id="st-mod-27">—</div></div>
+      <div class="kpi"><div class="kpi-label">Downside Sev. 2027</div><div class="kpi-value c-danger" id="st-sev-27">—</div></div>
+      <div class="kpi"><div class="kpi-label">Año Quiebre</div><div class="kpi-value c-danger">2026</div><div class="kpi-sub">Todos escenarios</div></div>
+      <div class="kpi"><div class="kpi-label">CFADS Mínimo</div><div class="kpi-value c-blue" id="st-cfads">—</div></div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="section-head">DSCR por Escenario (2027–2031)</div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">Comparativa DSCR — 3 Escenarios</div><div class="chart-box-tall"><canvas id="c-stress"></canvas></div></div>
+      <div class="card">
+        <div class="card-title">Tabla Detallada</div>
+        <div class="stress-grid" id="stress-grid-table">
+          <div class="stress-col"><div class="stress-col-head c-ok">📊 Caso Base</div><div class="stress-col-desc">Sin shocks</div><div class="stress-rows" id="st-base-rows"></div></div>
+          <div class="stress-col"><div class="stress-col-head c-warn">⚠️ Downside Mod.</div><div class="stress-col-desc">−10% Ing · −5pp MB · +200bps · +10% OPEX</div><div class="stress-rows" id="st-mod-rows"></div></div>
+          <div class="stress-col"><div class="stress-col-head c-danger">🔴 Downside Sev.</div><div class="stress-col-desc">−20% Ing · −10pp MB · +400bps · +20% OPEX</div><div class="stress-rows" id="st-sev-rows"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="section-head">Capacidad Máxima de Endeudamiento</div>
+    <div class="card">
+      <div class="grid-4" style="margin-bottom:0">
+        <div><div class="kpi-label">CFADS Mínimo (USD)</div><div class="kpi-value c-blue" id="cap-cfads" style="font-size:1.1rem;margin-top:6px">—</div></div>
+        <div><div class="kpi-label">Servicio Deuda Máx. (USD/año)</div><div class="kpi-value" id="cap-serv" style="font-size:1.1rem;margin-top:6px">—</div></div>
+        <div><div class="kpi-label">Monto Máx. Financiable</div><div class="kpi-value c-warn" id="cap-mmax" style="font-size:1.1rem;margin-top:6px">—</div></div>
+        <div><div class="kpi-label">Holgura / Déficit</div><div class="kpi-value c-danger" id="cap-deficit" style="font-size:1.1rem;margin-top:6px">—</div></div>
+      </div>
+      <div id="cap-note" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--text3)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ RATIOS ═══════════════════ -->
+<div id="page-ratios" class="page">
+  <div class="hero">
+    <div class="hero-eyebrow">Módulo de Ratios Financieros</div>
+    <div class="hero-title">Ratios Proyectados 2026–2035</div>
+    <div class="hero-sub">Rentabilidad · Capital · Endeudamiento · Cobertura</div>
+  </div>
+  <div class="content">
+    <div class="section-head">Rentabilidad</div>
+    <div class="card" style="margin-bottom:16px;overflow-x:auto">
+      <table class="data-table"><thead><tr><th>Métrica</th><th>2026</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th><th>2031</th><th>2032</th><th>2033</th></tr></thead><tbody id="t-rent"></tbody></table>
+    </div>
+    <div class="section-head">Endeudamiento &amp; Cobertura</div>
+    <div class="card" style="margin-bottom:16px;overflow-x:auto">
+      <table class="data-table"><thead><tr><th>Métrica</th><th>2026</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th><th>2031</th><th>2032</th><th>2033</th></tr></thead><tbody id="t-end"></tbody></table>
+    </div>
+    <div class="section-head">Evolución Gráfica</div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title">Margen EBITDA &amp; ROE (%)</div><div class="chart-box-tall"><canvas id="c-ratios"></canvas></div></div>
+      <div class="card"><div class="card-title">Apalancamiento (Deuda/Patrimonio)</div><div class="chart-box-tall"><canvas id="c-leverage"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ INPUTS ═══════════════════ -->
+<div id="page-inputs" class="page">
+  <div class="hero">
+    <div class="hero-eyebrow">Módulo de Supuestos · Recálculo Dinámico</div>
+    <div class="hero-title">Inputs del Modelo</div>
+    <div class="hero-sub">Modifica cualquier parámetro y presiona <strong>Recalcular</strong> para actualizar todas las proyecciones</div>
+  </div>
+  <div class="content">
+    <div class="section-head">Parámetros del Crédito</div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="input-grid">
+        <div class="input-group">
+          <div class="input-label">Monto Solicitado (USD)</div>
+          <div class="input-wrap"><input class="input-field" id="in-monto" type="number" value="19449494" oninput="markChanged()"></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label">Tasa Anual (%)</div>
+          <div class="input-wrap"><input class="input-field" id="in-tasa" type="number" value="14.00" step="0.25" oninput="markChanged()"><span class="input-unit">%</span></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label">Plazo (meses)</div>
+          <input class="input-field" id="in-plazo" type="number" value="90" step="6" oninput="markChanged()">
+        </div>
+        <div class="input-group">
+          <div class="input-label">Período de Gracia (meses)</div>
+          <input class="input-field" id="in-gracia" type="number" value="24" step="6" oninput="markChanged()">
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">Parámetros Operativos</div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="input-grid">
+        <div class="input-group">
+          <div class="input-label">Precio GTQ por libra de carne</div>
+          <div class="input-wrap"><input class="input-field" id="in-precio-gtq" type="number" value="10.50" step="0.10" oninput="markChanged()"><span class="input-unit">GTQ</span></div>
+          <div class="input-note">Precio de venta al mercado local</div>
+        </div>
+        <div class="input-group">
+          <div class="input-label">Lechones por parto</div>
+          <input class="input-field" id="in-lechones" type="number" value="18" step="1" oninput="markChanged()">
+          <div class="input-note">Meta: 20 lechones por parto</div>
+        </div>
+        <div class="input-group">
+          <div class="input-label">Libras por cerdo al sacrificio</div>
+          <input class="input-field" id="in-libras" type="number" value="280" step="5" oninput="markChanged()">
+          <div class="input-note">Meta: 280–300 libras</div>
+        </div>
+        <div class="input-group">
+          <div class="input-label">Tasa de Mortalidad (%)</div>
+          <div class="input-wrap"><input class="input-field" id="in-mort" type="number" value="1.00" step="0.1" oninput="markChanged()"><span class="input-unit">%</span></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label">OPEX como % ingresos</div>
+          <div class="input-wrap"><input class="input-field" id="in-opex" type="number" value="15.00" step="0.5" oninput="markChanged()"><span class="input-unit">%</span></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label">Costo Alimentación (% ingreso)</div>
+          <div class="input-wrap"><input class="input-field" id="in-alim" type="number" value="45.00" step="1" oninput="markChanged()"><span class="input-unit">%</span></div>
+        </div>
+        <div class="input-group">
+          <div class="input-label">Tasa de conversión USD/GTQ</div>
+          <input class="input-field" id="in-usd-gtq" type="number" value="0.13" step="0.001" oninput="markChanged()">
+        </div>
+        <div class="input-group">
+          <div class="input-label">ISR Empresarial (%)</div>
+          <div class="input-wrap"><input class="input-field" id="in-isr" type="number" value="12.00" step="1" oninput="markChanged()"><span class="input-unit">%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">Plan de Expansión — Vientres Añadidos por Año</div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Unidades de vientres adicionales incorporados cada año (se acumulan año tras año):</div>
+      <div class="vientres-grid" id="vientres-inputs"></div>
+      <div style="font-size:11px;color:var(--text3);padding-top:8px;border-top:1px solid var(--border)">
+        Total vientres acumulados 2035: <strong id="v-acum" style="color:var(--accent)">—</strong>
+      </div>
+    </div>
+
+    <div class="changed-hint" id="changed-hint">⚠️ Hay cambios sin aplicar. Presiona Recalcular para actualizar todas las proyecciones.</div>
+    <button class="recalc-btn" onclick="doRecalc()">⟳ Recalcular Modelo Completo</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ PRESENTACIÓN ═══════════════════ -->
+<div id="page-pres" class="page">
+  <div class="pres-cover">
+    <div class="pres-overline">Confidencial · Solo para uso del Comité de Crédito</div>
+    <div class="pres-company">Agroindustrias de<br>Animales S.A.</div>
+    <div class="pres-tagline">Modelo Financiero de Proyección · Solicitud de Crédito Comercial</div>
+    <div class="pres-date">Guatemala · <span id="pres-date"></span></div>
+    <div class="pres-score-box">
+      <div class="pres-score-big" id="pres-score-num">80</div>
+      <div class="pres-score-sub">Score Crediticio · / 100</div>
+      <div class="pres-verdict" id="pres-verdict">✅ APROBABLE</div>
+    </div>
+  </div>
+
+  <div class="pres-section">
+    <div class="pres-section-title"><span class="pres-section-num">I</span> Resumen Ejecutivo</div>
+    <div class="grid-4">
+      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">Monto Solicitado</div><div class="kpi-value c-accent" id="p-monto">$19.45M</div><div class="kpi-sub">USD · 6 desembolsos</div></div>
+      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">Tasa / Plazo</div><div class="kpi-value c-blue" id="p-tasa-plazo">14% / 90M</div><div class="kpi-sub">N.A.</div></div>
+      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">EBITDA Pico</div><div class="kpi-value c-ok" id="p-ebitda-peak">—</div><div class="kpi-sub" id="p-ebitda-yr">USD pico</div></div>
+      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">Score</div><div class="kpi-value c-ok" id="p-score">80/100</div><div class="kpi-sub" id="p-verdict">✅ Aprobable</div></div>
+    </div>
+    <div class="pres-highlight" id="pres-exec-summary"></div>
+  </div>
+
+  <div class="pres-section">
+    <div class="pres-section-title"><span class="pres-section-num">II</span> Métricas Bancarias Clave (2027–2031)</div>
+    <div style="overflow-x:auto">
+      <table class="data-table" style="min-width:600px" id="pres-metricas-table">
+        <thead><tr><th>Métrica</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th><th>2031</th><th>Estado</th></tr></thead>
+        <tbody id="pres-metricas-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="pres-section">
+    <div class="pres-section-title"><span class="pres-section-num">III</span> Análisis de Sensibilidad</div>
+    <div class="stress-grid">
+      <div class="stress-col"><div class="stress-col-head c-ok">📊 Caso Base</div><div class="stress-col-desc">Sin shocks</div><div class="stress-rows" id="p-base-rows"></div></div>
+      <div class="stress-col"><div class="stress-col-head c-warn">⚠️ Downside Moderado</div><div class="stress-col-desc">−10% Ing · −5pp MB · +200bps · +10% OPEX</div><div class="stress-rows" id="p-mod-rows"></div></div>
+      <div class="stress-col"><div class="stress-col-head c-danger">🔴 Downside Severo</div><div class="stress-col-desc">−20% Ing · −10pp MB · +400bps · +20% OPEX</div><div class="stress-rows" id="p-sev-rows"></div></div>
+    </div>
+  </div>
+
+  <div class="pres-section">
+    <div class="pres-section-title"><span class="pres-section-num">IV</span> Viabilidad del Aval — MARTESA</div>
+    <div class="grid-4" style="margin-bottom:16px">
+      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">Score Avalista</div><div class="kpi-value c-ok">76.6/100</div><div class="kpi-sub">✅ Puede Avalar</div></div>
+      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">ICR 2025</div><div class="kpi-value c-ok">10.2x</div></div>
+      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">D/Patrimonio 2025</div><div class="kpi-value c-ok">0.04x</div></div>
+      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">Current Ratio</div><div class="kpi-value c-ok">3.74x</div></div>
+    </div>
+    <div class="pres-highlight">
+      MARTESA puede avalar <strong>parcialmente (~USD 9.2M, patrimonio neto)</strong>. 
+      Complementar con <strong>garantía hipotecaria sobre PPE (Q68.4M)</strong>. 
+      Patrimonio cubre 47% del crédito. Fortalezas: D/E 0.04x, ICR 10.2x, Current Ratio 3.74x.
+    </div>
+  </div>
+
+  <div class="pres-section" style="border-bottom:none">
+    <div class="pres-section-title"><span class="pres-section-num">V</span> Recomendación Final</div>
+    <div class="grid-2">
+      <div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:10px;letter-spacing:.1em;text-transform:uppercase">Aprobación Condicionada</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.9" id="pres-recomendacion"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:10px;letter-spacing:.1em;text-transform:uppercase">Condiciones Mínimas</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.9" id="pres-condiciones"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end main -->
+
+<!-- Footer -->
+<div id="footer">
+  <div style="color:var(--text3)">Agroindustrias de Animales S.A. · FinModel Pro v3.5 · Confidencial</div>
+  <div class="footer-stats">
+    <div class="footer-stat"><span>Monto</span><strong id="f-monto">$19.45M USD</strong></div>
+    <div class="footer-stat"><span>Tasa</span><strong id="f-tasa">14% N.A.</strong></div>
+    <div class="footer-stat"><span>Plazo</span><strong id="f-plazo">90 meses</strong></div>
+    <div class="footer-stat"><span>Score</span><strong id="f-score" style="color:var(--accent)">80/100</strong></div>
+    <div class="footer-stat"><span id="last-updated" style="color:var(--text3)">Cálculo inicial cargado</span></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     CALCULATION ENGINE + UI CONTROLLER
+════════════════════════════════════════════════════ -->
+<script>
+"use strict";
+
+// ──────────────────────────────────────────────
+// BASE PARAMETERS
+// ──────────────────────────────────────────────
+const BASE = {
+  inflacion: 0.0396,
+  usd_gtq: 0.13,
+  isr: 0.12,
+  monto_usd: 19_449_494,
+  tasa_na: 0.14,
+  plazo_meses: 90,
+  gracia_meses: 24,
+  vientres: [550,1150,1650,1650,500,500,500,500,500,500],
+  lechones_por_parto: 18,
+  partos_por_vientre: 2.4,
+  mortalidad: 0.01,
+  libras_por_cerdo: 280,
+  precio_gtq_libra: 10.5,
+  costo_alimentacion_pct: 0.45,
+  costo_sanidad_pct: 0.04,
+  costo_energia_pct: 0.02,
+  opex_pct: 0.15,
+  ppe_inicial_usd: 19_964_151,
+};
+
+const YEARS = Array.from({length:10},(_,i)=>2026+i);
+const YL = YEARS.map(String);
+
+// ──────────────────────────────────────────────
+// CALCULATION ENGINE
+// ──────────────────────────────────────────────
+function calcModel(p) {
+  const n = 10;
+
+  // Revenue build-up from livestock
+  const ingresos = [], costos = [];
+  for (let i=0;i<n;i++) {
+    const vAcum = p.vientres.slice(0,i+1).reduce((a,b)=>a+b,0);
+    const partos = vAcum * p.partos_por_vientre;
+    const lechones = partos * p.lechones_por_parto * (1-p.mortalidad);
+    let rev = lechones * p.libras_por_cerdo * p.precio_gtq_libra * p.usd_gtq;
+    if (i===0) rev *= 0;          // 2026: no revenue
+    else if (i===1) rev *= 0.33;  // 2027: partial (~4 months)
+    ingresos.push(rev);
+    costos.push(rev * (p.costo_alimentacion_pct + p.costo_sanidad_pct + p.costo_energia_pct));
+  }
+
+  // OPEX
+  const opex = ingresos.map(ing=>ing*p.opex_pct);
+  opex[0] = p.ppe_inicial_usd * 0.025; // pre-operative fixed opex 2026
+
+  // EBITDA
+  const utilBruta = ingresos.map((r,i)=>r-costos[i]);
+  const ebitda = utilBruta.map((ub,i)=>ub-opex[i]);
+  const depreciacion = Array(n).fill(p.ppe_inicial_usd/20);
+
+  // Debt schedule
+  const amort = p.plazo_meses - p.gracia_meses;
+  const cuota_cap_m = amort>0 ? p.monto_usd/amort : 0;
+  const intereses = [], capital = [];
+  let saldo = p.monto_usd;
+  const nAmortYr = Math.ceil(amort/12);
+  for (let i=0;i<n;i++){
+    let iy, cy;
+    if (i<2){           iy=saldo*p.tasa_na; cy=0; }
+    else if(i<2+nAmortYr){ iy=saldo*p.tasa_na; cy=Math.min(cuota_cap_m*12,saldo); }
+    else{               iy=0; cy=saldo; }
+    intereses.push(iy); capital.push(cy);
+    saldo=Math.max(0,saldo-cy);
+  }
+  const servDeuda = intereses.map((v,i)=>v+capital[i]);
+
+  // P&L
+  const ebit = ebitda.map((e,i)=>e-depreciacion[i]);
+  const uai  = ebit.map((e,i)=>e-intereses[i]);
+  const uan  = uai.map(u=>u>0?u*(1-p.isr):u);
+
+  // Balance (simplified)
+  let patrimonioAcum = 4_509_078*p.usd_gtq;
+  const activos=[], pasivos=[], patrimonio=[];
+  let saldoD = p.monto_usd;
+  for (let i=0;i<n;i++){
+    saldoD=Math.max(0,saldoD-capital[i]);
+    patrimonioAcum+=uan[i];
+    const pasi = saldoD+53307*p.usd_gtq;
+    const acti = Math.max(patrimonioAcum,0)+pasi;
+    activos.push(acti); pasivos.push(pasi);
+    patrimonio.push(acti-pasi);
+  }
+
+  // CFADS ≈ EBITDA
+  const cfads = [...ebitda];
+
+  // Ratios
+  const dscr = cfads.map((c,i)=>servDeuda[i]>0?c/servDeuda[i]:null);
+  const icr  = ebitda.map((e,i)=>intereses[i]>0?e/intereses[i]:null);
+  const roe  = uan.map((u,i)=>patrimonio[i]>0?u/patrimonio[i]:null);
+  const roa  = uan.map((u,i)=>activos[i]>0?u/activos[i]:null);
+  const mEbitda= ebitda.map((e,i)=>ingresos[i]>0?e/ingresos[i]:0);
+  const mBruto = utilBruta.map((ub,i)=>ingresos[i]>0?ub/ingresos[i]:0);
+  const mNeto  = uan.map((u,i)=>ingresos[i]>0?u/ingresos[i]:0);
+  const dPat   = pasivos.map((p2,i)=>patrimonio[i]>0?p2/patrimonio[i]:null);
+
+  // Max loanable
+  const cfadsMin = Math.min(...cfads.slice(1,6).filter(v=>v>0));
+  const tM = p.tasa_na/12;
+  const pvFactor = tM>0&&amort>0 ? (1-(1+tM)**(-amort))/tM : 0;
+  const montoMax = pvFactor>0 ? (cfadsMin/1.3/12)*pvFactor : 0;
+
+  // Score
+  let score=0;
+  const dscrMin = Math.min(...dscr.slice(1,6).filter(v=>v!==null));
+  if(dscrMin>=1.5)score+=35; else if(dscrMin>=1.3)score+=25; else if(dscrMin>=1.0)score+=15; else score+=5;
+  const me3 = mEbitda[3]||0;
+  if(me3>0.5)score+=25; else if(me3>0.3)score+=18; else score+=8;
+  const dp2 = dPat[2];
+  if(dp2!==null&&dp2<0.2)score+=20; else if(dp2!==null&&dp2<0.5)score+=12; else score+=4;
+  score+=20; score=Math.min(score,100);
+  const verdict = score>=70?'✅ APROBABLE':score>=55?'⚠️ CONDICIONADO':'❌ NO VIABLE';
+
+  // Stress DSCR
+  function stressDscr(sI,sMB,sBps,sOpex){
+    return cfads.map((c,i)=>{
+      const ingS=ingresos[i]*(1+sI);
+      const costS=costos[i]*(1-sMB);
+      const ebS=(ingS-costS)-opex[i]*(1+sOpex);
+      const tS=p.tasa_na+sBps;
+      const intS=intereses[i]*(p.tasa_na>0?tS/p.tasa_na:1);
+      const sdS=intS+capital[i];
+      return sdS>0?+(ebS/sdS).toFixed(3):null;
+    });
+  }
+
+  const fmt2=(v,d=2)=>v===null?null:+v.toFixed(d);
+
+  return {
+    years: YL, ingresos: ingresos.map(v=>+(v/1e6).toFixed(3)),
+    costos: costos.map(v=>+(v/1e6).toFixed(3)),
+    opex: opex.map(v=>+(v/1e6).toFixed(3)),
+    ebitda: ebitda.map(v=>+(v/1e6).toFixed(3)),
+    ebit: ebit.map(v=>+(v/1e6).toFixed(3)),
+    uan: uan.map(v=>+(v/1e6).toFixed(3)),
+    activos: activos.map(v=>+(v/1e6).toFixed(3)),
+    pasivos: pasivos.map(v=>+(v/1e6).toFixed(3)),
+    patrimonio: patrimonio.map(v=>+(v/1e6).toFixed(3)),
+    intereses: intereses.map(v=>+(v/1e6).toFixed(3)),
+    capital: capital.map(v=>+(v/1e6).toFixed(3)),
+    servDeuda: servDeuda.map(v=>+(v/1e6).toFixed(3)),
+    cfads: cfads.map(v=>+(v/1e6).toFixed(3)),
+    dscr: dscr.map(v=>fmt2(v)), icr: icr.map(v=>fmt2(v)),
+    roe: roe.map(v=>fmt2(v,3)), roa: roa.map(v=>fmt2(v,3)),
+    mEbitda: mEbitda.map(v=>fmt2(v,3)), mBruto: mBruto.map(v=>fmt2(v,3)), mNeto: mNeto.map(v=>fmt2(v,3)),
+    dPat: dPat.map(v=>fmt2(v)),
+    stress: {
+      base: dscr.map(v=>fmt2(v)),
+      moderate: stressDscr(-0.10,-0.05,0.02,0.10),
+      severe:   stressDscr(-0.20,-0.10,0.04,0.20),
+    },
+    montoMax: Math.round(montoMax),
+    deficit: Math.round(montoMax-p.monto_usd),
+    cfadsMin: Math.round(cfadsMin),
+    score, verdict,
+    params: {monto:p.monto_usd, tasa:p.tasa_na, plazo:p.plazo_meses},
+  };
+}
+
+// ──────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────
+let R = null; // current results
+const charts = {};
+
+// ──────────────────────────────────────────────
+// CHART FACTORY
+// ──────────────────────────────────────────────
+const CD = {color:['#5a7a9a'], borderColor:'#1c2d42', font:{family:"'IBM Plex Mono'",size:10}};
+Chart.defaults.color = CD.color[0];
+Chart.defaults.borderColor = CD.borderColor;
+Chart.defaults.font.family = CD.font.family;
+Chart.defaults.font.size = CD.font.size;
+
+function baseOpts(yFmt, extra={}) {
+  return {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{labels:{boxWidth:10,padding:14,color:'#8ba8c4'}},
+      tooltip:{backgroundColor:'#0e1620',borderColor:'#1c2d42',borderWidth:1,
+        titleFont:{size:10},bodyFont:{size:10},padding:8}
+    },
+    scales:{
+      x:{grid:{color:'rgba(28,45,66,.4)'},ticks:{color:'#4d6a88',maxRotation:0}},
+      y:{grid:{color:'rgba(28,45,66,.4)'},ticks:{color:'#4d6a88',
+        callback:yFmt||(v=>`${v>=0?'':'−'}${Math.abs(v)}`)}}
+    }, ...extra
+  };
+}
+
+function mkBar(id, labels, datasets, yFmt, extra) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {type:'bar', data:{labels, datasets}, options:baseOpts(yFmt,extra)});
+}
+function mkLine(id, labels, datasets, yFmt, extra) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {type:'line', data:{labels, datasets}, options:baseOpts(yFmt,extra)});
+}
+
+const COLORS = {accent:'#00d4a8',blue:'#3b9eff',gold:'#f0c040',ok:'#22c55e',warn:'#f59e0b',danger:'#ef4444'};
+function alpha(c,a){return c+''+Math.round(a*255).toString(16).padStart(2,'0')}
+
+// ──────────────────────────────────────────────
+// RENDER FUNCTIONS
+// ──────────────────────────────────────────────
+function colorDSCR(v){
+  if(v===null||v===undefined) return 'var(--text3)';
+  if(v>=1.5) return 'var(--ok)'; if(v>=1.0) return 'var(--warn)'; return 'var(--danger)';
+}
+function colorVal(v, thresholds){
+  if(v===null) return 'var(--text3)';
+  const [lo,hi]=thresholds;
+  return v>=hi?'var(--ok)':v>=lo?'var(--warn)':'var(--danger)';
+}
+function fmt(v,type='x'){
+  if(v===null||v===undefined) return '—';
+  if(type==='x') return v.toFixed(2)+'x';
+  if(type==='%') return (v*100).toFixed(1)+'%';
+  if(type==='M') return '$'+v.toFixed(1)+'M';
+  if(type==='raw') return v.toFixed(2);
+  return v;
+}
+function semaforo(v,lo,hi){
+  if(v===null) return '<span class="dot dot-warn"></span><span style="color:var(--text3)">N/A</span>';
+  const c=v>=hi?'ok':v>=lo?'warn':'danger';
+  return `<span class="dot dot-${c}"></span><span class="c-${c}">${c==='ok'?'VERDE':c==='warn'?'AMARILLO':'ROJO'}</span>`;
+}
+
+function renderDashboard(){
+  if(!R) return;
+  // KPIs
+  const mUSD = (R.params.monto/1e6).toFixed(2);
+  document.getElementById('kpi-monto').textContent = `$${mUSD}M`;
+  document.getElementById('kpi-score').textContent = `${R.score}/100`;
+  document.getElementById('kpi-score').className = 'kpi-value '+(R.score>=70?'c-ok':R.score>=55?'c-warn':'c-danger');
+  document.getElementById('kpi-verdict').textContent = R.verdict;
+
+  const dscrSlice = R.dscr.slice(1,6).filter(v=>v!==null);
+  const dscrMin = Math.min(...dscrSlice);
+  document.getElementById('kpi-dscr-min').textContent = fmt(dscrMin,'x');
+  document.getElementById('kpi-dscr-min').className = 'kpi-value '+(dscrMin>=1.5?'c-ok':dscrMin>=1.0?'c-warn':'c-danger');
+
+  const peakIdx = R.ebitda.indexOf(Math.max(...R.ebitda));
+  document.getElementById('kpi-ebitda-peak').textContent = fmt(R.ebitda[peakIdx],'M');
+  document.getElementById('kpi-ebitda-yr').textContent = `${2026+peakIdx} · Margen ${(R.mEbitda[peakIdx]*100).toFixed(0)}%`;
+  document.getElementById('kpi-tasa').textContent = `${(R.params.tasa*100).toFixed(1)}% / ${R.params.plazo}M`;
+  document.getElementById('kpi-capmax').textContent = `$${(R.montoMax/1e6).toFixed(2)}M`;
+  document.getElementById('kpi-capmax').className = 'kpi-value '+(R.montoMax>=R.params.monto?'c-ok':'c-warn');
+  document.getElementById('kpi-deficit').textContent = R.deficit>=0?'Holgura vs. solicitado':'Déficit vs. solicitado';
+
+  document.getElementById('debt-warning').innerHTML =
+    R.deficit>=0
+    ? `✅ Monto dentro de capacidad. Holgura: <strong style="color:var(--ok)">$${(R.deficit/1e6).toFixed(2)}M</strong>`
+    : `⚠️ Monto excede capacidad DSCR ≥ 1.30x. Monto máx: <strong style="color:var(--warn)">$${(R.montoMax/1e6).toFixed(2)}M</strong>. Déficit: <strong style="color:var(--danger)">-$${Math.abs(R.deficit/1e6).toFixed(2)}M</strong>. Considerar reducir monto o extender plazo.`;
+
+  // Charts
+  const barColors = R.ebitda.map(v=>v>=0?alpha(COLORS.accent,0.55):alpha(COLORS.danger,0.55));
+  const barBorders= R.ebitda.map(v=>v>=0?COLORS.accent:COLORS.danger);
+  mkBar('c-ebitda', YL,
+    [{label:'EBITDA (USD M)',data:R.ebitda,backgroundColor:barColors,borderColor:barBorders,borderWidth:1,borderRadius:3}],
+    v=>`$${v.toFixed(1)}M`);
+
+  mkBar('c-balance', YL, [
+    {label:'Activos',data:R.activos,backgroundColor:alpha(COLORS.blue,0.5),borderColor:COLORS.blue,borderWidth:1,borderRadius:3},
+    {label:'Pasivos',data:R.pasivos,backgroundColor:alpha(COLORS.danger,0.4),borderColor:COLORS.danger,borderWidth:1,borderRadius:3},
+    {label:'Patrimonio',data:R.patrimonio,backgroundColor:alpha(COLORS.ok,0.4),borderColor:COLORS.ok,borderWidth:1,borderRadius:3},
+  ], v=>`$${v.toFixed(0)}M`);
+
+  mkBar('c-ing-cos', YL, [
+    {label:'Ingresos',data:R.ingresos,backgroundColor:alpha(COLORS.accent,0.5),borderColor:COLORS.accent,borderWidth:1,borderRadius:3},
+    {label:'Costos',data:R.costos,backgroundColor:alpha(COLORS.warn,0.5),borderColor:COLORS.warn,borderWidth:1,borderRadius:3},
+    {label:'OPEX',data:R.opex,backgroundColor:alpha(COLORS.danger,0.4),borderColor:COLORS.danger,borderWidth:1,borderRadius:3},
+  ], v=>`$${v.toFixed(1)}M`);
+
+  mkLine('c-deuda', YL, [
+    {label:'CFADS',data:R.cfads,borderColor:COLORS.accent,backgroundColor:alpha(COLORS.accent,0.08),tension:.4,pointRadius:4,fill:true},
+    {label:'Servicio Deuda',data:R.servDeuda,borderColor:COLORS.danger,backgroundColor:'transparent',tension:.4,pointRadius:4,borderDash:[4,4]},
+  ], v=>`$${v.toFixed(1)}M`);
+}
+
+function renderViabilidad(){
+  if(!R) return;
+  const dscrSlice = R.dscr.slice(1,6).filter(v=>v!==null);
+  const icrSlice  = R.icr.slice(1,6).filter(v=>v!==null);
+  document.getElementById('v-score').textContent = `${R.score}/100`;
+  document.getElementById('v-verdict').textContent = R.verdict;
+  document.getElementById('v-monto-sub').textContent = `USD ${R.params.monto.toLocaleString()}`;
+  document.getElementById('v-tasa-sub').textContent = `${(R.params.tasa*100).toFixed(1)}%`;
+  document.getElementById('v-dscr-min').textContent = fmt(Math.min(...dscrSlice),'x');
+  document.getElementById('v-icr-min').textContent  = fmt(Math.min(...icrSlice),'x');
+  document.getElementById('v-dp').textContent = fmt(R.dPat[2],'x');
+  document.getElementById('v-mebitda').textContent = fmt(Math.min(...R.mEbitda.slice(1,6).filter(v=>v!==null)),'%');
+
+  // Viabilidad table 2027-2031 (indices 1-5)
+  const tbody = document.getElementById('tbody-viabilidad');
+  const rows=[
+    {label:'DSCR (x)',  vals:R.dscr,  fmt:'x', thres:[1.0,1.5]},
+    {label:'ICR (x)',   vals:R.icr,   fmt:'x', thres:[1.2,2.0]},
+    {label:'Deuda/Patrimonio (x)', vals:R.dPat, fmt:'x', thres:[0.5,0.2], inv:true},
+    {label:'Margen EBITDA (%)',    vals:R.mEbitda, fmt:'%', thres:[0.3,0.5]},
+    {label:'Margen Bruto (%)',     vals:R.mBruto,  fmt:'%', thres:[0.3,0.5]},
+  ];
+  tbody.innerHTML = rows.map(r=>{
+    const sl=r.vals.slice(1,6);
+    const minV= sl.filter(v=>v!==null).length?Math.min(...sl.filter(v=>v!==null)):null;
+    const getC=(v)=>{
+      if(v===null) return 'var(--text3)';
+      if(r.inv) return v<=r.thres[1]?'var(--ok)':v<=r.thres[0]?'var(--warn)':'var(--danger)';
+      return colorVal(v,r.thres);
+    };
+    const cells=sl.map(v=>`<td style="color:${getC(v)}">${fmt(v,r.fmt)}</td>`).join('');
+    const sem = minV!==null?(r.inv?semaforo(-minV,...r.thres.map(v=>-v)):semaforo(minV,...r.thres)):'—';
+    return `<tr><td>${r.label}</td>${cells}<td style="color:${getC(minV)}">${fmt(minV,r.fmt)}</td><td>${sem}</td></tr>`;
+  }).join('');
+
+  // DSCR chart
+  const dscrBar=R.dscr.slice(1,6).map(v=>v!==null?v:0);
+  mkBar('c-dscr', YL.slice(1,6), [
+    {label:'DSCR (x)',data:dscrBar,
+     backgroundColor:dscrBar.map(v=>v>=1.5?alpha(COLORS.ok,0.6):v>=1.0?alpha(COLORS.warn,0.6):alpha(COLORS.danger,0.6)),
+     borderColor:dscrBar.map(v=>v>=1.5?COLORS.ok:v>=1.0?COLORS.warn:COLORS.danger),
+     borderWidth:1,borderRadius:3}
+  ], v=>`${v.toFixed(1)}x`);
+}
+
+function renderStress(){
+  if(!R) return;
+  document.getElementById('st-base-27').textContent = fmt(R.stress.base[1],'x');
+  document.getElementById('st-mod-27').textContent  = fmt(R.stress.moderate[1],'x');
+  document.getElementById('st-sev-27').textContent  = fmt(R.stress.severe[1],'x');
+  document.getElementById('st-cfads').textContent   = `$${(R.cfadsMin/1e6).toFixed(2)}M`;
+
+  const yrs=['2027','2028','2029','2030','2031'];
+  function stressRows(scenario,elId){
+    const el=document.getElementById(elId);
+    el.innerHTML=yrs.map((yr,i)=>{
+      const v=scenario[i+1];
+      const c=v===null?'var(--text3)':v>=1.5?COLORS.ok:v>=1.0?COLORS.warn:COLORS.danger;
+      return `<div class="stress-r"><span>${yr}</span><span style="color:${c}">${fmt(v,'x')}</span></div>`;
+    }).join('');
+  }
+  stressRows(R.stress.base,'st-base-rows');
+  stressRows(R.stress.moderate,'st-mod-rows');
+  stressRows(R.stress.severe,'st-sev-rows');
+
+  mkLine('c-stress', yrs, [
+    {label:'Caso Base',data:R.stress.base.slice(1,6).map(v=>v??0),borderColor:COLORS.accent,tension:.4,pointRadius:5,fill:false},
+    {label:'Downside Mod.',data:R.stress.moderate.slice(1,6).map(v=>v??0),borderColor:COLORS.warn,tension:.4,pointRadius:5,fill:false,borderDash:[5,4]},
+    {label:'Downside Sev.',data:R.stress.severe.slice(1,6).map(v=>v??0),borderColor:COLORS.danger,tension:.4,pointRadius:5,fill:false,borderDash:[3,4]},
+  ], v=>`${v.toFixed(1)}x`);
+
+  document.getElementById('cap-cfads').textContent = `$${(R.cfadsMin/1e6).toFixed(2)}M`;
+  document.getElementById('cap-mmax').textContent  = `$${(R.montoMax/1e6).toFixed(2)}M`;
+  document.getElementById('cap-deficit').textContent= `${R.deficit>=0?'+':'-'}$${Math.abs(R.deficit/1e6).toFixed(2)}M`;
+  document.getElementById('cap-deficit').className  = 'kpi-value '+(R.deficit>=0?'c-ok':'c-danger');
+  document.getElementById('cap-note').textContent   = R.deficit>=0
+    ?'✅ Monto dentro de capacidad con DSCR ≥ 1.30x.'
+    :'⚠️ Monto excede capacidad — reducir monto o extender plazo. Shocks: −10% ingresos, −5pp margen bruto, +200bps tasa, +10% OPEX.';
+}
+
+function renderRatios(){
+  if(!R) return;
+  const sl=(arr)=>arr.slice(0,8);
+  function row(label,vals,fmtType,lo,hi,inv=false){
+    const cells=sl(vals).map(v=>{
+      const c=v===null?'var(--text3)':inv?(v<=hi?'var(--ok)':v<=lo?'var(--warn)':'var(--danger)'):(v>=hi?'var(--ok)':v>=lo?'var(--warn)':'var(--danger)');
+      return `<td style="color:${c}">${fmt(v,fmtType)}</td>`;
+    }).join('');
+    return `<tr><td>${label}</td>${cells}</tr>`;
+  }
+  document.getElementById('t-rent').innerHTML=[
+    row('ROE',R.roe,'%',-0.05,0.15),
+    row('ROA',R.roa,'%',-0.05,0.10),
+    row('Margen Bruto',R.mBruto,'%',0.30,0.50),
+    row('Margen EBITDA',R.mEbitda,'%',0.25,0.40),
+    row('Margen Neto',R.mNeto,'%',0.10,0.25),
+  ].join('');
+  document.getElementById('t-end').innerHTML=[
+    row('Deuda/Patrimonio (x)',R.dPat,'x',0.5,0.2,true),
+    row('DSCR (x)',R.dscr,'x',1.0,1.5),
+    row('ICR (x)',R.icr,'x',1.5,3.0),
+  ].join('');
+
+  mkLine('c-ratios', YL.slice(0,8), [
+    {label:'Margen EBITDA (%)',data:R.mEbitda.slice(0,8).map(v=>v!==null?+(v*100).toFixed(1):null),borderColor:COLORS.accent,tension:.4,pointRadius:4,fill:false},
+    {label:'ROE (%)',data:R.roe.slice(0,8).map(v=>v!==null?+(v*100).toFixed(1):null),borderColor:COLORS.blue,tension:.4,pointRadius:4,fill:false},
+    {label:'ROA (%)',data:R.roa.slice(0,8).map(v=>v!==null?+(v*100).toFixed(1):null),borderColor:COLORS.gold,tension:.4,pointRadius:4,fill:false},
+  ], v=>`${v}%`);
+
+  mkLine('c-leverage', YL.slice(0,8), [
+    {label:'Deuda/Patrimonio (x)',data:R.dPat.slice(0,8).map(v=>v!==null?v:null),borderColor:COLORS.danger,backgroundColor:alpha(COLORS.danger,0.08),tension:.4,pointRadius:4,fill:true},
+  ], v=>`${v.toFixed(1)}x`);
+}
+
+function renderPresentation(){
+  if(!R) return;
+  document.getElementById('pres-date').textContent = new Date().toLocaleDateString('es-GT',{year:'numeric',month:'long'});
+  document.getElementById('pres-score-num').textContent = R.score;
+  document.getElementById('pres-verdict').textContent = R.verdict;
+  document.getElementById('p-monto').textContent = `$${(R.params.monto/1e6).toFixed(2)}M`;
+  document.getElementById('p-tasa-plazo').textContent = `${(R.params.tasa*100).toFixed(1)}% / ${R.params.plazo}M`;
+  const peakIdx=R.ebitda.indexOf(Math.max(...R.ebitda));
+  document.getElementById('p-ebitda-peak').textContent = fmt(R.ebitda[peakIdx],'M');
+  document.getElementById('p-ebitda-yr').textContent = `2026 + ${peakIdx} · Margen ${(R.mEbitda[peakIdx]*100).toFixed(0)}%`;
+  document.getElementById('p-score').textContent = `${R.score}/100`;
+  document.getElementById('p-verdict').textContent = R.verdict;
+
+  // Summary text
+  const dscrMin=Math.min(...R.dscr.slice(1,6).filter(v=>v!==null));
+  document.getElementById('pres-exec-summary').innerHTML=`
+    Agroindustrias de Animales S.A. presenta un modelo de negocio <strong>agroindustrial con doble fuente de ingresos</strong>: 
+    venta de productos cárnicos y comercialización de energía eléctrica. 
+    El proyecto requiere <strong>USD ${(R.params.monto/1e6).toFixed(2)}M</strong> estructurado en 6 desembolsos durante 2026. 
+    Los ingresos principales inician en julio–septiembre de 2027, generando un período de ramp-up de ~13 meses 
+    con DSCR mínimo de <strong>${fmt(dscrMin,'x')}</strong>. 
+    A partir de 2028, el DSCR supera <strong>${fmt(R.dscr[2],'x')}</strong> con margen EBITDA del <strong>${(R.mEbitda[2]*100).toFixed(0)}%</strong>, 
+    demostrando sólida capacidad de pago en régimen de crucero.`;
+
+  // Metrics table
+  const yrs5=YL.slice(1,6);
+  const mtRows=[
+    {l:'DSCR (CFADS/Serv.Deuda)',vals:R.dscr,f:'x',lo:1,hi:1.5},
+    {l:'ICR (EBITDA/Intereses)',vals:R.icr,f:'x',lo:1.2,hi:2},
+    {l:'Deuda Neta/EBITDA',vals:R.dPat,f:'x',lo:0.5,hi:0.2,inv:true},
+    {l:'Margen EBITDA',vals:R.mEbitda,f:'%',lo:0.25,hi:0.4},
+    {l:'Margen Bruto',vals:R.mBruto,f:'%',lo:0.3,hi:0.5},
+  ];
+  document.getElementById('pres-metricas-tbody').innerHTML=mtRows.map(r=>{
+    const sl2=r.vals.slice(1,6);
+    const minV=sl2.filter(v=>v!==null).length?Math.min(...sl2.filter(v=>v!==null)):null;
+    const getC=(v)=>{
+      if(v===null) return 'var(--text3)';
+      if(r.inv) return v<=r.hi?'var(--ok)':v<=r.lo?'var(--warn)':'var(--danger)';
+      return colorVal(v,[r.lo,r.hi]);
+    };
+    const cells=sl2.map(v=>`<td style="color:${getC(v)}">${fmt(v,r.f)}</td>`).join('');
+    return `<tr><td>${r.l}</td>${cells}<td>${semaforo(minV,r.lo,r.hi)}</td></tr>`;
+  }).join('');
+
+  // Stress rows
+  function presStressRows(scenario,elId){
+    const el=document.getElementById(elId);
+    el.innerHTML=yrs5.map((yr,i)=>{
+      const v=scenario[i+1];
+      const c=v===null?'var(--text3)':v>=1.5?COLORS.ok:v>=1.0?COLORS.warn:COLORS.danger;
+      return `<div class="stress-r"><span>${yr}</span><span style="color:${c}">${fmt(v,'x')}</span></div>`;
+    }).join('');
+  }
+  presStressRows(R.stress.base,'p-base-rows');
+  presStressRows(R.stress.moderate,'p-mod-rows');
+  presStressRows(R.stress.severe,'p-sev-rows');
+
+  // Recomendación
+  const montoMaxStr=`USD ${(R.montoMax/1e6).toFixed(2)}M`;
+  document.getElementById('pres-recomendacion').innerHTML=`
+    ✅ Proyecto con <strong>sólidos fundamentos</strong> en régimen de crucero (2028+).<br>
+    ${R.deficit<0?`⚠️ Reducir monto a ~<strong>${montoMaxStr}</strong> o extender plazo para DSCR ≥ 1.30x.<br>`:''}
+    🔴 Complementar aval MARTESA con <strong>hipoteca sobre PPE Q68.4M</strong>.<br>
+    📋 Monitoreo trimestral de DSCR durante ramp-up (2026–2027).`;
+  document.getElementById('pres-condiciones').innerHTML=`
+    1. Monto máximo: <strong>${montoMaxStr}</strong><br>
+    2. Garantía hipotecaria sobre PPE operativo<br>
+    3. Covenant DSCR mínimo 1.0x en 2027<br>
+    4. Reporte financiero trimestral al acreedor<br>
+    5. Desembolsos condicionados a avance físico`;
+}
+
+function updateGlobalKPIs(){
+  if(!R) return;
+  // Nav score
+  document.getElementById('score-badge').textContent = R.score;
+  document.getElementById('score-main').textContent  = R.score;
+  // Footer
+  document.getElementById('f-monto').textContent = `$${(R.params.monto/1e6).toFixed(2)}M USD`;
+  document.getElementById('f-tasa').textContent  = `${(R.params.tasa*100).toFixed(1)}% N.A.`;
+  document.getElementById('f-plazo').textContent = `${R.params.plazo} meses`;
+  document.getElementById('f-score').textContent = `${R.score}/100`;
+  document.getElementById('f-score').style.color = R.score>=70?'var(--accent)':R.score>=55?'var(--warn)':'var(--danger)';
+  const now=new Date().toLocaleTimeString('es-GT',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('last-updated').textContent=`Calculado ${now}`;
+}
+
+// ──────────────────────────────────────────────
+// NAVIGATION
+// ──────────────────────────────────────────────
+const renderers = {
+  dashboard: renderDashboard,
+  viabilidad: renderViabilidad,
+  stress: renderStress,
+  ratios: renderRatios,
+  inputs: ()=>{},
+  pres: renderPresentation,
+};
+const rendered = {};
+
+function goPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(`page-${id}`).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(!rendered[id]&&renderers[id]){
+    renderers[id]();
+    rendered[id]=true;
+  }
+}
+
+// ──────────────────────────────────────────────
+// VIENTRES EDITOR
+// ──────────────────────────────────────────────
+function initVientresEditor(){
+  const container=document.getElementById('vientres-inputs');
+  container.innerHTML='';
+  BASE.vientres.forEach((v,i)=>{
+    container.innerHTML+=`
+      <div class="v-cell">
+        <div class="v-yr">${2026+i}</div>
+        <input class="v-inp" id="vien-${i}" type="number" value="${v}" min="0" oninput="markChanged();updateVAcum()">
+      </div>`;
+  });
+  updateVAcum();
+}
+function updateVAcum(){
+  const total=Array.from({length:10},(_,i)=>parseInt(document.getElementById(`vien-${i}`)?.value||0,10)).reduce((a,b)=>a+b,0);
+  document.getElementById('v-acum').textContent=total.toLocaleString();
+}
+
+// ──────────────────────────────────────────────
+// RECALCULATE
+// ──────────────────────────────────────────────
+function markChanged(){
+  document.getElementById('changed-hint').style.display='block';
+  document.getElementById('inputs-dot').style.display='inline-block';
+}
+
+function doRecalc(){
+  const flash=document.getElementById('recalc-flash');
+  flash.classList.add('active');
+
+  const p = {
+    ...BASE,
+    monto_usd:           parseFloat(document.getElementById('in-monto').value)||BASE.monto_usd,
+    tasa_na:             (parseFloat(document.getElementById('in-tasa').value)||14)/100,
+    plazo_meses:         parseInt(document.getElementById('in-plazo').value)||90,
+    gracia_meses:        parseInt(document.getElementById('in-gracia').value)||24,
+    precio_gtq_libra:    parseFloat(document.getElementById('in-precio-gtq').value)||10.5,
+    lechones_por_parto:  parseFloat(document.getElementById('in-lechones').value)||18,
+    libras_por_cerdo:    parseFloat(document.getElementById('in-libras').value)||280,
+    mortalidad:          (parseFloat(document.getElementById('in-mort').value)||1)/100,
+    opex_pct:            (parseFloat(document.getElementById('in-opex').value)||15)/100,
+    costo_alimentacion_pct:(parseFloat(document.getElementById('in-alim').value)||45)/100,
+    usd_gtq:             parseFloat(document.getElementById('in-usd-gtq').value)||0.13,
+    isr:                 (parseFloat(document.getElementById('in-isr').value)||12)/100,
+    vientres:            Array.from({length:10},(_,i)=>parseInt(document.getElementById(`vien-${i}`)?.value||0,10)),
+  };
+
+  setTimeout(()=>{
+    R = calcModel(p);
+    // Invalidate all renders
+    Object.keys(rendered).forEach(k=>{ rendered[k]=false; });
+    // Re-render active page
+    const activePage = document.querySelector('.page.active');
+    if(activePage){
+      const id=activePage.id.replace('page-','');
+      if(renderers[id]){ renderers[id](); rendered[id]=true; }
+    }
+    updateGlobalKPIs();
+    document.getElementById('changed-hint').style.display='none';
+    document.getElementById('inputs-dot').style.display='none';
+    setTimeout(()=>flash.classList.remove('active'),200);
+  },30);
+}
+
+// ──────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  R = calcModel({...BASE});
+  updateGlobalKPIs();
+  renderers.dashboard();
+  rendered.dashboard=true;
+  initVientresEditor();
+  document.getElementById('pres-date').textContent =
+    new Date().toLocaleDateString('es-GT',{year:'numeric',month:'long'});
+});
+</script>
+</body>
+</html>

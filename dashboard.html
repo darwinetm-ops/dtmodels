@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel — DT Models</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c12;--surface:#0e1620;--surface2:#131e2e;--surface3:#192538;
+  --border:#1c2d42;--accent:#00d4a8;--blue:#3b9eff;--gold:#f0c040;
+  --ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;
+  --text:#e2ecf8;--text2:#8ba8c4;--text3:#4d6a88;
+  --font-mono:'IBM Plex Mono',monospace;
+  --font-sans:'IBM Plex Sans',sans-serif;
+  --font-serif:'Playfair Display',serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-height:100vh;display:flex}
+
+/* SIDEBAR */
+.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;height:100vh;position:fixed;top:0;left:0}
+.sidebar-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),var(--blue));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-size:13px;font-weight:700;color:#080c12}
+.logo-text{font-family:var(--font-mono);font-size:13px;font-weight:600}
+.logo-sub{font-size:10px;color:var(--text3)}
+.sidebar-nav{flex:1;padding:16px 0;overflow-y:auto}
+.nav-section{padding:0 16px;margin-bottom:8px;
+  font-size:9px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;
+  cursor:pointer;transition:all .15s;border-left:2px solid transparent;
+  font-size:13px;color:var(--text2);text-decoration:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:rgba(0,212,168,.08);color:var(--accent);border-left-color:var(--accent)}
+.nav-item-icon{width:18px;text-align:center;font-size:14px}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
+.user-pill{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  background:var(--surface2);border-radius:8px;cursor:pointer}
+.user-avatar{width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--blue));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-size:11px;font-weight:700;color:#080c12}
+.user-name{font-size:12px;font-weight:500}
+.user-role{font-size:10px;color:var(--text3)}
+
+/* MAIN */
+.main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:56px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;background:rgba(8,12,18,.8);backdrop-filter:blur(10px);
+  position:sticky;top:0;z-index:50}
+.topbar-title{font-family:var(--font-mono);font-size:13px;color:var(--text2)}
+.topbar-right{display:flex;gap:10px;align-items:center}
+.btn{padding:7px 16px;border-radius:5px;font-size:12px;cursor:pointer;
+  font-family:var(--font-mono);transition:all .15s;border:none}
+.btn-primary{background:var(--accent);color:#080c12;font-weight:700}
+.btn-primary:hover{background:#00f0c0}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.content{padding:28px;flex:1}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px}
+.stat-label{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.stat-value{font-family:var(--font-mono);font-size:1.6rem;font-weight:600}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* MODELS TABLE */
+.models-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.models-title{font-size:15px;font-weight:600}
+.search-input{padding:7px 14px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:5px;color:var(--text);font-family:var(--font-mono);font-size:12px;
+  outline:none;width:220px;transition:border-color .15s}
+.search-input:focus{border-color:var(--accent)}
+.models-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.model-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:20px;cursor:pointer;transition:all .2s;position:relative}
+.model-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.model-card-type{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
+  border-radius:20px;font-size:10px;font-weight:600;font-family:var(--font-mono);
+  margin-bottom:12px}
+.type-credito{background:rgba(0,212,168,.1);color:var(--accent);border:1px solid rgba(0,212,168,.2)}
+.type-valoracion{background:rgba(59,158,255,.1);color:var(--blue);border:1px solid rgba(59,158,255,.2)}
+.type-startup{background:rgba(240,192,64,.1);color:var(--gold);border:1px solid rgba(240,192,64,.2)}
+.model-card-client{font-family:var(--font-serif);font-size:1.05rem;font-weight:600;margin-bottom:4px}
+.model-card-desc{font-size:12px;color:var(--text3);margin-bottom:14px}
+.model-card-metrics{display:flex;gap:12px;margin-bottom:14px}
+.metric-pill{padding:4px 8px;background:var(--surface2);border-radius:4px;
+  font-family:var(--font-mono);font-size:10px}
+.metric-pill.ok{color:var(--ok)} .metric-pill.warn{color:var(--warn)} .metric-pill.danger{color:var(--danger)}
+.model-card-footer{display:flex;align-items:center;justify-content:space-between;
+  padding-top:12px;border-top:1px solid var(--border)}
+.model-card-date{font-size:10px;color:var(--text3)}
+.model-card-actions{display:flex;gap:6px}
+.action-btn{padding:5px 10px;border-radius:4px;font-size:10px;cursor:pointer;
+  font-family:var(--font-mono);border:1px solid var(--border);
+  background:transparent;color:var(--text2);transition:all .15s}
+.action-btn:hover{border-color:var(--accent);color:var(--accent)}
+.action-btn.danger:hover{border-color:var(--danger);color:var(--danger)}
+.score-badge{position:absolute;top:16px;right:16px;
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-size:11px;font-weight:700}
+.score-ok{background:rgba(34,197,94,.15);color:var(--ok);border:1px solid rgba(34,197,94,.3)}
+.score-warn{background:rgba(245,158,11,.15);color:var(--warn);border:1px solid rgba(245,158,11,.3)}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:80px 20px}
+.empty-icon{font-size:48px;margin-bottom:16px}
+.empty-title{font-size:18px;font-weight:600;margin-bottom:8px}
+.empty-sub{font-size:13px;color:var(--text3);margin-bottom:24px}
+
+/* NEW MODEL MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);
+  backdrop-filter:blur(8px);z-index:500;display:none;
+  align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);
+  border-radius:14px;padding:36px;width:100%;max-width:500px;position:relative}
+.modal-close{position:absolute;top:16px;right:16px;background:none;
+  border:none;color:var(--text3);font-size:18px;cursor:pointer}
+.modal-title{font-family:var(--font-serif);font-size:1.5rem;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--text3);margin-bottom:24px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:10px;color:var(--text3);letter-spacing:.08em;
+  text-transform:uppercase;margin-bottom:6px;display:block}
+.form-input,.form-select{width:100%;padding:9px 12px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:5px;color:var(--text);
+  font-family:var(--font-mono);font-size:13px;outline:none;transition:border-color .15s}
+.form-input:focus,.form-select:focus{border-color:var(--accent)}
+.form-select option{background:var(--surface2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-btn{width:100%;padding:11px;background:var(--accent);color:#080c12;
+  border:none;border-radius:6px;font-size:14px;font-weight:700;
+  cursor:pointer;font-family:var(--font-mono);margin-top:8px;transition:all .2s}
+.form-btn:hover{background:#00f0c0}
+
+/* LINK MODAL */
+.link-box{padding:12px 16px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:6px;font-family:var(--font-mono);font-size:12px;color:var(--accent);
+  word-break:break-all;margin:12px 0}
+.copy-btn{width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text2);border-radius:6px;font-family:var(--font-mono);font-size:12px;
+  cursor:pointer;transition:all .15s}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">DT</div>
+    <div><div class="logo-text">DT Models</div><div class="logo-sub">Panel de Control</div></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <a class="nav-item active" onclick="showSection('modelos')">
+      <span class="nav-item-icon">📊</span> Mis Modelos
+    </a>
+    <a class="nav-item" onclick="showSection('clientes')">
+      <span class="nav-item-icon">👥</span> Clientes
+    </a>
+    <div class="nav-section" style="margin-top:8px">Herramientas</div>
+    <a class="nav-item" onclick="window.open('modelo_financiero.html','_blank')">
+      <span class="nav-item-icon">🧮</span> Calculadora Rápida
+    </a>
+    <a class="nav-item" onclick="showSection('plantillas')">
+      <span class="nav-item-icon">📋</span> Plantillas
+    </a>
+    <div class="nav-section" style="margin-top:8px">Cuenta</div>
+    <a class="nav-item" onclick="showSection('ajustes')">
+      <span class="nav-item-icon">⚙️</span> Ajustes
+    </a>
+    <a class="nav-item" onclick="logout()">
+      <span class="nav-item-icon">🚪</span> Cerrar sesión
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar">DT</div>
+      <div><div class="user-name">Darwin Torres</div><div class="user-role">Administrador</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">📊 Mis Modelos</div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="window.open('index.html','_blank')">Ver sitio →</button>
+      <button class="btn btn-primary" onclick="openNewModel()">+ Nuevo Modelo</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- STATS -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Modelos Activos</div>
+        <div class="stat-value c-accent" id="stat-total" style="color:var(--accent)">0</div>
+        <div class="stat-sub">En tu biblioteca</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Clientes</div>
+        <div class="stat-value" id="stat-clients">0</div>
+        <div class="stat-sub">Únicos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Score Promedio</div>
+        <div class="stat-value" id="stat-score" style="color:var(--ok)">—</div>
+        <div class="stat-sub">Crediticio</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Último Modelo</div>
+        <div class="stat-value" id="stat-last" style="font-size:1rem">—</div>
+        <div class="stat-sub">Creado</div>
+      </div>
+    </div>
+
+    <!-- MODELS SECTION -->
+    <div id="section-modelos">
+      <div class="models-header">
+        <div class="models-title">Biblioteca de Modelos</div>
+        <input class="search-input" type="text" placeholder="Buscar cliente o modelo..." oninput="filterModels(this.value)">
+      </div>
+      <div class="models-grid" id="models-grid"></div>
+      <div class="empty" id="empty-state" style="display:none">
+        <div class="empty-icon">📂</div>
+        <div class="empty-title">No tienes modelos aún</div>
+        <div class="empty-sub">Crea tu primer modelo financiero para un cliente</div>
+        <button class="btn btn-primary" onclick="openNewModel()">+ Crear primer modelo</button>
+      </div>
+    </div>
+
+    <!-- PLANTILLAS -->
+    <div id="section-plantillas" style="display:none">
+      <div class="models-title" style="margin-bottom:20px">Plantillas Disponibles</div>
+      <div class="models-grid">
+        <div class="model-card" onclick="openNewModelWithType('credito')">
+          <div class="model-card-type type-credito">🏦 Viabilidad Crediticia</div>
+          <div class="model-card-client">Análisis Bancario Completo</div>
+          <div class="model-card-desc">DSCR, ICR, stress test, score crediticio, aval. Para solicitudes de crédito comercial.</div>
+          <div style="margin-top:12px"><button class="btn btn-primary" style="font-size:11px;padding:6px 14px">Usar plantilla →</button></div>
+        </div>
+        <div class="model-card" onclick="openNewModelWithType('valoracion')">
+          <div class="model-card-type type-valoracion">🏢 Valoración de Empresa</div>
+          <div class="model-card-client">DCF + Múltiplos</div>
+          <div class="model-card-desc">Valor presente neto, múltiplos de mercado y análisis comparativo por sector.</div>
+          <div style="margin-top:12px"><button class="btn btn-ghost" style="font-size:11px;padding:6px 14px">Próximamente</button></div>
+        </div>
+        <div class="model-card" onclick="openNewModelWithType('startup')">
+          <div class="model-card-type type-startup">🚀 Proyección Startup</div>
+          <div class="model-card-client">Unit Economics + Runway</div>
+          <div class="model-card-desc">CAC, LTV, burn rate, runway y proyección de crecimiento para inversionistas.</div>
+          <div style="margin-top:12px"><button class="btn btn-ghost" style="font-size:11px;padding:6px 14px">Próximamente</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AJUSTES -->
+    <div id="section-ajustes" style="display:none;max-width:500px">
+      <div class="models-title" style="margin-bottom:20px">Ajustes de Cuenta</div>
+      <div class="model-card">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input class="form-input" value="Darwin Enrique Torres Meza" readonly>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" value="darwinetm@gmail.com" readonly>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Empresa</label>
+          <input class="form-input" value="DT Models · Barranquilla, Colombia">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Plan</label>
+          <input class="form-input" value="Profesional — Activo" style="color:var(--ok)" readonly>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- NEW MODEL MODAL -->
+<div class="modal-overlay" id="modal-new">
+  <div class="modal">
+    <button class="modal-close" onclick="closeNewModel()">✕</button>
+    <h2 class="modal-title">Nuevo Modelo</h2>
+    <p class="modal-sub">Ingresa los datos del cliente para crear el modelo</p>
+    <div class="form-group">
+      <label class="form-label">Nombre del Cliente / Empresa</label>
+      <input class="form-input" id="new-client" placeholder="Ej: Agroindustrias del Norte S.A.">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tipo de Modelo</label>
+        <select class="form-select" id="new-type">
+          <option value="credito">Viabilidad Crediticia</option>
+          <option value="valoracion">Valoración de Empresa</option>
+          <option value="startup">Proyección Startup</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monto (USD)</label>
+        <input class="form-input" id="new-monto" type="number" placeholder="500000">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descripción / Notas</label>
+      <input class="form-input" id="new-desc" placeholder="Ej: Crédito para expansión de planta">
+    </div>
+    <button class="form-btn" onclick="createModel()">Crear Modelo →</button>
+  </div>
+</div>
+
+<!-- LINK MODAL -->
+<div class="modal-overlay" id="modal-link">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-link').classList.remove('open')">✕</button>
+    <h2 class="modal-title">Compartir Modelo</h2>
+    <p class="modal-sub">Envía este link al cliente para ver la presentación online</p>
+    <div class="link-box" id="link-box"></div>
+    <button class="copy-btn" onclick="copyLink()">📋 Copiar link</button>
+    <div style="margin-top:12px;font-size:11px;color:var(--text3)">
+      El cliente puede ver el modelo desde cualquier dispositivo sin necesidad de descargar nada.
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STORAGE ──
+function getModels(){ return JSON.parse(localStorage.getItem('dtmodels_models')||'[]') }
+function saveModels(m){ localStorage.setItem('dtmodels_models',JSON.stringify(m)) }
+
+// ── SECTIONS ──
+function showSection(s){
+  ['modelos','plantillas','ajustes','clientes'].forEach(x=>{
+    const el=document.getElementById('section-'+x)
+    if(el) el.style.display='none'
+  })
+  const el=document.getElementById('section-'+s)
+  if(el) el.style.display='block'
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'))
+  event.currentTarget.classList.add('active')
+  const titles={'modelos':'📊 Mis Modelos','plantillas':'📋 Plantillas','ajustes':'⚙️ Ajustes','clientes':'👥 Clientes'}
+  document.getElementById('topbar-title').textContent = titles[s]||''
+  if(s==='modelos') renderModels()
+}
+
+// ── RENDER MODELS ──
+function renderModels(filter=''){
+  const models = getModels().filter(m=>
+    m.client.toLowerCase().includes(filter.toLowerCase())||
+    m.desc.toLowerCase().includes(filter.toLowerCase())
+  )
+  const grid = document.getElementById('models-grid')
+  const empty = document.getElementById('empty-state')
+  
+  // Stats
+  const all = getModels()
+  document.getElementById('stat-total').textContent = all.length
+  document.getElementById('stat-clients').textContent = [...new Set(all.map(m=>m.client))].length
+  const scores = all.filter(m=>m.score).map(m=>m.score)
+  document.getElementById('stat-score').textContent = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length)+'/100' : '—'
+  document.getElementById('stat-last').textContent = all.length ? all[all.length-1].client.split(' ')[0] : '—'
+
+  if(!models.length){ grid.innerHTML=''; empty.style.display='block'; return }
+  empty.style.display='none'
+
+  const typeLabels={'credito':'🏦 Viabilidad Crediticia','valoracion':'🏢 Valoración','startup':'🚀 Startup'}
+  const typeClass={'credito':'type-credito','valoracion':'type-valoracion','startup':'type-startup'}
+
+  grid.innerHTML = models.map((m,i)=>`
+    <div class="model-card">
+      <div class="score-badge ${m.score>=70?'score-ok':'score-warn'}">${m.score||'—'}</div>
+      <div class="model-card-type ${typeClass[m.type]||'type-credito'}">${typeLabels[m.type]||'Modelo'}</div>
+      <div class="model-card-client">${m.client}</div>
+      <div class="model-card-desc">${m.desc||'Sin descripción'}</div>
+      <div class="model-card-metrics">
+        ${m.monto?`<div class="metric-pill ok">$${(m.monto/1e6).toFixed(1)}M USD</div>`:''}
+        ${m.dscr?`<div class="metric-pill ${m.dscr>=1.3?'ok':'warn'}">DSCR ${m.dscr}x</div>`:''}
+      </div>
+      <div class="model-card-footer">
+        <div class="model-card-date">📅 ${m.date}</div>
+        <div class="model-card-actions">
+          <button class="action-btn" onclick="openModel(${i})">Abrir</button>
+          <button class="action-btn" onclick="shareModel(${i})">🔗 Link</button>
+          <button class="action-btn danger" onclick="deleteModel(${i})">✕</button>
+        </div>
+      </div>
+    </div>
+  `).join('')
+}
+
+function filterModels(v){ renderModels(v) }
+
+// ── CREATE MODEL ──
+function openNewModel(){ document.getElementById('modal-new').classList.add('open') }
+function openNewModelWithType(t){ document.getElementById('new-type').value=t; openNewModel() }
+function closeNewModel(){ document.getElementById('modal-new').classList.remove('open') }
+
+function createModel(){
+  const client = document.getElementById('new-client').value.trim()
+  if(!client){ alert('Ingresa el nombre del cliente'); return }
+  const models = getModels()
+  const monto = parseFloat(document.getElementById('new-monto').value)||0
+  const newModel = {
+    id: Date.now(),
+    client,
+    type: document.getElementById('new-type').value,
+    monto,
+    desc: document.getElementById('new-desc').value,
+    date: new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}),
+    score: 80,
+    dscr: 1.22,
+  }
+  models.push(newModel)
+  saveModels(models)
+  closeNewModel()
+  renderModels()
+  // Clear form
+  ['new-client','new-monto','new-desc'].forEach(id=>document.getElementById(id).value='')
+}
+
+function openModel(i){
+  const m = getModels()[i]
+  // Open the financial model with client data
+  window.open('modelo_financiero.html?client='+encodeURIComponent(m.client)+'&monto='+m.monto,'_blank')
+}
+
+function deleteModel(i){
+  if(!confirm('¿Eliminar este modelo?')) return
+  const models = getModels()
+  models.splice(i,1)
+  saveModels(models)
+  renderModels()
+}
+
+function shareModel(i){
+  const m = getModels()[i]
+  const link = `${window.location.origin}/modelo_financiero.html?client=${encodeURIComponent(m.client)}&monto=${m.monto}&shared=1`
+  document.getElementById('link-box').textContent = link
+  document.getElementById('modal-link').classList.add('open')
+}
+
+function copyLink(){
+  const txt = document.getElementById('link-box').textContent
+  navigator.clipboard.writeText(txt).then(()=>{
+    document.querySelector('.copy-btn').textContent='✅ Copiado!'
+    setTimeout(()=>document.querySelector('.copy-btn').textContent='📋 Copiar link',2000)
+  })
+}
+
+function logout(){ window.location.href='index.html' }
+
+// ── INIT ──
+renderModels()
+
+// ── ADD SAMPLE MODEL IF EMPTY ──
+if(!getModels().length){
+  saveModels([{
+    id:1, client:'Agroindustrias de Animales S.A.', type:'credito',
+    monto:19449494, desc:'Crédito para expansión de planta porcina y planta solar',
+    date:'19 mar. 2026', score:80, dscr:1.22
+  }])
+  renderModels()
+}
+</script>
+</body>
+</html>
