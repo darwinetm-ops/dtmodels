@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nuevo Modelo — DT Models</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#080c12;--surface:#0e1620;--surface2:#131e2e;--surface3:#192538;
+  --border:#1c2d42;--accent:#00d4a8;--blue:#3b9eff;--gold:#f0c040;
+  --ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;
+  --text:#e2ecf8;--text2:#8ba8c4;--text3:#4d6a88;
+  --font-mono:'IBM Plex Mono',monospace;
+  --font-sans:'IBM Plex Sans',sans-serif;
+  --font-serif:'Playfair Display',serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-height:100vh}
+
+/* TOPBAR */
+.topbar{height:54px;background:rgba(8,12,18,.95);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;
+  justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.logo-icon{width:30px;height:30px;border-radius:7px;
+  background:linear-gradient(135deg,var(--accent),var(--blue));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-size:11px;font-weight:700;color:#080c12}
+.topbar-title{font-family:var(--font-mono);font-size:12px;color:var(--text2)}
+.btn{padding:7px 16px;border-radius:5px;font-size:12px;cursor:pointer;
+  font-family:var(--font-mono);transition:all .15s;border:none}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);color:#080c12;font-weight:700}
+.btn-primary:hover{background:#00f0c0}
+.btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+
+/* WIZARD LAYOUT */
+.wizard-wrap{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 54px)}
+
+/* STEPS SIDEBAR */
+.steps-sidebar{background:var(--surface);border-right:1px solid var(--border);
+  padding:28px 0;position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto}
+.steps-title{font-family:var(--font-mono);font-size:10px;color:var(--text3);
+  letter-spacing:.15em;text-transform:uppercase;padding:0 20px;margin-bottom:16px}
+.step-item{display:flex;align-items:flex-start;gap:12px;padding:12px 20px;
+  cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.step-item:hover{background:var(--surface2)}
+.step-item.active{background:rgba(0,212,168,.06);border-left-color:var(--accent)}
+.step-item.done{border-left-color:var(--ok)}
+.step-num{width:24px;height:24px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-size:10px;font-weight:600;
+  background:var(--surface2);border:1px solid var(--border);color:var(--text3);
+  transition:all .15s}
+.step-item.active .step-num{background:var(--accent);color:#080c12;border-color:var(--accent)}
+.step-item.done .step-num{background:var(--ok);color:#080c12;border-color:var(--ok)}
+.step-info{flex:1}
+.step-label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:2px}
+.step-item.active .step-label{color:var(--text)}
+.step-desc{font-size:10px;color:var(--text3)}
+.sidebar-preview{margin-top:24px;padding:16px 20px;border-top:1px solid var(--border)}
+.preview-title{font-size:10px;color:var(--text3);letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:10px;font-family:var(--font-mono)}
+.preview-kpi{display:flex;justify-content:space-between;margin-bottom:6px}
+.preview-kpi-label{font-size:10px;color:var(--text3)}
+.preview-kpi-val{font-family:var(--font-mono);font-size:11px;font-weight:600}
+
+/* WIZARD CONTENT */
+.wizard-content{padding:32px 40px;overflow-y:auto}
+.step-page{display:none;animation:fadeIn .2s ease}
+.step-page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.step-header{margin-bottom:28px}
+.step-eyebrow{font-family:var(--font-mono);font-size:10px;color:var(--accent);
+  letter-spacing:.18em;text-transform:uppercase;margin-bottom:6px}
+.step-h1{font-family:var(--font-serif);font-size:1.8rem;font-weight:600;margin-bottom:6px}
+.step-sub{font-size:13px;color:var(--text3);line-height:1.6}
+
+/* FORM */
+.form-section{margin-bottom:28px}
+.form-section-title{font-family:var(--font-mono);font-size:10px;color:var(--accent);
+  letter-spacing:.15em;text-transform:uppercase;margin-bottom:14px;
+  padding-bottom:8px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:6px}
+.form-section-title::before{content:'▎';opacity:.5}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.form-grid-2,.form-grid-3{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:10px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase}
+.form-label span{color:var(--danger);margin-left:2px}
+.form-input,.form-select{width:100%;padding:9px 12px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:5px;color:var(--text);
+  font-family:var(--font-mono);font-size:12px;outline:none;transition:border-color .15s}
+.form-input:focus,.form-select:focus{border-color:var(--accent)}
+.form-select option{background:var(--surface2)}
+.form-note{font-size:10px;color:var(--text3);line-height:1.4}
+.form-input-wrap{position:relative}
+.form-input-unit{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  font-family:var(--font-mono);font-size:10px;color:var(--text3);pointer-events:none}
+
+/* YEAR TABLE */
+.year-table{width:100%;border-collapse:collapse;font-size:12px}
+.year-table th{font-family:var(--font-mono);font-size:9px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--text3);padding:7px 10px;
+  text-align:right;border-bottom:1px solid var(--border);background:var(--surface2)}
+.year-table th:first-child{text-align:left}
+.year-table td{padding:5px 6px;text-align:right;border-bottom:1px solid rgba(28,45,66,.4)}
+.year-table td:first-child{text-align:left;color:var(--text2);font-size:11px;padding-left:10px}
+.year-input{width:100%;padding:5px 8px;background:var(--surface2);
+  border:1px solid transparent;border-radius:4px;color:var(--text);
+  font-family:var(--font-mono);font-size:11px;text-align:right;outline:none}
+.year-input:focus{border-color:var(--accent);background:var(--surface3)}
+
+/* FILE DROP */
+.file-drop{border:2px dashed var(--border);border-radius:10px;padding:40px;
+  text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.file-drop:hover,.file-drop.dragover{border-color:var(--accent);background:rgba(0,212,168,.04)}
+.file-drop-icon{font-size:36px;margin-bottom:12px}
+.file-drop-title{font-size:14px;font-weight:500;margin-bottom:4px}
+.file-drop-sub{font-size:12px;color:var(--text3)}
+.file-status{padding:10px 14px;border-radius:6px;font-size:12px;
+  background:rgba(0,212,168,.08);border:1px solid rgba(0,212,168,.2);
+  color:var(--accent);display:none;font-family:var(--font-mono)}
+
+/* RESULTS */
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1px;
+  border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px}
+.result-kpi{padding:16px 18px;background:var(--surface)}
+.result-kpi:hover{background:var(--surface2)}
+.result-label{font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.result-value{font-family:var(--font-mono);font-size:1.3rem;font-weight:600;line-height:1}
+.result-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.c-accent{color:var(--accent)}.c-ok{color:var(--ok)}.c-warn{color:var(--warn)}.c-danger{color:var(--danger)}.c-blue{color:var(--blue)}.c-gold{color:var(--gold)}
+
+/* CHART */
+.chart-box{height:200px;position:relative;margin-bottom:16px}
+
+/* DATA TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px}
+.data-table th{font-family:var(--font-mono);font-size:9px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--text3);padding:7px 10px;
+  text-align:right;border-bottom:1px solid var(--border);background:var(--surface2)}
+.data-table th:first-child{text-align:left}
+.data-table td{font-family:var(--font-mono);padding:6px 10px;text-align:right;
+  border-bottom:1px solid rgba(28,45,66,.4)}
+.data-table td:first-child{text-align:left;color:var(--text2)}
+.data-table tr:hover td{background:rgba(255,255,255,.015)}
+
+/* NAV BUTTONS */
+.wizard-nav{display:flex;justify-content:space-between;align-items:center;
+  margin-top:32px;padding-top:20px;border-top:1px solid var(--border)}
+.nav-hint{font-size:11px;color:var(--text3)}
+
+/* SCORE CIRCLE */
+.score-circle{width:100px;height:100px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:3px solid var(--ok);background:rgba(34,197,94,.08)}
+.score-circle.warn{border-color:var(--warn);background:rgba(245,158,11,.08)}
+.score-circle.danger{border-color:var(--danger);background:rgba(239,68,68,.08)}
+.score-num{font-family:var(--font-mono);font-size:1.8rem;font-weight:700}
+.score-label{font-size:9px;color:var(--text3);letter-spacing:.05em}
+
+/* STRESS TABLE */
+.stress-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--border);border-radius:7px;overflow:hidden;margin-bottom:16px}
+.stress-col{background:var(--surface2);padding:14px}
+.stress-col-head{font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:8px}
+.stress-row{display:flex;justify-content:space-between;font-family:var(--font-mono);
+  font-size:11px;margin-bottom:4px}
+.stress-row span:first-child{color:var(--text3)}
+
+/* UPLOAD SECTION */
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:700px){.upload-grid{grid-template-columns:1fr}}
+.upload-card{background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:20px;text-align:center}
+.upload-card-icon{font-size:28px;margin-bottom:8px}
+.upload-card-title{font-size:13px;font-weight:500;margin-bottom:4px}
+.upload-card-sub{font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.5}
+.upload-input{display:none}
+.upload-btn{padding:8px 18px;background:var(--surface);border:1px solid var(--border);
+  color:var(--text2);border-radius:5px;font-size:12px;cursor:pointer;
+  font-family:var(--font-mono);transition:all .15s}
+.upload-btn:hover{border-color:var(--accent);color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-icon">DT</div>
+    <div class="topbar-title">DT Models · Nuevo Modelo</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-ghost" onclick="window.location.href='dashboard.html'">← Volver</button>
+    <button class="btn btn-primary" onclick="saveAndFinish()">💾 Guardar Modelo</button>
+  </div>
+</div>
+
+<div class="wizard-wrap">
+
+  <!-- STEPS SIDEBAR -->
+  <div class="steps-sidebar">
+    <div class="steps-title">Pasos del Modelo</div>
+
+    <div class="step-item active" id="step-nav-1" onclick="goStep(1)">
+      <div class="step-num" id="step-num-1">1</div>
+      <div class="step-info">
+        <div class="step-label">Datos del Cliente</div>
+        <div class="step-desc">Nombre, sector, tipo de modelo</div>
+      </div>
+    </div>
+    <div class="step-item" id="step-nav-2" onclick="goStep(2)">
+      <div class="step-num" id="step-num-2">2</div>
+      <div class="step-info">
+        <div class="step-label">Importar / Ingresar Datos</div>
+        <div class="step-desc">Subir Excel o ingresar manual</div>
+      </div>
+    </div>
+    <div class="step-item" id="step-nav-3" onclick="goStep(3)">
+      <div class="step-num" id="step-num-3">3</div>
+      <div class="step-info">
+        <div class="step-label">Estados Financieros</div>
+        <div class="step-desc">P&L y Balance histórico</div>
+      </div>
+    </div>
+    <div class="step-item" id="step-nav-4" onclick="goStep(4)">
+      <div class="step-num" id="step-num-4">4</div>
+      <div class="step-info">
+        <div class="step-label">Parámetros del Crédito</div>
+        <div class="step-desc">Monto, tasa, plazo, gracia</div>
+      </div>
+    </div>
+    <div class="step-item" id="step-nav-5" onclick="goStep(5)">
+      <div class="step-num" id="step-num-5">5</div>
+      <div class="step-info">
+        <div class="step-label">Supuestos Operativos</div>
+        <div class="step-desc">Proyecciones de ingresos y costos</div>
+      </div>
+    </div>
+    <div class="step-item" id="step-nav-6" onclick="goStep(6)">
+      <div class="step-num" id="step-num-6">6</div>
+      <div class="step-info">
+        <div class="step-label">Resultados del Modelo</div>
+        <div class="step-desc">DSCR, score, stress test</div>
+      </div>
+    </div>
+
+    <!-- LIVE PREVIEW -->
+    <div class="sidebar-preview">
+      <div class="preview-title">Vista Previa</div>
+      <div class="preview-kpi"><span class="preview-kpi-label">Cliente</span><span class="preview-kpi-val c-accent" id="prev-client">—</span></div>
+      <div class="preview-kpi"><span class="preview-kpi-label">Monto</span><span class="preview-kpi-val" id="prev-monto">—</span></div>
+      <div class="preview-kpi"><span class="preview-kpi-label">Score</span><span class="preview-kpi-val c-ok" id="prev-score">—</span></div>
+      <div class="preview-kpi"><span class="preview-kpi-label">DSCR Mín.</span><span class="preview-kpi-val" id="prev-dscr">—</span></div>
+      <div class="preview-kpi"><span class="preview-kpi-label">Veredicto</span><span class="preview-kpi-val" id="prev-verdict">—</span></div>
+    </div>
+  </div>
+
+  <!-- WIZARD CONTENT -->
+  <div class="wizard-content">
+
+    <!-- ═══ STEP 1: CLIENTE ═══ -->
+    <div class="step-page active" id="step-1">
+      <div class="step-header">
+        <div class="step-eyebrow">Paso 1 de 6</div>
+        <h1 class="step-h1">Datos del Cliente</h1>
+        <p class="step-sub">Información básica de la empresa y el tipo de análisis a realizar</p>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Identificación</div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Nombre de la Empresa <span>*</span></label>
+            <input class="form-input" id="f-empresa" placeholder="Ej: Agroindustrias del Norte S.A." oninput="updatePreview()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">NIT / RUT</label>
+            <input class="form-input" id="f-nit" placeholder="900.123.456-7">
+          </div>
+          <div class="form-group">
+            <label class="form-label">País</label>
+            <select class="form-select" id="f-pais">
+              <option>Colombia</option><option>Guatemala</option><option>México</option>
+              <option>Panamá</option><option>Costa Rica</option><option>Honduras</option>
+              <option>El Salvador</option><option>Nicaragua</option><option>Perú</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ciudad</label>
+            <input class="form-input" id="f-ciudad" placeholder="Ej: Barranquilla">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Clasificación</div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Sector / Industria <span>*</span></label>
+            <select class="form-select" id="f-sector">
+              <option>Agroindustrial</option><option>Ganadero / Pecuario</option>
+              <option>Manufacturero</option><option>Comercial</option>
+              <option>Servicios</option><option>Construcción</option>
+              <option>Energía</option><option>Tecnología</option>
+              <option>Logística / Transporte</option><option>Turismo</option>
+              <option>Salud</option><option>Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipo de Análisis <span>*</span></label>
+            <select class="form-select" id="f-tipo" onchange="updateModelType()">
+              <option value="credito">Viabilidad Crediticia</option>
+              <option value="valoracion">Valoración de Empresa</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipo de Acreedor</label>
+            <select class="form-select" id="f-acreedor">
+              <option>Banco Comercial</option><option>Banco de Desarrollo</option>
+              <option>Fondo de Inversión</option><option>Leasing</option>
+              <option>Inversionista Ángel</option><option>Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Moneda del Modelo</label>
+            <select class="form-select" id="f-moneda">
+              <option value="USD">USD — Dólares</option>
+              <option value="COP">COP — Pesos Colombianos</option>
+              <option value="GTQ">GTQ — Quetzales</option>
+              <option value="MXN">MXN — Pesos Mexicanos</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Descripción del Proyecto</div>
+        <div class="form-group">
+          <label class="form-label">Descripción del uso de los recursos</label>
+          <input class="form-input" id="f-desc" placeholder="Ej: Crédito para expansión de planta de producción y adquisición de maquinaria">
+        </div>
+        <div class="form-grid-3" style="margin-top:12px">
+          <div class="form-group">
+            <label class="form-label">Años de operación</label>
+            <input class="form-input" id="f-anos-op" type="number" placeholder="5" value="5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">No. de empleados</label>
+            <input class="form-input" id="f-empleados" type="number" placeholder="50">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Analista responsable</label>
+            <input class="form-input" id="f-analista" value="Darwin Torres" placeholder="Darwin Torres">
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-nav">
+        <div class="nav-hint">Completa los campos obligatorios (*)</div>
+        <button class="btn btn-primary" onclick="goStep(2)">Siguiente → Importar Datos</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 2: IMPORTAR ═══ -->
+    <div class="step-page" id="step-2">
+      <div class="step-header">
+        <div class="step-eyebrow">Paso 2 de 6</div>
+        <h1 class="step-h1">Importar Datos</h1>
+        <p class="step-sub">Sube el Excel del cliente para cargar automáticamente, o continúa ingresando los datos manualmente</p>
+      </div>
+
+      <div class="upload-grid">
+        <div class="upload-card">
+          <div class="upload-card-icon">📊</div>
+          <div class="upload-card-title">Subir Excel del Cliente</div>
+          <div class="upload-card-sub">Carga el archivo .xlsx o .xls con los estados financieros. El sistema intentará mapear los datos automáticamente.</div>
+          <input type="file" id="excel-upload" class="upload-input" accept=".xlsx,.xls" onchange="handleExcelUpload(this)">
+          <button class="upload-btn" onclick="document.getElementById('excel-upload').click()">📂 Seleccionar archivo</button>
+          <div class="file-status" id="excel-status"></div>
+        </div>
+        <div class="upload-card">
+          <div class="upload-card-icon">📄</div>
+          <div class="upload-card-title">Tengo PDF / Manual</div>
+          <div class="upload-card-sub">Si el cliente envió PDF o quieres ingresar los datos manualmente, continúa al siguiente paso y llena los formularios.</div>
+          <button class="upload-btn" onclick="goStep(3)">✏️ Ingresar manualmente</button>
+        </div>
+      </div>
+
+      <div style="padding:16px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);font-size:12px;color:var(--text3);line-height:1.7">
+        💡 <strong style="color:var(--text2)">Tip:</strong> Para mejores resultados con el Excel, asegúrate de que tenga hojas con nombres como "P&L", "Estado de Resultados", "Balance" o "Balance General". El sistema buscará estos nombres automáticamente.
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn btn-ghost" onclick="goStep(1)">← Anterior</button>
+        <button class="btn btn-primary" onclick="goStep(3)">Siguiente → Estados Financieros</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 3: EEFF ═══ -->
+    <div class="step-page" id="step-3">
+      <div class="step-header">
+        <div class="step-eyebrow">Paso 3 de 6</div>
+        <h1 class="step-h1">Estados Financieros Históricos</h1>
+        <p class="step-sub">Ingresa los datos del P&L y Balance de los últimos 3 años</p>
+      </div>
+
+      <!-- P&L -->
+      <div class="form-section">
+        <div class="form-section-title">Estado de Resultados (P&L) — Cifras en miles</div>
+        <div style="overflow-x:auto">
+          <table class="year-table">
+            <thead>
+              <tr>
+                <th>Concepto</th>
+                <th id="yr-h-1">Año 1</th>
+                <th id="yr-h-2">Año 2</th>
+                <th id="yr-h-3">Año 3 (último)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Ingresos Netos</td><td><input class="year-input" id="pl-ing-1" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-ing-2" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-ing-3" type="number" placeholder="0" oninput="calcPL()"></td></tr>
+              <tr><td>Costo de Ventas</td><td><input class="year-input" id="pl-cv-1" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-cv-2" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-cv-3" type="number" placeholder="0" oninput="calcPL()"></td></tr>
+              <tr style="background:rgba(0,212,168,.04)"><td><strong>Utilidad Bruta</strong></td><td><input class="year-input" id="pl-ub-1" readonly style="color:var(--accent)"></td><td><input class="year-input" id="pl-ub-2" readonly style="color:var(--accent)"></td><td><input class="year-input" id="pl-ub-3" readonly style="color:var(--accent)"></td></tr>
+              <tr><td>Gastos Operativos</td><td><input class="year-input" id="pl-go-1" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-go-2" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-go-3" type="number" placeholder="0" oninput="calcPL()"></td></tr>
+              <tr><td>Depreciación</td><td><input class="year-input" id="pl-dep-1" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-dep-2" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-dep-3" type="number" placeholder="0" oninput="calcPL()"></td></tr>
+              <tr style="background:rgba(0,212,168,.04)"><td><strong>EBITDA</strong></td><td><input class="year-input" id="pl-ebitda-1" readonly style="color:var(--accent)"></td><td><input class="year-input" id="pl-ebitda-2" readonly style="color:var(--accent)"></td><td><input class="year-input" id="pl-ebitda-3" readonly style="color:var(--accent)"></td></tr>
+              <tr><td>Gastos Financieros</td><td><input class="year-input" id="pl-gf-1" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-gf-2" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-gf-3" type="number" placeholder="0" oninput="calcPL()"></td></tr>
+              <tr><td>Impuestos (%)</td><td><input class="year-input" id="pl-isr-1" type="number" placeholder="12" value="12" oninput="calcPL()"></td><td><input class="year-input" id="pl-isr-2" type="number" placeholder="12" value="12" oninput="calcPL()"></td><td><input class="year-input" id="pl-isr-3" type="number" placeholder="12" value="12" oninput="calcPL()"></td></tr>
+              <tr style="background:rgba(34,197,94,.04)"><td><strong>Utilidad Neta</strong></td><td><input class="year-input" id="pl-un-1" readonly style="color:var(--ok)"></td><td><input class="year-input" id="pl-un-2" readonly style="color:var(--ok)"></td><td><input class="year-input" id="pl-un-3" readonly style="color:var(--ok)"></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BALANCE -->
+      <div class="form-section">
+        <div class="form-section-title">Balance General — Cifras en miles (último año)</div>
+        <div class="form-grid-2">
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase">ACTIVOS</div>
+            <div class="form-group" style="margin-bottom:8px"><label class="form-label">Activo Corriente</label><input class="form-input" id="b-ac" type="number" placeholder="0" style="font-size:12px"></div>
+            <div class="form-group" style="margin-bottom:8px"><label class="form-label">Activo No Corriente (PPE)</label><input class="form-input" id="b-anc" type="number" placeholder="0" style="font-size:12px"></div>
+            <div class="form-group"><label class="form-label">Total Activos</label><input class="form-input" id="b-ta" type="number" placeholder="0" style="font-size:12px;color:var(--accent)" readonly></div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase">PASIVOS & PATRIMONIO</div>
+            <div class="form-group" style="margin-bottom:8px"><label class="form-label">Pasivo Corriente</label><input class="form-input" id="b-pc" type="number" placeholder="0" style="font-size:12px" oninput="calcBalance()"></div>
+            <div class="form-group" style="margin-bottom:8px"><label class="form-label">Pasivo No Corriente</label><input class="form-input" id="b-pnc" type="number" placeholder="0" style="font-size:12px" oninput="calcBalance()"></div>
+            <div class="form-group"><label class="form-label">Patrimonio</label><input class="form-input" id="b-pat" type="number" placeholder="0" style="font-size:12px;color:var(--ok)" readonly></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn btn-ghost" onclick="goStep(2)">← Anterior</button>
+        <button class="btn btn-primary" onclick="goStep(4)">Siguiente → Crédito</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 4: CRÉDITO ═══ -->
+    <div class="step-page" id="step-4">
+      <div class="step-header">
+        <div class="step-eyebrow">Paso 4 de 6</div>
+        <h1 class="step-h1">Parámetros del Crédito</h1>
+        <p class="step-sub">Estructura financiera de la deuda solicitada</p>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Estructura de la Deuda</div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Monto Solicitado <span>*</span></label>
+            <div class="form-input-wrap">
+              <input class="form-input" id="c-monto" type="number" placeholder="1000000" oninput="updatePreview()">
+              <span class="form-input-unit" id="c-moneda-unit">USD</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tasa Anual N.A. (%) <span>*</span></label>
+            <div class="form-input-wrap">
+              <input class="form-input" id="c-tasa" type="number" value="14" step="0.25" placeholder="14">
+              <span class="form-input-unit">%</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Plazo Total (meses) <span>*</span></label>
+            <input class="form-input" id="c-plazo" type="number" value="60" step="6" placeholder="60">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Período de Gracia (meses)</label>
+            <input class="form-input" id="c-gracia" type="number" value="12" step="6" placeholder="12">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha primer desembolso</label>
+            <input class="form-input" id="c-fecha" type="month" value="2026-06">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Número de desembolsos</label>
+            <input class="form-input" id="c-ndesembolsos" type="number" value="1" min="1" max="10">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Garantías</div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Tipo de Garantía Principal</label>
+            <select class="form-select" id="c-garantia">
+              <option>Hipoteca sobre inmueble</option>
+              <option>Prenda sobre maquinaria</option>
+              <option>Aval personal</option>
+              <option>Aval empresarial</option>
+              <option>Fiducia en garantía</option>
+              <option>Sin garantía real</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Valor de la Garantía</label>
+            <input class="form-input" id="c-val-garantia" type="number" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Empresa Avalista</label>
+            <input class="form-input" id="c-avalista" placeholder="Nombre del avalista (si aplica)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ISR / Impuesto sobre utilidades (%)</label>
+            <div class="form-input-wrap">
+              <input class="form-input" id="c-isr" type="number" value="12" step="1">
+              <span class="form-input-unit">%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn btn-ghost" onclick="goStep(3)">← Anterior</button>
+        <button class="btn btn-primary" onclick="goStep(5)">Siguiente → Supuestos</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 5: SUPUESTOS ═══ -->
+    <div class="step-page" id="step-5">
+      <div class="step-header">
+        <div class="step-eyebrow">Paso 5 de 6</div>
+        <h1 class="step-h1">Supuestos Operativos</h1>
+        <p class="step-sub">Proyecciones de ingresos, costos y crecimiento para el horizonte del modelo</p>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Tasas de Crecimiento Proyectadas</div>
+        <div style="overflow-x:auto">
+          <table class="year-table">
+            <thead>
+              <tr>
+                <th>Supuesto</th>
+                <th>2026</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Crecimiento Ingresos (%)</td>
+                <td><input class="year-input" id="s-ing-0" type="number" value="5" placeholder="5"></td>
+                <td><input class="year-input" id="s-ing-1" type="number" value="15" placeholder="15"></td>
+                <td><input class="year-input" id="s-ing-2" type="number" value="20" placeholder="20"></td>
+                <td><input class="year-input" id="s-ing-3" type="number" value="15" placeholder="15"></td>
+                <td><input class="year-input" id="s-ing-4" type="number" value="10" placeholder="10"></td>
+              </tr>
+              <tr><td>Margen Bruto (%)</td>
+                <td><input class="year-input" id="s-mb-0" type="number" value="40" placeholder="40"></td>
+                <td><input class="year-input" id="s-mb-1" type="number" value="42" placeholder="42"></td>
+                <td><input class="year-input" id="s-mb-2" type="number" value="45" placeholder="45"></td>
+                <td><input class="year-input" id="s-mb-3" type="number" value="45" placeholder="45"></td>
+                <td><input class="year-input" id="s-mb-4" type="number" value="45" placeholder="45"></td>
+              </tr>
+              <tr><td>OPEX como % ingresos</td>
+                <td><input class="year-input" id="s-opex-0" type="number" value="20" placeholder="20"></td>
+                <td><input class="year-input" id="s-opex-1" type="number" value="18" placeholder="18"></td>
+                <td><input class="year-input" id="s-opex-2" type="number" value="16" placeholder="16"></td>
+                <td><input class="year-input" id="s-opex-3" type="number" value="15" placeholder="15"></td>
+                <td><input class="year-input" id="s-opex-4" type="number" value="15" placeholder="15"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Macro & Otros</div>
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Inflación anual estimada (%)</label>
+            <div class="form-input-wrap">
+              <input class="form-input" id="s-inflacion" type="number" value="4.0" step="0.5">
+              <span class="form-input-unit">%</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipo de cambio (si aplica)</label>
+            <input class="form-input" id="s-tc" type="number" value="1" step="0.01" placeholder="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">PPE / Inversión total</label>
+            <input class="form-input" id="s-ppe" type="number" placeholder="0">
+            <div class="form-note">Activos fijos del proyecto</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vida útil PPE (años)</label>
+            <input class="form-input" id="s-ppe-vida" type="number" value="10" min="1" max="30">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Inicio de ingresos (meses)</label>
+            <input class="form-input" id="s-inicio-ing" type="number" value="1" min="1" max="36">
+            <div class="form-note">Desde el primer desembolso</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Horizonte del modelo (años)</label>
+            <select class="form-select" id="s-horizonte">
+              <option value="5">5 años</option>
+              <option value="7">7 años</option>
+              <option value="10" selected>10 años</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn btn-ghost" onclick="goStep(4)">← Anterior</button>
+        <button class="btn btn-primary" onclick="calcAndGoResults()">⟳ Calcular Modelo →</button>
+      </div>
+    </div>
+
+    <!-- ═══ STEP 6: RESULTADOS ═══ -->
+    <div class="step-page" id="step-6">
+      <div class="step-header">
+        <div class="step-eyebrow">Paso 6 de 6 — Resultados</div>
+        <h1 class="step-h1" id="res-empresa-title">Modelo Financiero</h1>
+        <p class="step-sub" id="res-sub">Proyecciones calculadas · Listo para presentar al cliente</p>
+      </div>
+
+      <!-- SCORE + KPIs -->
+      <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap">
+        <div class="score-circle" id="score-circle">
+          <div class="score-num c-ok" id="res-score-num">—</div>
+          <div class="score-label">/ 100</div>
+        </div>
+        <div class="results-grid" style="flex:1">
+          <div class="result-kpi"><div class="result-label">Monto</div><div class="result-value c-accent" id="r-monto">—</div></div>
+          <div class="result-kpi"><div class="result-label">DSCR Mínimo</div><div class="result-value" id="r-dscr">—</div></div>
+          <div class="result-kpi"><div class="result-label">EBITDA Pico</div><div class="result-value c-ok" id="r-ebitda">—</div></div>
+          <div class="result-kpi"><div class="result-label">Capacidad Máx.</div><div class="result-value c-warn" id="r-capmax">—</div></div>
+          <div class="result-kpi"><div class="result-label">Tasa / Plazo</div><div class="result-value c-blue" id="r-tasa">—</div></div>
+          <div class="result-kpi"><div class="result-label">Veredicto</div><div class="result-value" id="r-verdict">—</div></div>
+        </div>
+      </div>
+
+      <!-- CHART -->
+      <div class="chart-box"><canvas id="res-chart"></canvas></div>
+
+      <!-- METRICS TABLE -->
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">▎ Métricas Proyectadas</div>
+      <div style="overflow-x:auto;margin-bottom:20px">
+        <table class="data-table" id="res-table">
+          <thead><tr id="res-table-head"></tr></thead>
+          <tbody id="res-table-body"></tbody>
+        </table>
+      </div>
+
+      <!-- STRESS TEST -->
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">▎ Stress Test — DSCR</div>
+      <div class="stress-grid" id="stress-grid"></div>
+
+      <!-- ACTION BUTTONS -->
+      <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="saveAndFinish()">💾 Guardar en Dashboard</button>
+        <button class="btn btn-ghost" onclick="exportExcel()">📥 Exportar Excel</button>
+        <button class="btn btn-ghost" onclick="copyShareLink()">🔗 Copiar Link Cliente</button>
+        <button class="btn btn-ghost" onclick="calcAndGoResults()">⟳ Recalcular</button>
+      </div>
+      <div id="share-link-box" style="display:none;margin-top:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;font-family:var(--font-mono);font-size:11px;color:var(--accent);word-break:break-all"></div>
+
+      <div class="wizard-nav">
+        <button class="btn btn-ghost" onclick="goStep(5)">← Ajustar Supuestos</button>
+        <button class="btn btn-primary" onclick="saveAndFinish()">✅ Finalizar y Guardar</button>
+      </div>
+    </div>
+
+  </div><!-- end wizard-content -->
+</div><!-- end wizard-wrap -->
+
+<script>
+"use strict"
+
+// ── STATE ──
+let currentStep = 1
+let calcResults = null
+const YEARS_PROJ = ['2026','2027','2028','2029','2030','2031','2032','2033','2034','2035']
+
+// ── NAVIGATION ──
+function goStep(n) {
+  document.querySelectorAll('.step-page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.step-item').forEach(i => i.classList.remove('active'))
+  document.getElementById(`step-${n}`).classList.add('active')
+  document.getElementById(`step-nav-${n}`).classList.add('active')
+  // Mark previous as done
+  for(let i=1;i<n;i++){
+    document.getElementById(`step-nav-${i}`).classList.add('done')
+    document.getElementById(`step-num-${i}`).textContent = '✓'
+  }
+  currentStep = n
+  window.scrollTo(0,0)
+  if(n===6) renderResults()
+}
+
+function calcAndGoResults(){
+  calcResults = calcModel()
+  goStep(6)
+}
+
+// ── PREVIEW ──
+function updatePreview(){
+  const empresa = document.getElementById('f-empresa').value
+  const monto   = parseFloat(document.getElementById('c-monto')?.value)||0
+  document.getElementById('prev-client').textContent = empresa ? empresa.split(' ')[0] : '—'
+  document.getElementById('prev-monto').textContent  = monto ? `$${(monto/1e6).toFixed(1)}M` : '—'
+  if(calcResults){
+    document.getElementById('prev-score').textContent  = calcResults.score+'/100'
+    const dscrMin = Math.min(...calcResults.dscr.slice(1,6).filter(v=>v!==null))
+    document.getElementById('prev-dscr').textContent   = isFinite(dscrMin)?dscrMin.toFixed(2)+'x':'—'
+    document.getElementById('prev-verdict').textContent= calcResults.verdict
+  }
+}
+
+function updateModelType(){
+  const tipo = document.getElementById('f-tipo').value
+  document.getElementById('f-acreedor').parentElement.style.display = tipo==='credito'?'block':'none'
+}
+
+// ── P&L CALC ──
+function calcPL(){
+  for(let y=1;y<=3;y++){
+    const ing = parseFloat(document.getElementById(`pl-ing-${y}`).value)||0
+    const cv  = parseFloat(document.getElementById(`pl-cv-${y}`).value)||0
+    const go  = parseFloat(document.getElementById(`pl-go-${y}`).value)||0
+    const dep = parseFloat(document.getElementById(`pl-dep-${y}`).value)||0
+    const gf  = parseFloat(document.getElementById(`pl-gf-${y}`).value)||0
+    const isr = (parseFloat(document.getElementById(`pl-isr-${y}`).value)||12)/100
+    const ub  = ing - cv
+    const ebitda = ub - go
+    const ebit   = ebitda - dep
+    const uai    = ebit - gf
+    const un     = uai > 0 ? uai*(1-isr) : uai
+    document.getElementById(`pl-ub-${y}`).value    = ub.toFixed(0)
+    document.getElementById(`pl-ebitda-${y}`).value= ebitda.toFixed(0)
+    document.getElementById(`pl-un-${y}`).value    = un.toFixed(0)
+  }
+  calcBalance()
+}
+
+function calcBalance(){
+  const ac  = parseFloat(document.getElementById('b-ac').value)||0
+  const anc = parseFloat(document.getElementById('b-anc').value)||0
+  const pc  = parseFloat(document.getElementById('b-pc').value)||0
+  const pnc = parseFloat(document.getElementById('b-pnc').value)||0
+  const ta  = ac + anc
+  const pat = ta - pc - pnc
+  document.getElementById('b-ta').value  = ta.toFixed(0)
+  document.getElementById('b-pat').value = pat.toFixed(0)
+}
+
+// ── EXCEL UPLOAD ──
+function handleExcelUpload(input){
+  const file = input.files[0]
+  if(!file) return
+  const status = document.getElementById('excel-status')
+  status.style.display = 'block'
+  status.textContent   = '⏳ Leyendo archivo...'
+  const reader = new FileReader()
+  reader.onload = function(e){
+    try{
+      const wb = XLSX.read(e.target.result, {type:'binary'})
+      let loaded = 0
+      // Try to find P&L sheet
+      const plSheet = wb.SheetNames.find(n=>
+        /p.l|resultado|income|utilidad|ganancias/i.test(n)
+      )
+      if(plSheet){
+        const ws = wb.Sheets[plSheet]
+        const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:0})
+        status.textContent = `✅ Archivo leído: "${file.name}" · Hoja P&L detectada: "${plSheet}" · Revisa los datos en el Paso 3`
+        loaded++
+      }
+      if(!loaded){
+        status.textContent = `✅ Archivo "${file.name}" cargado. No se detectó hoja P&L automáticamente — ingresa los datos en el Paso 3`
+      }
+      goStep(3)
+    }catch(err){
+      status.textContent = '❌ Error leyendo el archivo. Intenta con otro formato.'
+    }
+  }
+  reader.readAsBinaryString(file)
+}
+
+// ── CALCULATION ENGINE ──
+function calcModel(){
+  const n = parseInt(document.getElementById('s-horizonte').value)||10
+  const monto    = parseFloat(document.getElementById('c-monto').value)||0
+  const tasa_na  = (parseFloat(document.getElementById('c-tasa').value)||14)/100
+  const plazo    = parseInt(document.getElementById('c-plazo').value)||60
+  const gracia   = parseInt(document.getElementById('c-gracia').value)||12
+  const isr      = (parseFloat(document.getElementById('c-isr').value)||12)/100
+  const ppe      = parseFloat(document.getElementById('s-ppe').value)||monto
+  const ppeVida  = parseInt(document.getElementById('s-ppe-vida').value)||10
+  const inicioIng= parseInt(document.getElementById('s-inicio-ing').value)||1
+
+  // Base revenue from last historical year
+  const baseIng = (parseFloat(document.getElementById('pl-ing-3').value)||0)*1000
+  const baseIng2 = baseIng > 0 ? baseIng : monto * 0.5
+
+  // Build projections
+  const ingresos=[], costos=[], opex=[], ebitda=[], depreciacion=[]
+  let ingActual = baseIng2
+  for(let i=0;i<n;i++){
+    const growIdx = Math.min(i,4)
+    const gIng  = (parseFloat(document.getElementById(`s-ing-${growIdx}`)?.value)||10)/100
+    const gMB   = (parseFloat(document.getElementById(`s-mb-${growIdx}`)?.value)||40)/100
+    const gOpex = (parseFloat(document.getElementById(`s-opex-${growIdx}`)?.value)||20)/100
+    ingActual = i===0 ? ingActual*(1+gIng) : ingActual*(1+gIng)
+    // Ramp-up: if inicio > 1 month, first year partial
+    const ramp = inicioIng <= 1 ? 1 : (i===0 ? 0 : i===1 ? 0.5 : 1)
+    const ing = ingActual * ramp
+    const cv  = ing * (1 - gMB)
+    const op  = ing * gOpex
+    const dep = ppe / ppeVida
+    ingresos.push(ing)
+    costos.push(cv)
+    opex.push(op)
+    depreciacion.push(dep)
+    ebitda.push(ing - cv - op)
+  }
+
+  // Debt schedule
+  const amort = plazo - gracia
+  const cuotaM = amort > 0 ? monto/amort : 0
+  const tM = tasa_na/12
+  const nAmortYr = Math.ceil(amort/12)
+  const intereses=[], capital=[]
+  let saldo = monto
+  for(let i=0;i<n;i++){
+    let iy, cy
+    if(i < Math.ceil(gracia/12)){     iy=saldo*tasa_na; cy=0 }
+    else if(i < Math.ceil(gracia/12)+nAmortYr){ iy=saldo*tasa_na; cy=Math.min(cuotaM*12,saldo) }
+    else{                              iy=0; cy=saldo }
+    intereses.push(iy); capital.push(cy)
+    saldo = Math.max(0, saldo-cy)
+  }
+  const servDeuda = intereses.map((v,i)=>v+capital[i])
+  const ebit = ebitda.map((e,i)=>e-depreciacion[i])
+  const uai  = ebit.map((e,i)=>e-intereses[i])
+  const uan  = uai.map(u=>u>0?u*(1-isr):u)
+  const cfads = [...ebitda]
+
+  // Ratios
+  const dscr = cfads.map((c,i)=>servDeuda[i]>0?+(c/servDeuda[i]).toFixed(3):null)
+  const icr  = ebitda.map((e,i)=>intereses[i]>0?+(e/intereses[i]).toFixed(3):null)
+  const mEbitda = ebitda.map((e,i)=>ingresos[i]>0?+(e/ingresos[i]).toFixed(3):0)
+
+  // Balance
+  let pat = (parseFloat(document.getElementById('b-pat').value)||0)*1000
+  const activos=[], pasivos=[], patrimonio=[]
+  let sd = monto
+  for(let i=0;i<n;i++){
+    sd=Math.max(0,sd-capital[i]); pat+=uan[i]
+    pasivos.push(sd); patrimonio.push(Math.max(pat,0))
+    activos.push(Math.max(pat,0)+sd)
+  }
+  const dPat = pasivos.map((p,i)=>patrimonio[i]>0?+(p/patrimonio[i]).toFixed(3):null)
+
+  // Score
+  const dscrVals = dscr.slice(0,6).filter(v=>v!==null)
+  const dscrMin  = dscrVals.length ? Math.min(...dscrVals) : 0
+  let score=0
+  if(dscrMin>=1.5)score+=35; else if(dscrMin>=1.3)score+=25; else if(dscrMin>=1.0)score+=15; else score+=5
+  const me2 = mEbitda[2]||0
+  if(me2>0.5)score+=25; else if(me2>0.3)score+=18; else score+=8
+  const dp2 = dPat[2]
+  if(dp2!==null&&dp2<0.2)score+=20; else if(dp2!==null&&dp2<0.5)score+=12; else score+=4
+  score+=20; score=Math.min(score,100)
+  const verdict = score>=70?'✅ APROBABLE':score>=55?'⚠️ CONDICIONADO':'❌ NO VIABLE'
+
+  // Max loanable
+  const cfadsMin = cfads.slice(0,6).filter(v=>v>0).length ? Math.min(...cfads.slice(0,6).filter(v=>v>0)) : 0
+  const pvFactor = tM>0&&amort>0?(1-(1+tM)**(-amort))/tM:0
+  const montoMax = pvFactor>0?(cfadsMin/1.3/12)*pvFactor:0
+
+  // Stress
+  function stressDscr(sI,sMB,sBps,sOp){
+    return cfads.map((c,i)=>{
+      const ingS=ingresos[i]*(1+sI), costS=costos[i]*(1-sMB)
+      const ebS=(ingS-costS)-opex[i]*(1+sOp)
+      const tS=tasa_na+sBps, intS=intereses[i]*(tasa_na>0?tS/tasa_na:1)
+      const sdS=intS+capital[i]
+      return sdS>0?+(ebS/sdS).toFixed(3):null
+    })
+  }
+
+  return {
+    years: YEARS_PROJ.slice(0,n), n,
+    ingresos, costos, opex, ebitda, depreciacion,
+    intereses, capital, servDeuda, cfads,
+    dscr, icr, mEbitda, dPat,
+    activos, pasivos, patrimonio, uan,
+    score, verdict, dscrMin,
+    montoMax, cfadsMin,
+    deficit: montoMax - monto,
+    params: {monto, tasa_na, plazo, gracia, isr},
+    stress: {
+      base:     dscr,
+      moderate: stressDscr(-0.10,-0.05,0.02,0.10),
+      severe:   stressDscr(-0.20,-0.10,0.04,0.20),
+    }
+  }
+}
+
+// ── RENDER RESULTS ──
+const resChart = {}
+function renderResults(){
+  if(!calcResults) calcResults = calcModel()
+  const R = calcResults
+  const empresa = document.getElementById('f-empresa').value || 'Cliente'
+  document.getElementById('res-empresa-title').textContent = empresa
+  document.getElementById('res-sub').textContent =
+    `Viabilidad Crediticia · ${document.getElementById('f-sector').value} · ${new Date().toLocaleDateString('es-CO')}`
+
+  // Score
+  const sc = document.getElementById('score-circle')
+  sc.className = 'score-circle'+(R.score>=70?'':R.score>=55?' warn':' danger')
+  document.getElementById('res-score-num').textContent = R.score
+  document.getElementById('res-score-num').className = 'score-num '+(R.score>=70?'c-ok':R.score>=55?'c-warn':'c-danger')
+
+  const fmt=(v,t='x')=>v===null||v===undefined?'—':t==='x'?v.toFixed(2)+'x':t==='%'?(v*100).toFixed(1)+'%':t==='M'?'$'+(v/1e6).toFixed(2)+'M':v
+  const monto = R.params.monto
+  document.getElementById('r-monto').textContent   = fmt(monto,'M')
+  document.getElementById('r-dscr').textContent    = fmt(R.dscrMin,'x')
+  document.getElementById('r-dscr').className      = 'result-value '+(R.dscrMin>=1.3?'c-ok':R.dscrMin>=1.0?'c-warn':'c-danger')
+  const peakIdx = R.ebitda.indexOf(Math.max(...R.ebitda))
+  document.getElementById('r-ebitda').textContent  = fmt(R.ebitda[peakIdx],'M')
+  document.getElementById('r-capmax').textContent  = fmt(R.montoMax,'M')
+  document.getElementById('r-tasa').textContent    = `${(R.params.tasa_na*100).toFixed(1)}% / ${R.params.plazo}M`
+  document.getElementById('r-verdict').textContent = R.verdict
+  document.getElementById('r-verdict').className   = 'result-value '+(R.score>=70?'c-ok':R.score>=55?'c-warn':'c-danger')
+
+  updatePreview()
+
+  // Chart
+  const ctx = document.getElementById('res-chart')
+  if(resChart.main) resChart.main.destroy()
+  Chart.defaults.color='#4d6a88'; Chart.defaults.borderColor='#1c2d42'
+  Chart.defaults.font.family="'IBM Plex Mono'"
+  resChart.main = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:R.years,
+      datasets:[
+        {label:'EBITDA',data:R.ebitda.map(v=>+(v/1e6).toFixed(2)),
+         backgroundColor:R.ebitda.map(v=>v>=0?'rgba(0,212,168,.55)':'rgba(239,68,68,.55)'),
+         borderColor:R.ebitda.map(v=>v>=0?'#00d4a8':'#ef4444'),borderWidth:1,borderRadius:3,order:2},
+        {label:'Servicio Deuda',data:R.servDeuda.map(v=>+(v/1e6).toFixed(2)),
+         type:'line',borderColor:'#ef4444',backgroundColor:'transparent',
+         tension:.4,pointRadius:4,borderDash:[4,4],order:1}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{boxWidth:10,padding:14,color:'#8ba8c4'}}},
+      scales:{
+        x:{grid:{color:'rgba(28,45,66,.4)'},ticks:{color:'#4d6a88'}},
+        y:{grid:{color:'rgba(28,45,66,.4)'},ticks:{color:'#4d6a88',callback:v=>`$${v}M`}}
+      }
+    }
+  })
+
+  // Metrics table
+  const head = document.getElementById('res-table-head')
+  const body = document.getElementById('res-table-body')
+  head.innerHTML = '<th>Métrica</th>'+R.years.map(y=>`<th>${y}</th>`).join('')
+  const rows=[
+    {l:'Ingresos ($M)',   vals:R.ingresos,  f:'M'},
+    {l:'EBITDA ($M)',     vals:R.ebitda,    f:'M'},
+    {l:'Margen EBITDA',  vals:R.mEbitda,   f:'%'},
+    {l:'DSCR (x)',        vals:R.dscr,      f:'x'},
+    {l:'ICR (x)',         vals:R.icr,       f:'x'},
+    {l:'Deuda/Patrimonio',vals:R.dPat,      f:'x'},
+  ]
+  body.innerHTML = rows.map(r=>{
+    const cells = r.vals.map(v=>{
+      const fv = v===null?'—':r.f==='M'?'$'+(v/1e6).toFixed(2)+'M':r.f==='%'?(v*100).toFixed(1)+'%':v===null?'—':v.toFixed(2)+'x'
+      const c  = v===null?'':r.l.includes('DSCR')?(v>=1.3?'color:var(--ok)':v>=1.0?'color:var(--warn)':'color:var(--danger)'):'color:var(--text)'
+      return `<td style="${c}">${fv}</td>`
+    }).join('')
+    return `<tr><td>${r.l}</td>${cells}</tr>`
+  }).join('')
+
+  // Stress grid
+  const stressEl = document.getElementById('stress-grid')
+  const stressData=[
+    {label:'📊 Caso Base',cls:'c-ok',key:'base',desc:'Sin shocks'},
+    {label:'⚠️ Downside Mod.',cls:'c-warn',key:'moderate',desc:'−10% Ing · −5pp MB · +200bps · +10% OPEX'},
+    {label:'🔴 Downside Sev.',cls:'c-danger',key:'severe',desc:'−20% Ing · −10pp MB · +400bps · +20% OPEX'},
+  ]
+  stressEl.innerHTML = stressData.map(s=>`
+    <div class="stress-col">
+      <div class="stress-col-head ${s.cls}">${s.label}</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px">${s.desc}</div>
+      ${R.years.slice(0,6).map((yr,i)=>{
+        const v=R.stress[s.key][i]
+        const c=v===null?'var(--text3)':v>=1.5?'var(--ok)':v>=1.0?'var(--warn)':'var(--danger)'
+        return `<div class="stress-row"><span>${yr}</span><span style="color:${c}">${v!==null?v.toFixed(2)+'x':'—'}</span></div>`
+      }).join('')}
+    </div>`).join('')
+}
+
+// ── SAVE ──
+function saveAndFinish(){
+  if(!calcResults) calcResults = calcModel()
+  const R = calcResults
+  const models = JSON.parse(localStorage.getItem('dtmodels_models')||'[]')
+  const model = {
+    id: Date.now(),
+    client:  document.getElementById('f-empresa').value || 'Sin nombre',
+    type:    document.getElementById('f-tipo').value,
+    sector:  document.getElementById('f-sector').value,
+    monto:   R.params.monto,
+    tasa:    R.params.tasa_na,
+    plazo:   R.params.plazo,
+    desc:    document.getElementById('f-desc').value,
+    date:    new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}),
+    score:   R.score,
+    dscr:    R.dscrMin,
+    verdict: R.verdict,
+    data:    JSON.stringify(R),
+  }
+  models.push(model)
+  localStorage.setItem('dtmodels_models', JSON.stringify(models))
+  alert(`✅ Modelo guardado para "${model.client}"`)
+  window.location.href = 'dashboard.html'
+}
+
+// ── EXPORT EXCEL ──
+function exportExcel(){
+  if(!calcResults) calcResults = calcModel()
+  const R = calcResults
+  const empresa = document.getElementById('f-empresa').value || 'Cliente'
+  const wb = XLSX.utils.book_new()
+
+  // Sheet 1: Resumen
+  const resumen = [
+    ['DT Models — Modelo Financiero','','','',''],
+    ['Cliente:', empresa,'','',''],
+    ['Fecha:', new Date().toLocaleDateString('es-CO'),'','',''],
+    ['Analista:', document.getElementById('f-analista').value,'','',''],
+    ['','','','',''],
+    ['PARÁMETROS DEL CRÉDITO','','','',''],
+    ['Monto (USD)', R.params.monto,'','',''],
+    ['Tasa N.A.', R.params.tasa_na*100+'%','','',''],
+    ['Plazo (meses)', R.params.plazo,'','',''],
+    ['Gracia (meses)', R.params.gracia,'','',''],
+    ['','','','',''],
+    ['SCORE CREDITICIO', R.score+'/100','','',''],
+    ['Veredicto', R.verdict,'','',''],
+    ['DSCR Mínimo', R.dscrMin.toFixed(2)+'x','','',''],
+    ['Capacidad Máx. (USD)', R.montoMax.toFixed(0),'','',''],
+  ]
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumen), 'Resumen')
+
+  // Sheet 2: Proyecciones
+  const header = ['Métrica', ...R.years]
+  const rows = [
+    header,
+    ['Ingresos ($)', ...R.ingresos.map(v=>+(v).toFixed(0))],
+    ['Costos ($)',   ...R.costos.map(v=>+(v).toFixed(0))],
+    ['EBITDA ($)',   ...R.ebitda.map(v=>+(v).toFixed(0))],
+    ['Margen EBITDA', ...R.mEbitda.map(v=>+((v*100)).toFixed(1))],
+    ['Intereses ($)', ...R.intereses.map(v=>+(v).toFixed(0))],
+    ['Capital ($)',   ...R.capital.map(v=>+(v).toFixed(0))],
+    ['Serv. Deuda ($)',...R.servDeuda.map(v=>+(v).toFixed(0))],
+    ['DSCR (x)',      ...R.dscr.map(v=>v!==null?+v.toFixed(3):'-')],
+    ['ICR (x)',       ...R.icr.map(v=>v!==null?+v.toFixed(3):'-')],
+    ['Activos ($)',   ...R.activos.map(v=>+(v).toFixed(0))],
+    ['Pasivos ($)',   ...R.pasivos.map(v=>+(v).toFixed(0))],
+    ['Patrimonio ($)',...R.patrimonio.map(v=>+(v).toFixed(0))],
+    ['D/Patrimonio',  ...R.dPat.map(v=>v!==null?+v.toFixed(3):'-')],
+  ]
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Proyecciones')
+
+  // Sheet 3: Stress Test
+  const stressRows = [
+    ['Escenario',...R.years],
+    ['Caso Base',...R.stress.base.map(v=>v!==null?+v.toFixed(3):'-')],
+    ['Downside Moderado',...R.stress.moderate.map(v=>v!==null?+v.toFixed(3):'-')],
+    ['Downside Severo',...R.stress.severe.map(v=>v!==null?+v.toFixed(3):'-')],
+  ]
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stressRows), 'Stress Test')
+
+  XLSX.writeFile(wb, `DT_Models_${empresa.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`)
+}
+
+// ── SHARE LINK ──
+function copyShareLink(){
+  const empresa = encodeURIComponent(document.getElementById('f-empresa').value||'Cliente')
+  const monto   = document.getElementById('c-monto').value||0
+  const link    = `${window.location.origin}/modelo_financiero.html?client=${empresa}&monto=${monto}&shared=1`
+  navigator.clipboard.writeText(link).then(()=>{
+    const box = document.getElementById('share-link-box')
+    box.style.display='block'; box.textContent=link
+    alert('✅ Link copiado al portapapeles')
+  })
+}
+
+// Init
+document.getElementById('f-empresa').addEventListener('input', updatePreview)
+</script>
+</body>
+</html>
