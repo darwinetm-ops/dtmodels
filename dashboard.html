@@ -2,9 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Panel — DT Models</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#080c12;--surface:#0e1620;--surface2:#131e2e;--surface3:#192538;
@@ -19,11 +20,11 @@
 body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-height:100vh;display:flex}
 
 /* SIDEBAR */
-.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);
+.sidebar{width:240px;background:#0A1020;border-right:1px solid var(--border);
   display:flex;flex-direction:column;height:100vh;position:fixed;top:0;left:0}
 .sidebar-logo{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .logo-icon{width:34px;height:34px;border-radius:8px;
-  background:linear-gradient(135deg,var(--accent),var(--blue));
+  background:linear-gradient(135deg,#2563EB,#3B82F6);
   display:flex;align-items:center;justify-content:center;
   font-family:var(--font-mono);font-size:13px;font-weight:700;color:#080c12}
 .logo-text{font-family:var(--font-mono);font-size:13px;font-weight:600}
@@ -57,8 +58,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
 .topbar-right{display:flex;gap:10px;align-items:center}
 .btn{padding:7px 16px;border-radius:5px;font-size:12px;cursor:pointer;
   font-family:var(--font-mono);transition:all .15s;border:none}
-.btn-primary{background:var(--accent);color:#080c12;font-weight:700}
-.btn-primary:hover{background:#00f0c0}
+.btn-primary{background:#2563EB;color:#fff;font-weight:700}
+.btn-primary:hover{background:#1D4ED8}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2)}
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
 .content{padding:28px;flex:1}
@@ -183,7 +184,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
   </nav>
   <div class="sidebar-footer">
     <div class="user-pill">
-      <div class="user-avatar">DT</div>
+      <div class="user-avatar" style="background:linear-gradient(135deg,#1D4ED8,#3B82F6)">DT</div>
       <div><div class="user-name">Darwin Torres</div><div class="user-role">Administrador</div></div>
     </div>
   </div>
@@ -205,7 +206,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
     <div class="stats-row" id="stats-row">
       <div class="stat-card">
         <div class="stat-label">Modelos Activos</div>
-        <div class="stat-value c-accent" id="stat-total" style="color:var(--accent)">0</div>
+        <div class="stat-value" id="stat-total" style="color:#3B82F6;font-family:'JetBrains Mono',monospace">0</div>
         <div class="stat-sub">En tu biblioteca</div>
       </div>
       <div class="stat-card">

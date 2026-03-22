@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DT Models — Plataforma de Modelos Financieros</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="alternate icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%232563EB'/><rect x='4' y='21' width='4' height='7' rx='1' fill='white' opacity='.45'/><rect x='11' y='16' width='4' height='12' rx='1' fill='white' opacity='.7'/><rect x='18' y='10' width='4' height='18' rx='1' fill='white' opacity='.9'/><rect x='25' y='4' width='4' height='24' rx='1' fill='white'/></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--navy-500:#2563EB;--navy-600:#1D4ED8;--navy-700:#1E3A8A;--ok:#10B981;--danger:#EF4444}
@@ -135,6 +137,40 @@ footer{background:var(--footer-bg);padding:40px 32px;display:flex;align-items:ce
 .form-note{font-size:11px;color:var(--text3);text-align:center;margin-top:14px}
 /* Logo SVG size */
 .logo-sm{width:30px;height:30px;flex-shrink:0}
+
+/* SCROLL ANIMATIONS */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-delay-1{transition-delay:.1s}
+.reveal-delay-2{transition-delay:.2s}
+.reveal-delay-3{transition-delay:.3s}
+.reveal-delay-4{transition-delay:.4s}
+.reveal-delay-5{transition-delay:.5s}
+.reveal-delay-6{transition-delay:.6s}
+/* TESTIMONIALS */
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:900px){.testi-grid{grid-template-columns:1fr}}
+.testi-card{background:var(--card-bg);border:1px solid var(--card-bd);border-radius:12px;padding:28px;transition:all .25s}
+.testi-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.testi-quote{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:20px;font-style:italic}
+.testi-quote::before{content:'"';font-size:32px;color:var(--accent);font-family:'Playfair Display',serif;line-height:0;vertical-align:-12px;margin-right:4px;opacity:.6}
+.testi-author{display:flex;align-items:center;gap:12px}
+.testi-avatar{width:40px;height:40px;border-radius:50%;background:#2563EB;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.testi-name{font-size:13px;font-weight:600;color:var(--text)}
+.testi-role{font-size:11px;color:var(--text3)}
+.stars{color:#F59E0B;font-size:13px;margin-bottom:10px;letter-spacing:2px}
+/* ABOUT */
+.about-grid{display:grid;grid-template-columns:1fr 1.8fr;gap:48px;align-items:center}
+@media(max-width:800px){.about-grid{grid-template-columns:1fr}}
+.about-avatar{width:160px;height:160px;border-radius:50%;background:linear-gradient(135deg,#1D4ED8,#2563EB);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:48px;color:#fff;font-weight:700;border:4px solid var(--border2);box-shadow:0 0 0 8px var(--accent-bg)}
+.about-name{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.about-role{font-size:13px;color:var(--accent);font-weight:500;margin-bottom:16px;font-family:'JetBrains Mono',monospace;letter-spacing:.05em}
+.about-bio{font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px}
+.about-tags{display:flex;flex-wrap:wrap;gap:8px}
+.about-tag{padding:5px 12px;border-radius:20px;background:var(--accent-bg);border:1px solid rgba(59,130,246,.2);font-size:11px;color:var(--accent2);font-weight:500}
+.about-contact{margin-top:20px;font-size:13px;color:var(--text3)}
+.about-contact a{color:var(--accent);transition:color .2s}
+.about-contact a:hover{color:var(--accent2)}
 </style>
 </head>
 <body>
@@ -169,14 +205,14 @@ footer{background:var(--footer-bg);padding:40px 32px;display:flex;align-items:ce
 <section class="hero">
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
-  <div class="hero-badge"><span class="badge-dot"></span>Plataforma Financiera Profesional</div>
-  <h1 class="hero-title">Modelos financieros<br>que <em>convencen</em> bancos</h1>
-  <p class="hero-sub">Crea, presenta y comparte modelos de viabilidad crediticia, valoraciones y proyecciones financieras con tus clientes — todo desde una sola plataforma.</p>
-  <div class="hero-btns">
+  <div class="hero-badge reveal"><span class="badge-dot"></span>Plataforma Financiera Profesional</div>
+  <h1 class="hero-title reveal reveal-delay-1">Modelos financieros<br>que <em>convencen</em> bancos</h1>
+  <p class="hero-sub reveal reveal-delay-2">Crea, presenta y comparte modelos de viabilidad crediticia, valoraciones y proyecciones financieras con tus clientes — todo desde una sola plataforma.</p>
+  <div class="hero-btns reveal reveal-delay-3">
     <a href="#" class="btn btn-primary btn-lg" onclick="openLogin()">Crear mi primer modelo →</a>
     <a href="#como-funciona" class="btn btn-ghost btn-lg">Ver cómo funciona</a>
   </div>
-  <div class="hero-stats">
+  <div class="hero-stats reveal reveal-delay-4">
     <div class="hero-stat"><span class="hero-stat-num">100%</span><span class="hero-stat-label">Online</span></div>
     <div class="hero-stat"><span class="hero-stat-num">∞</span><span class="hero-stat-label">Clientes</span></div>
     <div class="hero-stat"><span class="hero-stat-num">XLSX</span><span class="hero-stat-label">Exportable</span></div>
@@ -190,32 +226,32 @@ footer{background:var(--footer-bg);padding:40px 32px;display:flex;align-items:ce
     <div class="eyebrow">Características</div>
     <div class="section-title">Todo lo que necesitas<br>para estructurar negocios</div>
     <div class="feat-grid">
-      <div class="feat-card">
+      <div class="feat-card reveal reveal-delay-1">
         <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="18" height="18" rx="3"/><path d="M7 14V10M11 14V8M15 14V5"/></svg></div>
         <div class="feat-title">Viabilidad Crediticia</div>
         <div class="feat-desc">DSCR, ICR, stress test y score crediticio automático. Todo lo que un banco necesita para aprobar un crédito.</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card reveal reveal-delay-2">
         <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="9"/><path d="M11 6v5l3 3"/></svg></div>
         <div class="feat-title">Valoración de Empresas</div>
         <div class="feat-desc">DCF, múltiplos de mercado y análisis comparativo. Determina el valor justo de cualquier empresa con precisión.</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card reveal reveal-delay-3">
         <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
         <div class="feat-title">Proyecciones Startup</div>
         <div class="feat-desc">Unit economics, runway y CAC/LTV. Convence inversionistas con proyecciones financieras sólidas y defendibles.</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card reveal reveal-delay-4">
         <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div>
         <div class="feat-title">Presentación Online</div>
         <div class="feat-desc">Genera un link único por cliente. Presenta el modelo directamente desde el navegador, sin archivos adjuntos.</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card reveal reveal-delay-5">
         <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
         <div class="feat-title">Exportar Excel y PDF</div>
         <div class="feat-desc">Descarga el modelo completo en Excel profesional o en PDF listo para el comité de crédito o la junta directiva.</div>
       </div>
-      <div class="feat-card">
+      <div class="feat-card reveal reveal-delay-6">
         <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
         <div class="feat-title">Recálculo Dinámico</div>
         <div class="feat-desc">Cambia cualquier supuesto y todos los indicadores se actualizan en tiempo real. Sin macros, sin errores, sin espera.</div>
@@ -230,10 +266,10 @@ footer{background:var(--footer-bg);padding:40px 32px;display:flex;align-items:ce
     <div class="eyebrow" style="justify-content:center">Proceso</div>
     <div class="section-title" style="margin-bottom:48px">De los datos del cliente<br>al modelo en minutos</div>
     <div class="steps">
-      <div class="step"><div class="step-num">1</div><div class="step-title">Ingresas los datos</div><div class="step-desc">Sube el Excel del cliente o completa el formulario paso a paso.</div></div>
-      <div class="step"><div class="step-num">2</div><div class="step-title">El modelo calcula</div><div class="step-desc">EBITDA, DSCR, ICR, score y stress test se generan automáticamente.</div></div>
-      <div class="step"><div class="step-num">3</div><div class="step-title">Presentas online</div><div class="step-desc">Compartes un link único. El cliente ve el dashboard desde cualquier dispositivo.</div></div>
-      <div class="step"><div class="step-num">4</div><div class="step-title">Exportas el entregable</div><div class="step-desc">Excel o PDF profesional listo para entregar al banco o comité.</div></div>
+      <div class="step reveal reveal-delay-1"><div class="step-num">1</div><div class="step-title">Ingresas los datos</div><div class="step-desc">Sube el Excel del cliente o completa el formulario paso a paso.</div></div>
+      <div class="step reveal reveal-delay-2"><div class="step-num">2</div><div class="step-title">El modelo calcula</div><div class="step-desc">EBITDA, DSCR, ICR, score y stress test se generan automáticamente.</div></div>
+      <div class="step reveal reveal-delay-3"><div class="step-num">3</div><div class="step-title">Presentas online</div><div class="step-desc">Compartes un link único. El cliente ve el dashboard desde cualquier dispositivo.</div></div>
+      <div class="step reveal reveal-delay-4"><div class="step-num">4</div><div class="step-title">Exportas el entregable</div><div class="step-desc">Excel o PDF profesional listo para entregar al banco o comité.</div></div>
     </div>
   </div>
 </div>
@@ -270,11 +306,82 @@ footer{background:var(--footer-bg);padding:40px 32px;display:flex;align-items:ce
   </div>
 </div>
 
+
+<!-- TESTIMONIOS -->
+<div style="padding:96px 32px;background:var(--bg)" id="testimonios">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="eyebrow reveal">Testimonios</div>
+    <div class="section-title reveal reveal-delay-1">Lo que dicen<br>nuestros clientes</div>
+    <div class="testi-grid">
+      <div class="testi-card reveal reveal-delay-1">
+        <div class="stars">★★★★★</div>
+        <div class="testi-quote">Darwin entregó el modelo de viabilidad en tiempo récord. El banco aprobó el crédito la primera vez que lo presentamos. La plataforma es increíblemente profesional.</div>
+        <div class="testi-author">
+          <div class="testi-avatar">JR</div>
+          <div><div class="testi-name">Jorge Ramírez</div><div class="testi-role">Gerente General · Agroindustrias del Norte</div></div>
+        </div>
+      </div>
+      <div class="testi-card reveal reveal-delay-2">
+        <div class="stars">★★★★★</div>
+        <div class="testi-quote">El dashboard interactivo que nos compartió fue clave para la presentación al comité. Los banqueros quedaron impresionados con la calidad del análisis y los gráficos.</div>
+        <div class="testi-author">
+          <div class="testi-avatar">MC</div>
+          <div><div class="testi-name">María Castro</div><div class="testi-role">CFO · Grupo Logístico Andino</div></div>
+        </div>
+      </div>
+      <div class="testi-card reveal reveal-delay-3">
+        <div class="stars">★★★★★</div>
+        <div class="testi-quote">Llevábamos meses buscando un analista que entendiera nuestro negocio. Darwin construyó el modelo exacto que necesitábamos y nos ayudó a conseguir el financiamiento.</div>
+        <div class="testi-author">
+          <div class="testi-avatar">AP</div>
+          <div><div class="testi-name">Andrés Pedraza</div><div class="testi-role">Fundador · TechFarm Colombia</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- CTA -->
 <div class="cta-section">
   <h2 class="cta-title">Tu próximo modelo,<br>en <span style="color:var(--accent)">dtmodels.com</span></h2>
   <p class="cta-sub">Únete a los consultores que presentan modelos profesionales en línea</p>
   <button class="btn btn-primary btn-lg" onclick="openLogin()">Crear mi cuenta gratis →</button>
+</div>
+
+
+<!-- ABOUT -->
+<div style="padding:96px 32px;background:var(--bg2);border-top:1px solid var(--border)" id="about">
+  <div style="max-width:900px;margin:0 auto">
+    <div class="about-grid">
+      <div style="display:flex;justify-content:center;align-items:center">
+        <div class="about-avatar reveal">DT</div>
+      </div>
+      <div class="reveal reveal-delay-1">
+        <div class="about-name">Darwin Enrique Torres Meza</div>
+        <div class="about-role">Analista Financiero · Estructurador de Negocios</div>
+        <div class="about-bio">
+          Especialista en modelos financieros para viabilidad crediticia, valoración de empresas y estructuración de negocios. 
+          Trabajo con empresas en Colombia y Centroamérica, ayudando a conectar proyectos sólidos con el financiamiento que necesitan. 
+          Asociado con <strong>Acvay Capital</strong> — firma especializada en estructuración de créditos y búsqueda de fondeadores.
+        </div>
+        <div class="about-tags">
+          <span class="about-tag">Viabilidad Crediticia</span>
+          <span class="about-tag">Valoración de Empresas</span>
+          <span class="about-tag">Modelos para Bancos</span>
+          <span class="about-tag">Proyecciones Financieras</span>
+          <span class="about-tag">Stress Test</span>
+          <span class="about-tag">Colombia · Centroamérica</span>
+        </div>
+        <div class="about-contact" style="margin-top:20px">
+          📧 <a href="mailto:darwinetm@gmail.com">darwinetm@gmail.com</a>
+          &nbsp;&nbsp;·&nbsp;&nbsp;
+          🌐 <a href="https://dtmodels.com">dtmodels.com</a>
+          &nbsp;&nbsp;·&nbsp;&nbsp;
+          📍 Barranquilla, Colombia
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- FOOTER -->
@@ -343,6 +450,23 @@ function doLogin(){
     document.getElementById('login-error').style.display='block'
   }
 }
+
+// SCROLL REVEAL
+function revealOnScroll(){
+  document.querySelectorAll('.reveal').forEach(el=>{
+    const rect=el.getBoundingClientRect()
+    if(rect.top < window.innerHeight - 60){
+      el.classList.add('visible')
+    }
+  })
+}
+// Trigger immediately for hero elements
+window.addEventListener('load',()=>{
+  setTimeout(revealOnScroll, 100)
+})
+window.addEventListener('scroll', revealOnScroll, {passive:true})
+revealOnScroll()
+
 </script>
 </body>
 </html>
