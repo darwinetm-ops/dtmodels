@@ -370,11 +370,11 @@ body{
     <div class="hero-title">DT Models S.A.</div>
     <div class="hero-sub">Dashboard Financiero · Horizonte 2026–2035 · Módulo de Proyección Dinámica</div>
     <div class="kpi-row" id="kpi-row">
-      <div class="kpi"><div class="kpi-label">Monto Solicitado</div><div class="kpi-value c-accent" id="kpi-monto">$19.45M</div><div class="kpi-sub">USD · 6 desembolsos</div></div>
+      <div class="kpi"><div class="kpi-label">Monto Solicitado</div><div class="kpi-value c-accent" id="kpi-monto">$—</div><div class="kpi-sub" id="kpi-monto-sub">—</div></div>
       <div class="kpi"><div class="kpi-label">Score Crediticio</div><div class="kpi-value" id="kpi-score">80/100</div><div class="kpi-sub" id="kpi-verdict">✅ Aprobable</div></div>
       <div class="kpi"><div class="kpi-label">DSCR Mínimo (2027–31)</div><div class="kpi-value" id="kpi-dscr-min">—</div><div class="kpi-sub">Año ramp-up</div></div>
       <div class="kpi"><div class="kpi-label">EBITDA Pico</div><div class="kpi-value c-ok" id="kpi-ebitda-peak">—</div><div class="kpi-sub" id="kpi-ebitda-yr">2028</div></div>
-      <div class="kpi"><div class="kpi-label">Tasa / Plazo</div><div class="kpi-value c-blue" id="kpi-tasa">14% / 90M</div><div class="kpi-sub">N.A.</div></div>
+      <div class="kpi"><div class="kpi-label">Tasa / Plazo</div><div class="kpi-value c-blue" id="kpi-tasa">—</div><div class="kpi-sub">N.A.</div></div>
       <div class="kpi"><div class="kpi-label">Capacidad Máx.</div><div class="kpi-value" id="kpi-capmax">$11.46M</div><div class="kpi-sub" id="kpi-deficit">Déficit vs. solicitado</div></div>
     </div>
   </div>
@@ -393,12 +393,26 @@ body{
       <div class="card">
         <div class="card-title">Estructura de Desembolsos</div>
         <div class="pill-row" style="margin-bottom:14px">
-          <div class="desembolso-pill"><div class="d-tag">D1</div><div class="d-amt">$3.87M</div><div class="d-date">Jun-2026</div></div>
-          <div class="desembolso-pill"><div class="d-tag">D2</div><div class="d-amt">$2.90M</div><div class="d-date">Jul-2026</div></div>
-          <div class="desembolso-pill"><div class="d-tag">D3</div><div class="d-amt">$2.90M</div><div class="d-date">Sep-2026</div></div>
-          <div class="desembolso-pill"><div class="d-tag">D4</div><div class="d-amt">$3.91M</div><div class="d-date">Jun-2026</div></div>
-          <div class="desembolso-pill"><div class="d-tag">D5</div><div class="d-amt">$2.93M</div><div class="d-date">Jul-2026</div></div>
-          <div class="desembolso-pill"><div class="d-tag">D6</div><div class="d-amt">$2.93M</div><div class="d-date">Sep-2026</div></div>
+          <div class="desembolso-pill" id="desembolso-pill-main">
+            <div class="d-tag">D1</div>
+            <div class="d-amt" id="d-monto-total">—</div>
+            <div class="d-date">Desembolso único</div>
+          </div>
+          <div class="desembolso-pill">
+            <div class="d-tag">Tasa</div>
+            <div class="d-amt" id="d-tasa">14%</div>
+            <div class="d-date">N.A. anual</div>
+          </div>
+          <div class="desembolso-pill">
+            <div class="d-tag">Plazo</div>
+            <div class="d-amt" id="d-plazo">60M</div>
+            <div class="d-date">meses total</div>
+          </div>
+          <div class="desembolso-pill">
+            <div class="d-tag">Gracia</div>
+            <div class="d-amt" id="d-gracia">12M</div>
+            <div class="d-date">a capital</div>
+          </div>
         </div>
         <div id="debt-warning" style="padding:10px 14px;border-radius:5px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);font-size:11px;color:var(--text2);line-height:1.6"></div>
       </div>
@@ -407,15 +421,15 @@ body{
         <table class="data-table">
           <thead><tr><th>Concepto</th><th>Inicio</th><th>2026</th><th>2027</th><th>2028+</th></tr></thead>
           <tbody>
-            <tr><td>Venta de productos</td><td style="color:var(--text3);text-align:right">Sep-27</td><td style="text-align:right;color:var(--text3)">—</td><td style="text-align:right;color:var(--accent)">▶</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
-            <tr><td>Otros ingresos (Energía)</td><td style="color:var(--text3);text-align:right">Jul-27</td><td style="text-align:right;color:var(--text3)">—</td><td style="text-align:right;color:var(--accent)">▶</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
-            <tr><td>Costos por ventas</td><td style="color:var(--text3);text-align:right">Jun-27</td><td style="text-align:right;color:var(--text3)">—</td><td style="text-align:right;color:var(--accent)">▶</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
-            <tr><td>Gastos operativos</td><td style="color:var(--text3);text-align:right">Jul-26</td><td style="text-align:right;color:var(--accent)">▶</td><td style="text-align:right;color:var(--ok)">━━</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
-            <tr><td>Pago intereses</td><td style="color:var(--text3);text-align:right">Jun-28</td><td style="text-align:right;color:var(--text3)">—</td><td style="text-align:right;color:var(--text3)">—</td><td style="text-align:right;color:var(--accent)">▶</td></tr>
+            <tr><td>Ingresos operacionales</td><td style="color:var(--text3);text-align:right">Año 1</td><td style="text-align:right;color:var(--accent)">▶</td><td style="text-align:right;color:var(--ok)">━━</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
+            <tr><td>Costos directos</td><td style="color:var(--text3);text-align:right">Año 1</td><td style="text-align:right;color:var(--accent)">▶</td><td style="text-align:right;color:var(--ok)">━━</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
+            <tr><td>Gastos operativos</td><td style="color:var(--text3);text-align:right">Año 1</td><td style="text-align:right;color:var(--accent)">▶</td><td style="text-align:right;color:var(--ok)">━━</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
+            <tr><td>Intereses financieros</td><td style="color:var(--text3);text-align:right">Año 1</td><td style="text-align:right;color:var(--warn)">▶</td><td style="text-align:right;color:var(--warn)">━━</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
+            <tr><td>Amortización capital</td><td style="color:var(--text3);text-align:right">Post-gracia</td><td style="text-align:right;color:var(--text3)">—</td><td style="text-align:right;color:var(--accent)">▶</td><td style="text-align:right;color:var(--ok)">━━</td></tr>
           </tbody>
         </table>
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:10px;color:var(--text3);line-height:1.6">
-          ⚠️ Período ~13 meses sin ingresos principales (Jun-2026→Sep-2027). Ingresos de energía mitigan desde Jul-2027.
+          💡 El período de gracia permite construir capacidad antes de iniciar pagos a capital. Los intereses inician desde el primer desembolso.
         </div>
       </div>
     </div>
@@ -427,7 +441,7 @@ body{
   <div class="hero">
     <div class="hero-eyebrow">Viabilidad Crediticia · Pre-Screening Bancario</div>
     <div class="hero-title">Análisis de Viabilidad</div>
-    <div class="hero-sub">Banco Comercial · <span id="v-monto-sub">USD 19,449,494</span> · Tasa <span id="v-tasa-sub">14%</span> N.A.</div>
+    <div class="hero-sub">Banco Comercial · <span id="v-monto-sub">—</span> · Tasa <span id="v-tasa-sub">—</span> N.A.</div>
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Score</div><div class="kpi-value" id="v-score">80/100</div><div class="kpi-sub" id="v-verdict">✅ Aprobable</div></div>
       <div class="kpi"><div class="kpi-label">DSCR Mínimo</div><div class="kpi-value" id="v-dscr-min">—</div><div class="kpi-sub">2027–2031</div></div>
@@ -651,8 +665,8 @@ body{
   <div class="pres-section">
     <div class="pres-section-title"><span class="pres-section-num">I</span> Resumen Ejecutivo</div>
     <div class="grid-4">
-      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">Monto Solicitado</div><div class="kpi-value c-accent" id="p-monto">$19.45M</div><div class="kpi-sub">USD · 6 desembolsos</div></div>
-      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">Tasa / Plazo</div><div class="kpi-value c-blue" id="p-tasa-plazo">14% / 90M</div><div class="kpi-sub">N.A.</div></div>
+      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">Monto Solicitado</div><div class="kpi-value c-accent" id="p-monto">$—</div><div class="kpi-sub" id="kpi-monto-sub">—</div></div>
+      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">Tasa / Plazo</div><div class="kpi-value c-blue" id="p-tasa-plazo">—</div><div class="kpi-sub">N.A.</div></div>
       <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">EBITDA Pico</div><div class="kpi-value c-ok" id="p-ebitda-peak">—</div><div class="kpi-sub" id="p-ebitda-yr">USD pico</div></div>
       <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">Score</div><div class="kpi-value c-ok" id="p-score">80/100</div><div class="kpi-sub" id="p-verdict">✅ Aprobable</div></div>
     </div>
@@ -1175,13 +1189,13 @@ function renderPresentation(){
     ✅ Proyecto con <strong>sólidos fundamentos</strong> en régimen de crucero (2028+).<br>
     ${R.deficit<0?`⚠️ Reducir monto a ~<strong>${montoMaxStr}</strong> o extender plazo para DSCR ≥ 1.30x.<br>`:''}
     📋 Monitoreo trimestral de DSCR durante el período de ramp-up.<br>
-    🔒 Definir garantías reales según estructura del proyecto.\`;
+    🔒 Definir garantías reales según estructura del proyecto.`;
   document.getElementById('pres-condiciones').innerHTML=`
     1. Monto máximo: <strong>${montoMaxStr}</strong><br>
     2. Garantías reales según estructura del proyecto<br>
     3. Covenant DSCR mínimo 1.0x durante ramp-up<br>
     4. Reporte financiero trimestral al acreedor<br>
-    5. Desembolsos condicionados a hitos del proyecto\`;
+    5. Desembolsos condicionados a hitos del proyecto`;
 }
 
 function updateGlobalKPIs(){
@@ -1195,6 +1209,15 @@ function updateGlobalKPIs(){
   document.getElementById('f-plazo').textContent = `${R.params.plazo} meses`;
   document.getElementById('f-score').textContent = `${R.score}/100`;
   document.getElementById('f-score').style.color = R.score>=70?'var(--accent)':R.score>=55?'var(--warn)':'var(--danger)';
+  // Update desembolso pills
+  const dm = document.getElementById('d-monto-total');
+  const dt = document.getElementById('d-tasa');
+  const dp = document.getElementById('d-plazo');
+  const dg = document.getElementById('d-gracia');
+  if(dm) dm.textContent = '$'+(R.params.monto/1e6).toFixed(2)+'M';
+  if(dt) dt.textContent = (R.params.tasa*100).toFixed(1)+'%';
+  if(dp) dp.textContent = R.params.plazo+'M';
+  if(dg) dg.textContent = R.params.gracia+'M';
   const now=new Date().toLocaleTimeString('es-GT',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   document.getElementById('last-updated').textContent=`Calculado ${now}`;
 }
@@ -1289,6 +1312,19 @@ window.addEventListener('DOMContentLoaded',()=>{
     const montoEl = document.getElementById('in-monto');
     if(montoEl) montoEl.value = params.get('monto');
     BASE.monto_usd = parseFloat(params.get('monto'));
+  }
+  // Set client name from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const clientName = urlParams.get('client') ? decodeURIComponent(urlParams.get('client')) : 'Modelo Financiero';
+  const el = document.getElementById('hero-title-empresa');
+  if(el) el.textContent = clientName;
+  document.title = clientName + ' — DT Models';
+  // Set monto from URL if provided
+  const montoUrl = parseFloat(urlParams.get('monto'));
+  if(montoUrl > 0) {
+    BASE.monto_usd = montoUrl;
+    const montoEl = document.getElementById('in-monto');
+    if(montoEl) montoEl.value = montoUrl;
   }
   R = calcModel({...BASE});
   updateGlobalKPIs();
