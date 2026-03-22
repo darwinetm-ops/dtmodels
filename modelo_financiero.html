@@ -157,6 +157,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
     <button class="nav-tab" onclick="goPage('viabilidad',this)">Viabilidad<span class="nav-badge" id="score-badge">—</span></button>
     <button class="nav-tab" onclick="goPage('stress',this)">Stress Test</button>
     <button class="nav-tab" onclick="goPage('ratios',this)">Ratios</button>
+    <button class="nav-tab" onclick="goPage('eeff',this)">Estados Financieros</button>
     <button class="nav-tab" onclick="goPage('inputs',this)">Inputs &amp; Recálculo</button>
     <button class="nav-tab" onclick="goPage('pres',this)">Presentación Cliente</button>
   </div>
@@ -314,6 +315,30 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
     <div class="grid-2">
       <div class="card"><div class="card-title">Márgenes Proyectados (%)</div><div class="chart-box-tall"><canvas id="c-margenes"></canvas></div></div>
       <div class="card"><div class="card-title">Apalancamiento (Deuda/Patrimonio x)</div><div class="chart-box-tall"><canvas id="c-leverage"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════ ESTADOS FINANCIEROS ══════════ -->
+<div id="page-eeff" class="page">
+  <div class="hero">
+    <div class="hero-eyebrow">Estados Financieros Proyectados · Año por Año</div>
+    <div class="hero-title">P&L y Balance General</div>
+    <div class="hero-sub" id="eeff-sub">—</div>
+  </div>
+  <div class="content">
+    <div class="sec-head">Estado de Resultados Proyectado (P&amp;L)</div>
+    <div class="card" style="margin-bottom:14px;overflow-x:auto">
+      <table class="dt" id="t-pl" style="min-width:700px"></table>
+    </div>
+    <div class="sec-head">Balance General Proyectado</div>
+    <div class="card" style="margin-bottom:14px;overflow-x:auto">
+      <table class="dt" id="t-balance" style="min-width:700px"></table>
+    </div>
+    <div class="sec-head">Flujo de Caja de la Deuda</div>
+    <div class="card" style="margin-bottom:14px;overflow-x:auto">
+      <table class="dt" id="t-deuda" style="min-width:700px"></table>
     </div>
   </div>
 </div>
@@ -661,6 +686,7 @@ function renderPage(id) {
   if(id === 'viabilidad')  renderViabilidad();
   if(id === 'stress')      renderStress();
   if(id === 'ratios')      renderRatios();
+  if(id === 'eeff')        renderEEFF();
   if(id === 'pres')        renderPres();
 }
 
@@ -900,6 +926,109 @@ function renderRatios() {
   mkChart('c-leverage', 'line', years, [
     { label:'Deuda/Patrimonio (x)', data:d_pat.map(v=>v!==null?v:null), borderColor:COLORS.danger, backgroundColor:alpha(COLORS.danger,0.08), tension:.4, pointRadius:4, fill:true },
   ], v => v.toFixed(2)+'x');
+}
+
+
+// ── ESTADOS FINANCIEROS ──
+function renderEEFF() {
+  const { years, n, moneda, ingresos, costos, opex, ebitda, intereses,
+          capital_pago, serv_deuda, uai, uan, depreciacion,
+          activos, pasivos, patrimonio, cfads, params } = R;
+
+  document.getElementById('eeff-sub').textContent =
+    `${CLIENT_NAME} · ${moneda} · Horizonte ${n} años`;
+
+  const M = v => v === null || v === undefined ? '—' :
+    (Math.abs(v)>=1e9 ? (v/1e9).toFixed(3)+'B' :
+     Math.abs(v)>=1e6 ? (v/1e6).toFixed(2)+'M' :
+     Math.abs(v)>=1e3 ? (v/1e3).toFixed(1)+'K' :
+     v.toFixed(0)) + ' ' + moneda;
+
+  const head = '<thead><tr><th>Concepto</th>' + years.map(y=>`<th>${y}</th>`).join('') + '</tr></thead>';
+
+  // Helper to build a row
+  const row = (label, vals, color, bold, pct) => {
+    const style = bold ? 'font-weight:600;' : '';
+    const cells = vals.map(v => {
+      if(v === null || v === undefined) return `<td style="${style}color:var(--t3)">—</td>`;
+      const c = color ? (typeof color === 'function' ? color(v) : color) : 'var(--text)';
+      const display = pct ? (v*100).toFixed(1)+'%' : M(v);
+      return `<td style="${style}color:${c}">${display}</td>`;
+    }).join('');
+    return `<tr><td style="${style}${bold?'color:var(--text)':'color:var(--t2)'}">${label}</td>${cells}</tr>`;
+  };
+
+  const sepRow = label => `<tr><td colspan="${n+1}" style="padding:4px 9px;font-size:9px;letter-spacing:.1em;color:var(--t3);text-transform:uppercase;background:var(--s2);border-top:1px solid var(--bd)">${label}</td></tr>`;
+
+  // Gross profit & utility bruta
+  const util_bruta = ingresos.map((v,i) => v - costos[i]);
+  const m_bruta    = util_bruta.map((v,i) => ingresos[i]>0 ? v/ingresos[i] : 0);
+  const m_ebitda   = ebitda.map((v,i) => ingresos[i]>0 ? v/ingresos[i] : 0);
+  const ebit       = ebitda.map((v,i) => v - (depreciacion[i]||0));
+  const m_neto     = uan.map((v,i) => ingresos[i]>0 ? v/ingresos[i] : 0);
+
+  // P&L table
+  document.getElementById('t-pl').innerHTML = head + '<tbody>' +
+    sepRow('Ingresos') +
+    row('(+) Ingresos Operacionales', ingresos, 'var(--acc)', true) +
+    sepRow('Costos') +
+    row('(-) Costos Directos (CVs)', costos, v=>v>0?'var(--warn)':'var(--ok)', false) +
+    row('Utilidad Bruta', util_bruta, v=>v>=0?'var(--ok)':'var(--danger)', true) +
+    row('    Margen Bruto (%)', m_bruta, v=>v>=0.4?'var(--ok)':v>=0.2?'var(--warn)':'var(--danger)', false, true) +
+    sepRow('Gastos Operativos') +
+    row('(-) OPEX / Gastos Adm. y Ventas', opex, v=>v>0?'var(--warn)':'var(--ok)', false) +
+    row('EBITDA', ebitda, v=>v>=0?'var(--ok)':'var(--danger)', true) +
+    row('    Margen EBITDA (%)', m_ebitda, v=>v>=0.3?'var(--ok)':v>=0.1?'var(--warn)':'var(--danger)', false, true) +
+    row('(-) Depreciación y Amortización', depreciacion.map(v=>v||0), 'var(--t2)', false) +
+    row('EBIT (Utilidad Operativa)', ebit, v=>v>=0?'var(--ok)':'var(--danger)', true) +
+    sepRow('Resultado No Operacional') +
+    row('(-) Gastos Financieros / Intereses', intereses, v=>v>0?'var(--warn)':'var(--ok)', false) +
+    row('Utilidad Antes de Impuestos (UAI)', uai, v=>v>=0?'var(--ok)':'var(--danger)', true) +
+    row('(-) Impuesto sobre utilidades', uai.map(v=>v>0?v*P.isr/100:0), 'var(--t2)', false) +
+    row('UTILIDAD NETA', uan, v=>v>=0?'var(--ok)':'var(--danger)', true) +
+    row('    Margen Neto (%)', m_neto, v=>v>=0.1?'var(--ok)':v>=0?'var(--warn)':'var(--danger)', false, true) +
+    '</tbody>';
+
+  // Balance table
+  const act_corr = ingresos.map((v,i) => v * 0.25);       // simplified WC estimate
+  const act_fijo = activos.map((v,i) => v - act_corr[i] - (v*0.05)); // rough PPE
+  const pas_corr = pasivos.map((v,i) => v * 0.3);
+  const pas_lp   = pasivos.map((v,i) => v * 0.7);
+  const cap_social = Array(n).fill(P.ingresos[0] * 0.2);
+  const util_acum  = uan.map((v,i) => uan.slice(0,i+1).reduce((a,b)=>a+b,0));
+
+  document.getElementById('t-balance').innerHTML = head + '<tbody>' +
+    sepRow('ACTIVOS') +
+    row('Activo Corriente (estimado)', act_corr, 'var(--acc)', false) +
+    row('Activo No Corriente / PPE (estimado)', act_fijo.map(v=>Math.max(v,0)), 'var(--acc)', false) +
+    row('TOTAL ACTIVOS', activos, 'var(--acc)', true) +
+    sepRow('PASIVOS') +
+    row('Pasivo Corriente (estimado)', pas_corr, 'var(--warn)', false) +
+    row('Pasivo Largo Plazo (Deuda Financiera)', pas_lp, 'var(--warn)', false) +
+    row('TOTAL PASIVOS', pasivos, 'var(--warn)', true) +
+    sepRow('PATRIMONIO') +
+    row('Capital Social (estimado)', cap_social, 'var(--t2)', false) +
+    row('Utilidades Acumuladas', util_acum, v=>v>=0?'var(--ok)':'var(--danger)', false) +
+    row('TOTAL PATRIMONIO', patrimonio, v=>v>=0?'var(--ok)':'var(--danger)', true) +
+    row('TOTAL PASIVOS + PATRIMONIO', activos, 'var(--acc)', true) +
+    '</tbody>';
+
+  // Debt schedule
+  const saldo_deuda = [];
+  let sd = params.monto;
+  for(let i=0;i<n;i++){ sd = Math.max(0, sd - capital_pago[i]); saldo_deuda.push(sd); }
+
+  document.getElementById('t-deuda').innerHTML = head + '<tbody>' +
+    sepRow('SERVICIO DE LA DEUDA') +
+    row('Saldo Inicial Deuda', [params.monto, ...saldo_deuda.slice(0,-1)], 'var(--t2)', false) +
+    row('(-) Amortización Capital', capital_pago, 'var(--warn)', false) +
+    row('(-) Pago Intereses', intereses, 'var(--warn)', false) +
+    row('Total Servicio Deuda', serv_deuda, 'var(--danger)', true) +
+    row('Saldo Final Deuda', saldo_deuda, v=>v>0?'var(--warn)':'var(--ok)', false) +
+    sepRow('COBERTURA') +
+    row('CFADS (≈ EBITDA)', cfads, v=>v>=0?'var(--ok)':'var(--danger)', true) +
+    row('DSCR (CFADS / Serv. Deuda)', R.dscr, v=>v===null?'var(--t3)':v>=1.5?'var(--ok)':v>=1?'var(--warn)':'var(--danger)', true) +
+    '</tbody>';
 }
 
 // ── PRESENTATION ──
