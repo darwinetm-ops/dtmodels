@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FinModel Pro — Agroindustrias de Animales S.A.</title>
+<title>FinModel Pro — DT Models S.A.</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -233,14 +233,10 @@ body{
 }
 
 /* ── Vientres editor ── */
-.vientres-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
-.v-cell{display:flex;flex-direction:column;gap:4px}
-.v-yr{font-size:9px;color:var(--text3);font-family:var(--font-mono);text-align:center}
-.v-inp{
-  text-align:center;padding:6px 4px;background:var(--surface2);
-  border:1px solid var(--border);border-radius:4px;
-  color:var(--text);font-family:var(--font-mono);font-size:12px;outline:none;
-}
+
+
+
+
 .v-inp:focus{border-color:var(--accent)}
 
 /* ── Presentation Mode ── */
@@ -371,7 +367,7 @@ body{
 <div id="page-dashboard" class="page active">
   <div class="hero">
     <div class="hero-eyebrow">Modelo Financiero Proyectado · Confidencial · v3.5</div>
-    <div class="hero-title">Agroindustrias de Animales S.A.</div>
+    <div class="hero-title">DT Models S.A.</div>
     <div class="hero-sub">Dashboard Financiero · Horizonte 2026–2035 · Módulo de Proyección Dinámica</div>
     <div class="kpi-row" id="kpi-row">
       <div class="kpi"><div class="kpi-label">Monto Solicitado</div><div class="kpi-value c-accent" id="kpi-monto">$19.45M</div><div class="kpi-sub">USD · 6 desembolsos</div></div>
@@ -451,7 +447,7 @@ body{
     <div class="grid-2">
       <div class="card"><div class="card-title">DSCR Proyectado (2027–2031)</div><div class="chart-box-tall"><canvas id="c-dscr"></canvas></div></div>
       <div class="card">
-        <div class="card-title">Viabilidad Aval — MARTESA (datos históricos)</div>
+        <div class="card-title">Fortaleza del Avalista (si aplica)</div>
         <div class="sem-list">
           <div class="sem-row"><span class="sem-name">Margen Bruto 2025</span><div class="sem-track"><div class="sem-fill" style="width:86%;background:var(--ok)"></div></div><span class="sem-val c-ok">48.6%</span></div>
           <div class="sem-row"><span class="sem-name">Margen EBITDA 2025</span><div class="sem-track"><div class="sem-fill" style="width:72%;background:var(--ok)"></div></div><span class="sem-val c-ok">35.9%</span></div>
@@ -564,53 +560,72 @@ body{
       </div>
     </div>
 
-    <div class="section-head">Parámetros Operativos</div>
+    <div class="section-head">Supuestos Financieros Proyectados</div>
     <div class="card" style="margin-bottom:16px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;padding:10px 14px;background:rgba(0,212,168,.06);border-radius:6px;border-left:3px solid var(--accent)">
+        💡 Estos supuestos se aplican sobre los ingresos históricos del cliente para proyectar los próximos 10 años.
+      </div>
       <div class="input-grid">
         <div class="input-group">
-          <div class="input-label">Precio GTQ por libra de carne</div>
-          <div class="input-wrap"><input class="input-field" id="in-precio-gtq" type="number" value="10.50" step="0.10" oninput="markChanged()"><span class="input-unit">GTQ</span></div>
-          <div class="input-note">Precio de venta al mercado local</div>
+          <div class="input-label">Ingresos Año Base (M)</div>
+          <div class="input-wrap"><input class="input-field" id="in-ing-base" type="number" value="1000" step="10" oninput="markChanged()"></div>
+          <div class="input-note">Ingresos del último año histórico</div>
         </div>
         <div class="input-group">
-          <div class="input-label">Lechones por parto</div>
-          <input class="input-field" id="in-lechones" type="number" value="18" step="1" oninput="markChanged()">
-          <div class="input-note">Meta: 20 lechones por parto</div>
+          <div class="input-label">Crecimiento Ingresos Año 1 (%)</div>
+          <div class="input-wrap"><input class="input-field" id="in-crec-1" type="number" value="10" step="1" oninput="markChanged()"><span class="input-unit">%</span></div>
         </div>
         <div class="input-group">
-          <div class="input-label">Libras por cerdo al sacrificio</div>
-          <input class="input-field" id="in-libras" type="number" value="280" step="5" oninput="markChanged()">
-          <div class="input-note">Meta: 280–300 libras</div>
+          <div class="input-label">Crecimiento Ingresos Año 2–5 (%)</div>
+          <div class="input-wrap"><input class="input-field" id="in-crec-2" type="number" value="15" step="1" oninput="markChanged()"><span class="input-unit">%</span></div>
         </div>
         <div class="input-group">
-          <div class="input-label">Tasa de Mortalidad (%)</div>
-          <div class="input-wrap"><input class="input-field" id="in-mort" type="number" value="1.00" step="0.1" oninput="markChanged()"><span class="input-unit">%</span></div>
+          <div class="input-label">Crecimiento Ingresos Año 6–10 (%)</div>
+          <div class="input-wrap"><input class="input-field" id="in-crec-3" type="number" value="8" step="1" oninput="markChanged()"><span class="input-unit">%</span></div>
         </div>
         <div class="input-group">
-          <div class="input-label">OPEX como % ingresos</div>
-          <div class="input-wrap"><input class="input-field" id="in-opex" type="number" value="15.00" step="0.5" oninput="markChanged()"><span class="input-unit">%</span></div>
+          <div class="input-label">Margen Bruto (%)</div>
+          <div class="input-wrap"><input class="input-field" id="in-mb" type="number" value="40" step="1" oninput="markChanged()"><span class="input-unit">%</span></div>
+          <div class="input-note">Ingresos menos costos directos</div>
         </div>
         <div class="input-group">
-          <div class="input-label">Costo Alimentación (% ingreso)</div>
-          <div class="input-wrap"><input class="input-field" id="in-alim" type="number" value="45.00" step="1" oninput="markChanged()"><span class="input-unit">%</span></div>
+          <div class="input-label">OPEX como % de Ingresos</div>
+          <div class="input-wrap"><input class="input-field" id="in-opex" type="number" value="20" step="1" oninput="markChanged()"><span class="input-unit">%</span></div>
+          <div class="input-note">Gastos operativos / administración</div>
         </div>
         <div class="input-group">
-          <div class="input-label">Tasa de conversión USD/GTQ</div>
-          <input class="input-field" id="in-usd-gtq" type="number" value="0.13" step="0.001" oninput="markChanged()">
+          <div class="input-label">PPE / Inversión Total</div>
+          <div class="input-wrap"><input class="input-field" id="in-ppe" type="number" value="0" step="100" oninput="markChanged()"></div>
+          <div class="input-note">Activos fijos del proyecto (opcional)</div>
         </div>
         <div class="input-group">
-          <div class="input-label">ISR Empresarial (%)</div>
-          <div class="input-wrap"><input class="input-field" id="in-isr" type="number" value="12.00" step="1" oninput="markChanged()"><span class="input-unit">%</span></div>
+          <div class="input-label">ISR / Impuesto sobre utilidades (%)</div>
+          <div class="input-wrap"><input class="input-field" id="in-isr" type="number" value="33" step="1" oninput="markChanged()"><span class="input-unit">%</span></div>
         </div>
-      </div>
-    </div>
-
-    <div class="section-head">Plan de Expansión — Vientres Añadidos por Año</div>
-    <div class="card" style="margin-bottom:16px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Unidades de vientres adicionales incorporados cada año (se acumulan año tras año):</div>
-      <div class="vientres-grid" id="vientres-inputs"></div>
-      <div style="font-size:11px;color:var(--text3);padding-top:8px;border-top:1px solid var(--border)">
-        Total vientres acumulados 2035: <strong id="v-acum" style="color:var(--accent)">—</strong>
+        <div class="input-group">
+          <div class="input-label">Moneda del Modelo</div>
+          <select class="input-field" id="in-moneda" oninput="markChanged()">
+            <option value="COP">COP — Pesos Colombianos</option>
+            <option value="USD">USD — Dólares</option>
+            <option value="GTQ">GTQ — Quetzales</option>
+            <option value="MXN">MXN — Pesos Mexicanos</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <div class="input-label">Sector / Industria</div>
+          <select class="input-field" id="in-sector" oninput="markChanged()">
+            <option>Logística / Transporte</option>
+            <option>Agroindustrial</option>
+            <option>Comercial / Retail</option>
+            <option>Manufactura</option>
+            <option>Servicios</option>
+            <option>Construcción</option>
+            <option>Energía</option>
+            <option>Tecnología</option>
+            <option>Salud</option>
+            <option>Otro</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -623,9 +638,9 @@ body{
 <div id="page-pres" class="page">
   <div class="pres-cover">
     <div class="pres-overline">Confidencial · Solo para uso del Comité de Crédito</div>
-    <div class="pres-company">Agroindustrias de<br>Animales S.A.</div>
-    <div class="pres-tagline">Modelo Financiero de Proyección · Solicitud de Crédito Comercial</div>
-    <div class="pres-date">Guatemala · <span id="pres-date"></span></div>
+    <div class="pres-company" id="pres-company">Modelo Financiero</div>
+    <div class="pres-tagline">Análisis de Viabilidad Crediticia · DT Models</div>
+    <div class="pres-date"><span id="pres-date"></span></div>
     <div class="pres-score-box">
       <div class="pres-score-big" id="pres-score-num">80</div>
       <div class="pres-score-sub">Score Crediticio · / 100</div>
@@ -663,23 +678,8 @@ body{
     </div>
   </div>
 
-  <div class="pres-section">
-    <div class="pres-section-title"><span class="pres-section-num">IV</span> Viabilidad del Aval — MARTESA</div>
-    <div class="grid-4" style="margin-bottom:16px">
-      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">Score Avalista</div><div class="kpi-value c-ok">76.6/100</div><div class="kpi-sub">✅ Puede Avalar</div></div>
-      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">ICR 2025</div><div class="kpi-value c-ok">10.2x</div></div>
-      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">D/Patrimonio 2025</div><div class="kpi-value c-ok">0.04x</div></div>
-      <div class="kpi" style="background:var(--surface2);border-radius:7px"><div class="kpi-label">Current Ratio</div><div class="kpi-value c-ok">3.74x</div></div>
-    </div>
-    <div class="pres-highlight">
-      MARTESA puede avalar <strong>parcialmente (~USD 9.2M, patrimonio neto)</strong>. 
-      Complementar con <strong>garantía hipotecaria sobre PPE (Q68.4M)</strong>. 
-      Patrimonio cubre 47% del crédito. Fortalezas: D/E 0.04x, ICR 10.2x, Current Ratio 3.74x.
-    </div>
-  </div>
-
   <div class="pres-section" style="border-bottom:none">
-    <div class="pres-section-title"><span class="pres-section-num">V</span> Recomendación Final</div>
+    <div class="pres-section-title"><span class="pres-section-num">IV</span> Recomendación Final</div>
     <div class="grid-2">
       <div>
         <div style="font-size:10px;color:var(--text3);margin-bottom:10px;letter-spacing:.1em;text-transform:uppercase">Aprobación Condicionada</div>
@@ -697,7 +697,7 @@ body{
 
 <!-- Footer -->
 <div id="footer">
-  <div style="color:var(--text3)">Agroindustrias de Animales S.A. · FinModel Pro v3.5 · Confidencial</div>
+  <div style="color:var(--text3)">DT Models · Modelo Financiero · Confidencial</div>
   <div class="footer-stats">
     <div class="footer-stat"><span>Monto</span><strong id="f-monto">$19.45M USD</strong></div>
     <div class="footer-stat"><span>Tasa</span><strong id="f-tasa">14% N.A.</strong></div>
@@ -716,57 +716,50 @@ body{
 // ──────────────────────────────────────────────
 // BASE PARAMETERS
 // ──────────────────────────────────────────────
+// ── BASE PARAMS (generic — works for any industry) ──
 const BASE = {
-  inflacion: 0.0396,
-  usd_gtq: 0.13,
-  isr: 0.12,
-  monto_usd: 19_449_494,
+  isr: 0.33,
+  monto_usd: 1_000_000,
   tasa_na: 0.14,
-  plazo_meses: 90,
-  gracia_meses: 24,
-  vientres: [550,1150,1650,1650,500,500,500,500,500,500],
-  lechones_por_parto: 18,
-  partos_por_vientre: 2.4,
-  mortalidad: 0.01,
-  libras_por_cerdo: 280,
-  precio_gtq_libra: 10.5,
-  costo_alimentacion_pct: 0.45,
-  costo_sanidad_pct: 0.04,
-  costo_energia_pct: 0.02,
-  opex_pct: 0.15,
-  ppe_inicial_usd: 19_964_151,
+  plazo_meses: 60,
+  gracia_meses: 12,
+  ing_base: 1_000,       // M in client currency
+  crec_1: 0.10,          // year 1 growth
+  crec_2: 0.15,          // years 2-5 growth
+  crec_3: 0.08,          // years 6-10 growth
+  margen_bruto: 0.40,    // gross margin
+  opex_pct: 0.20,        // opex as % of revenue
+  ppe: 0,                // fixed assets
+  moneda: 'COP',
+  sector: 'Logística / Transporte',
 };
 
 const YEARS = Array.from({length:10},(_,i)=>2026+i);
 const YL = YEARS.map(String);
 
 // ──────────────────────────────────────────────
-// CALCULATION ENGINE
+// CALCULATION ENGINE — GENERIC (any industry)
 // ──────────────────────────────────────────────
 function calcModel(p) {
   const n = 10;
 
-  // Revenue build-up from livestock
+  // Revenue projection — compound growth from historical base
   const ingresos = [], costos = [];
+  let ing = p.ing_base; // starts from last historical year
   for (let i=0;i<n;i++) {
-    const vAcum = p.vientres.slice(0,i+1).reduce((a,b)=>a+b,0);
-    const partos = vAcum * p.partos_por_vientre;
-    const lechones = partos * p.lechones_por_parto * (1-p.mortalidad);
-    let rev = lechones * p.libras_por_cerdo * p.precio_gtq_libra * p.usd_gtq;
-    if (i===0) rev *= 0;          // 2026: no revenue
-    else if (i===1) rev *= 0.33;  // 2027: partial (~4 months)
-    ingresos.push(rev);
-    costos.push(rev * (p.costo_alimentacion_pct + p.costo_sanidad_pct + p.costo_energia_pct));
+    const g = i===0 ? p.crec_1 : i<5 ? p.crec_2 : p.crec_3;
+    ing = ing * (1 + g);
+    ingresos.push(ing);
+    costos.push(ing * (1 - p.margen_bruto));
   }
 
   // OPEX
   const opex = ingresos.map(ing=>ing*p.opex_pct);
-  opex[0] = p.ppe_inicial_usd * 0.025; // pre-operative fixed opex 2026
 
   // EBITDA
   const utilBruta = ingresos.map((r,i)=>r-costos[i]);
   const ebitda = utilBruta.map((ub,i)=>ub-opex[i]);
-  const depreciacion = Array(n).fill(p.ppe_inicial_usd/20);
+  const depreciacion = Array(n).fill((p.ppe||0)/20);
 
   // Debt schedule
   const amort = p.plazo_meses - p.gracia_meses;
@@ -790,13 +783,14 @@ function calcModel(p) {
   const uan  = uai.map(u=>u>0?u*(1-p.isr):u);
 
   // Balance (simplified)
-  let patrimonioAcum = 4_509_078*p.usd_gtq;
+  // Balance — simplified from historical patrimony + projections
+  let patrimonioAcum = p.ing_base * 0.5; // estimate: 50% of base revenue
   const activos=[], pasivos=[], patrimonio=[];
   let saldoD = p.monto_usd;
   for (let i=0;i<n;i++){
     saldoD=Math.max(0,saldoD-capital[i]);
     patrimonioAcum+=uan[i];
-    const pasi = saldoD+53307*p.usd_gtq;
+    const pasi = saldoD;
     const acti = Math.max(patrimonioAcum,0)+pasi;
     activos.push(acti); pasivos.push(pasi);
     patrimonio.push(acti-pasi);
@@ -1133,7 +1127,7 @@ function renderPresentation(){
   // Summary text
   const dscrMin=Math.min(...R.dscr.slice(1,6).filter(v=>v!==null));
   document.getElementById('pres-exec-summary').innerHTML=`
-    Agroindustrias de Animales S.A. presenta un modelo de negocio <strong>agroindustrial con doble fuente de ingresos</strong>: 
+    DT Models S.A. presenta un modelo de negocio <strong>agroindustrial con doble fuente de ingresos</strong>: 
     venta de productos cárnicos y comercialización de energía eléctrica. 
     El proyecto requiere <strong>USD ${(R.params.monto/1e6).toFixed(2)}M</strong> estructurado en 6 desembolsos durante 2026. 
     Los ingresos principales inician en julio–septiembre de 2027, generando un período de ramp-up de ~13 meses 
@@ -1180,14 +1174,14 @@ function renderPresentation(){
   document.getElementById('pres-recomendacion').innerHTML=`
     ✅ Proyecto con <strong>sólidos fundamentos</strong> en régimen de crucero (2028+).<br>
     ${R.deficit<0?`⚠️ Reducir monto a ~<strong>${montoMaxStr}</strong> o extender plazo para DSCR ≥ 1.30x.<br>`:''}
-    🔴 Complementar aval MARTESA con <strong>hipoteca sobre PPE Q68.4M</strong>.<br>
-    📋 Monitoreo trimestral de DSCR durante ramp-up (2026–2027).`;
+    📋 Monitoreo trimestral de DSCR durante el período de ramp-up.<br>
+    🔒 Definir garantías reales según estructura del proyecto.\`;
   document.getElementById('pres-condiciones').innerHTML=`
     1. Monto máximo: <strong>${montoMaxStr}</strong><br>
-    2. Garantía hipotecaria sobre PPE operativo<br>
-    3. Covenant DSCR mínimo 1.0x en 2027<br>
+    2. Garantías reales según estructura del proyecto<br>
+    3. Covenant DSCR mínimo 1.0x durante ramp-up<br>
     4. Reporte financiero trimestral al acreedor<br>
-    5. Desembolsos condicionados a avance físico`;
+    5. Desembolsos condicionados a hitos del proyecto\`;
 }
 
 function updateGlobalKPIs(){
@@ -1229,25 +1223,7 @@ function goPage(id, btn) {
   }
 }
 
-// ──────────────────────────────────────────────
-// VIENTRES EDITOR
-// ──────────────────────────────────────────────
-function initVientresEditor(){
-  const container=document.getElementById('vientres-inputs');
-  container.innerHTML='';
-  BASE.vientres.forEach((v,i)=>{
-    container.innerHTML+=`
-      <div class="v-cell">
-        <div class="v-yr">${2026+i}</div>
-        <input class="v-inp" id="vien-${i}" type="number" value="${v}" min="0" oninput="markChanged();updateVAcum()">
-      </div>`;
-  });
-  updateVAcum();
-}
-function updateVAcum(){
-  const total=Array.from({length:10},(_,i)=>parseInt(document.getElementById(`vien-${i}`)?.value||0,10)).reduce((a,b)=>a+b,0);
-  document.getElementById('v-acum').textContent=total.toLocaleString();
-}
+// Generic model — no sector-specific editor needed
 
 // ──────────────────────────────────────────────
 // RECALCULATE
@@ -1263,19 +1239,20 @@ function doRecalc(){
 
   const p = {
     ...BASE,
-    monto_usd:           parseFloat(document.getElementById('in-monto').value)||BASE.monto_usd,
-    tasa_na:             (parseFloat(document.getElementById('in-tasa').value)||14)/100,
-    plazo_meses:         parseInt(document.getElementById('in-plazo').value)||90,
-    gracia_meses:        parseInt(document.getElementById('in-gracia').value)||24,
-    precio_gtq_libra:    parseFloat(document.getElementById('in-precio-gtq').value)||10.5,
-    lechones_por_parto:  parseFloat(document.getElementById('in-lechones').value)||18,
-    libras_por_cerdo:    parseFloat(document.getElementById('in-libras').value)||280,
-    mortalidad:          (parseFloat(document.getElementById('in-mort').value)||1)/100,
-    opex_pct:            (parseFloat(document.getElementById('in-opex').value)||15)/100,
-    costo_alimentacion_pct:(parseFloat(document.getElementById('in-alim').value)||45)/100,
-    usd_gtq:             parseFloat(document.getElementById('in-usd-gtq').value)||0.13,
-    isr:                 (parseFloat(document.getElementById('in-isr').value)||12)/100,
-    vientres:            Array.from({length:10},(_,i)=>parseInt(document.getElementById(`vien-${i}`)?.value||0,10)),
+    monto_usd:    parseFloat(document.getElementById('in-monto').value)||BASE.monto_usd,
+    tasa_na:      (parseFloat(document.getElementById('in-tasa').value)||14)/100,
+    plazo_meses:  parseInt(document.getElementById('in-plazo').value)||60,
+    gracia_meses: parseInt(document.getElementById('in-gracia').value)||12,
+    ing_base:     parseFloat(document.getElementById('in-ing-base')?.value)||BASE.ing_base,
+    crec_1:       (parseFloat(document.getElementById('in-crec-1')?.value)||10)/100,
+    crec_2:       (parseFloat(document.getElementById('in-crec-2')?.value)||15)/100,
+    crec_3:       (parseFloat(document.getElementById('in-crec-3')?.value)||8)/100,
+    margen_bruto: (parseFloat(document.getElementById('in-mb')?.value)||40)/100,
+    opex_pct:     (parseFloat(document.getElementById('in-opex')?.value)||20)/100,
+    ppe:          parseFloat(document.getElementById('in-ppe')?.value)||0,
+    isr:          (parseFloat(document.getElementById('in-isr').value)||33)/100,
+    moneda:       document.getElementById('in-moneda')?.value||'COP',
+    sector:       document.getElementById('in-sector')?.value||'',
   };
 
   setTimeout(()=>{
@@ -1299,13 +1276,26 @@ function doRecalc(){
 // INIT
 // ──────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded',()=>{
+  // Load params from URL if coming from dashboard
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('client')) {
+    const clientName = decodeURIComponent(params.get('client'));
+    // Update page title and presentation
+    document.title = `${clientName} — DT Models`;
+    const presCompany = document.getElementById('pres-company');
+    if(presCompany) presCompany.textContent = clientName;
+  }
+  if(params.get('monto') && parseFloat(params.get('monto'))>0) {
+    const montoEl = document.getElementById('in-monto');
+    if(montoEl) montoEl.value = params.get('monto');
+    BASE.monto_usd = parseFloat(params.get('monto'));
+  }
   R = calcModel({...BASE});
   updateGlobalKPIs();
   renderers.dashboard();
   rendered.dashboard=true;
-  initVientresEditor();
   document.getElementById('pres-date').textContent =
-    new Date().toLocaleDateString('es-GT',{year:'numeric',month:'long'});
+    new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long'});
 });
 </script>
 </body>
