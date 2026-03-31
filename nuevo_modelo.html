@@ -434,7 +434,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
 
       <!-- P&L -->
       <div class="form-section">
-        <div class="form-section-title">Estado de Resultados (P&L) — Cifras en miles</div>
+        <div class="form-section-title">Estado de Resultados (P&L) — Valores en COP, valor absoluto</div>
         <div style="overflow-x:auto">
           <table class="year-table">
             <thead>
@@ -446,6 +446,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
               </tr>
             </thead>
             <tbody>
+              <tr style="background:rgba(59,130,246,.06)">
+                <td colspan="4" style="font-size:11px;color:#60A5FA;padding:5px 8px">
+                  📌 Ingresa valores en pesos colombianos (COP), valor absoluto. Ej: $121.299.616.146 → escribe 121299616146
+                </td>
+              </tr>
               <tr><td>Ingresos Netos</td><td><input class="year-input" id="pl-ing-1" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-ing-2" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-ing-3" type="number" placeholder="0" oninput="calcPL()"></td></tr>
               <tr><td>Costo de Ventas</td><td><input class="year-input" id="pl-cv-1" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-cv-2" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-cv-3" type="number" placeholder="0" oninput="calcPL()"></td></tr>
               <tr style="background:rgba(0,212,168,.04)"><td><strong>Utilidad Bruta</strong></td><td><input class="year-input" id="pl-ub-1" readonly style="color:var(--accent)"></td><td><input class="year-input" id="pl-ub-2" readonly style="color:var(--accent)"></td><td><input class="year-input" id="pl-ub-3" readonly style="color:var(--accent)"></td></tr>
@@ -465,9 +470,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
 
       <!-- BALANCE -->
       <div class="form-section">
-        <div class="form-section-title">Balance General — Cifras en miles (último año)</div>
+        <div class="form-section-title">Balance General — Valores en COP, valor absoluto (último año real)</div>
         <div class="form-grid-2">
           <div>
+            <div style="font-size:11px;color:#60A5FA;margin-bottom:10px;padding:6px 8px;background:rgba(59,130,246,.06);border-radius:4px">
+              📌 Valores en pesos (COP), valor absoluto. Ej: 55.611.034.632 → escribe 55611034632
+            </div>
             <div style="font-size:10px;color:var(--text3);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase">ACTIVOS</div>
             <div class="form-group" style="margin-bottom:8px"><label class="form-label">Activo Corriente</label><input class="form-input" id="b-ac" type="number" placeholder="0" style="font-size:12px"></div>
             <div class="form-group" style="margin-bottom:8px"><label class="form-label">Activo No Corriente (PPE)</label><input class="form-input" id="b-anc" type="number" placeholder="0" style="font-size:12px"></div>
@@ -502,9 +510,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
           <div class="form-group">
             <label class="form-label">Monto Solicitado <span>*</span></label>
             <div class="form-input-wrap">
-              <input class="form-input" id="c-monto" type="number" placeholder="1000000" oninput="updatePreview()">
-              <span class="form-input-unit" id="c-moneda-unit">USD</span>
+              <input class="form-input" id="c-monto" type="number" placeholder="18466600000" oninput="updatePreview()">
+              <span class="form-input-unit" id="c-moneda-unit">COP</span>
             </div>
+            <div class="form-note" style="color:var(--accent)">⚠️ Ingresa el valor en pesos — valor absoluto. Ej: 18.466.600.000 → escribe 18466600000</div>
           </div>
           <div class="form-group">
             <label class="form-label">Tasa Anual N.A. (%) <span>*</span></label>
@@ -735,7 +744,16 @@ function exportPDF(){
   const sector = document.getElementById('f-sector').value || ''
   const sc = R.score>=70?'#22c55e':R.score>=55?'#f59e0b':'#ef4444'
   const dscrColor = v => v===null?'#888':v>=1.5?'#22c55e':v>=1.0?'#f59e0b':'#ef4444'
-  const fmtM = v => v===null?'—':'$'+(v/1e6).toFixed(1)+'M'
+  const fmtM = v => {
+    if(v===null||v===undefined) return '—'
+    const mon = document.getElementById('f-moneda')?.value||'COP'
+    const abs = Math.abs(v)
+    if(abs>=1e12) return '$'+(v/1e12).toFixed(2)+'T '+mon
+    if(abs>=1e9)  return '$'+(v/1e9).toFixed(2)+'B '+mon
+    if(abs>=1e6)  return '$'+(v/1e6).toFixed(1)+'M '+mon
+    if(abs>=1e3)  return '$'+(v/1e3).toFixed(0)+'K '+mon
+    return '$'+v.toFixed(0)+' '+mon
+  }
   const fmtX = v => v===null?'—':v.toFixed(2)+'x'
   const fmtP = v => (v*100).toFixed(1)+'%'
 
