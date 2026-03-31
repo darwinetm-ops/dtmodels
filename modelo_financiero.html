@@ -1333,8 +1333,23 @@ window.addEventListener('DOMContentLoaded',()=>{
   const isBlank = qp.get('blank') === '1';
 
   if(isBlank){
-    // ── Calculadora Rápida: start completely blank ──
-    // P keeps its default values — no data loaded
+    // ── Calculadora Rápida: completely blank ──
+    P.monto    = 0;
+    P.h_ing    = 0;
+    P.h_cv     = 0;
+    P.h_ga     = 0;
+    P.h_dep    = 0;
+    P.h_gf     = 0;
+    P.h_oi     = 0;
+    P.h_act    = 0;
+    P.h_pas    = 0;
+    P.h_pat    = 0;
+    P.p_crecIng = Array(10).fill(0);
+    P.p_mb      = Array(10).fill(0);
+    P.p_gaAdm   = Array(10).fill(0);
+    P.p_dep     = Array(10).fill(0);
+    P.p_oi      = Array(10).fill(0);
+    P.p_gfVig   = Array(10).fill(0);
   } else if(modelId){
     // ── Open from Dashboard: load full saved model ──
     try{
