@@ -481,7 +481,7 @@ const MONTO_URL = parseFloat(QP.get('monto')) || 0;
 // STATE — current inputs
 // ════════════════════════════════════════════════
 let P = {
-  monto:    MONTO_URL || 1000000000,
+  monto:    MONTO_URL || 0,
   tasa:     14,       // % N.A.
   plazo:    60,       // meses
   gracia:   0,        // meses
@@ -489,20 +489,20 @@ let P = {
   moneda:   'COP',
   sector:   'Logística / Transporte',
   horizonte: 5,
-  // Historical base (Año 0)
-  h_ing:  1000,  // Ingresos totales
-  h_cv:   770,   // Costos directos
-  h_ga:   43,    // Gastos administrativos
-  h_dep:  0,     // Depreciación
-  h_gf:   0,     // Gastos financieros deuda vigente
-  h_oi:   0,     // Otros ingresos no op
-  h_act:  500,   // Activos totales
-  h_pas:  200,   // Pasivos totales
-  h_pat:  300,   // Patrimonio
+  // Historical base (Año 0) — all zero by default
+  h_ing:  0,
+  h_cv:   0,
+  h_ga:   0,
+  h_dep:  0,
+  h_gf:   0,
+  h_oi:   0,
+  h_act:  0,
+  h_pas:  0,
+  h_pat:  0,   // Patrimonio
   // Year projections [yr1..yrN] — set by year table
-  p_ing:      [1100,1200,1300,1400,1500,1600,1700,1800,1900,2000], // ingresos absolutos año a año
-  p_mb:       [23, 23, 23, 23, 23, 23, 23, 23, 23, 23], // % margen bruto
-  p_gaAdm:    [5,  5,  5,  5,  5,  5,  5,  5,  5, 5],  // % gastos adm / ing
+  p_ing:      [0,0,0,0,0,0,0,0,0,0], // ingresos absolutos año a año
+  p_mb:       [0,0,0,0,0,0,0,0,0,0], // % margen bruto
+  p_gaAdm:    [0,0,0,0,0,0,0,0,0,0],  // % gastos adm / ing
   p_dep:      [0,  0,  0,  0,  0,  0,  0,  0,  0, 0],  // depreciación año
   p_oi:       [0,  0,  0,  0,  0,  0,  0,  0,  0, 0],  // otros ingresos no op
   p_gfVig:    [0,  0,  0,  0,  0,  0,  0,  0,  0, 0],  // gastos fin deuda vigente año
