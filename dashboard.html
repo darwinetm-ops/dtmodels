@@ -435,8 +435,8 @@ function createModel(){
 
 function openModel(i){
   const m = getModels()[i]
-  // Open the financial model with client data
-  window.open('modelo_financiero.html?client='+encodeURIComponent(m.client)+'&monto='+m.monto,'_blank')
+  // Pass id so nuevo_modelo.html can restore all saved inputs
+  window.open('nuevo_modelo.html?client='+encodeURIComponent(m.client)+'&monto='+m.monto+'&id='+m.id,'_blank')
 }
 
 function deleteModel(i){
@@ -467,15 +467,7 @@ function logout(){ window.location.href='index.html' }
 // ── INIT ──
 renderModels()
 
-// ── ADD SAMPLE MODEL IF EMPTY ──
-if(!getModels().length){
-  saveModels([{
-    id:1, client:'Agroindustrias de Animales S.A.', type:'credito',
-    monto:19449494, desc:'Crédito para expansión de planta porcina y planta solar',
-    date:'19 mar. 2026', score:80, dscr:1.22
-  }])
-  renderModels()
-}
+
 </script>
 </body>
 </html>
