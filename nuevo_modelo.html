@@ -1139,15 +1139,15 @@ function calcModel(){
   const monto    = parseFloat(document.getElementById('c-monto').value)||0
   const tasa_na  = (parseFloat(document.getElementById('c-tasa').value)||14)/100
   const plazo    = parseInt(document.getElementById('c-plazo').value)||60
-  const gracia   = parseInt(document.getElementById('c-gracia').value)||12
+  const gracia   = parseInt(document.getElementById('c-gracia').value)||0
   const isr      = (parseFloat(document.getElementById('c-isr').value)||12)/100
   const ppe      = parseFloat(document.getElementById('s-ppe').value)||monto
   const ppeVida  = parseInt(document.getElementById('s-ppe-vida').value)||10
   const inicioIng= 1 // field removed — single disbursement assumed
 
-  // Base revenue from last historical year
-  const baseIng = (parseFloat(document.getElementById('pl-ing-3').value)||0)*1000
-  const baseIng2 = baseIng > 0 ? baseIng : monto * 0.5
+  // Base revenue from last historical year — raw value, no multiplier
+  const baseIng = parseFloat(document.getElementById('pl-ing-3').value)||0
+  const baseIng2 = baseIng > 0 ? baseIng : 0
 
   // Build projections
   const ingresos=[], costos=[], opex=[], ebitda=[], depreciacion=[]
@@ -1179,18 +1179,26 @@ function calcModel(){
   const intereses=[], capital=[]
   let saldo = monto
   for(let i=0;i<n;i++){
-    let iy, cy
-    if(i < Math.ceil(gracia/12)){     iy=saldo*tasa_na; cy=0 }
-    else if(i < Math.ceil(gracia/12)+nAmortYr){ iy=saldo*tasa_na; cy=Math.min(cuotaM*12,saldo) }
-    else{                              iy=0; cy=saldo }
+    let cy = 0
+    const graciaYrs = Math.ceil(gracia/12)
+    if(i >= graciaYrs && i < graciaYrs + nAmortYr){
+      cy = Math.min(cuotaM*12, saldo)
+    } else if(i >= graciaYrs + nAmortYr){
+      cy = saldo // final balloon if any
+    }
+    // Use average balance for more accurate annual interest
+    const saldoFin = Math.max(0, saldo - cy)
+    const iy = ((saldo + saldoFin) / 2) * tasa_na
     intereses.push(iy); capital.push(cy)
-    saldo = Math.max(0, saldo-cy)
+    saldo = saldoFin
   }
   const servDeuda = intereses.map((v,i)=>v+capital[i])
   const ebit = ebitda.map((e,i)=>e-depreciacion[i])
   const uai  = ebit.map((e,i)=>e-intereses[i])
   const uan  = uai.map(u=>u>0?u*(1-isr):u)
-  const cfads = [...ebitda]
+  // CFADS = EBITDA − ISR pagado en efectivo (estándar bancario)
+  const isr_pago_wiz = uai.map(u => u > 0 ? u * isr : 0)
+  const cfads = ebitda.map((e, i) => e - isr_pago_wiz[i])
 
   // Ratios
   const dscr = cfads.map((c,i)=>servDeuda[i]>0?+(c/servDeuda[i]).toFixed(3):null)
@@ -1198,7 +1206,7 @@ function calcModel(){
   const mEbitda = ebitda.map((e,i)=>ingresos[i]>0?+(e/ingresos[i]).toFixed(3):0)
 
   // Balance
-  let pat = (parseFloat(document.getElementById('b-pat').value)||0)*1000
+  let pat = parseFloat(document.getElementById('b-pat').value)||0
   const activos=[], pasivos=[], patrimonio=[]
   let sd = monto
   for(let i=0;i<n;i++){
@@ -1211,14 +1219,18 @@ function calcModel(){
   // Score
   const dscrVals = dscr.slice(0,6).filter(v=>v!==null)
   const dscrMin  = dscrVals.length ? Math.min(...dscrVals) : 0
-  let score=0
-  if(dscrMin>=1.5)score+=35; else if(dscrMin>=1.3)score+=25; else if(dscrMin>=1.0)score+=15; else score+=5
-  const me2 = mEbitda[2]||0
-  if(me2>0.5)score+=25; else if(me2>0.3)score+=18; else score+=8
-  const dp2 = dPat[2]
-  if(dp2!==null&&dp2<0.2)score+=20; else if(dp2!==null&&dp2<0.5)score+=12; else score+=4
-  score+=20; score=Math.min(score,100)
-  const verdict = score>=70?'✅ APROBABLE':score>=55?'⚠️ CONDICIONADO':'❌ NO VIABLE'
+  // Unified score — same criteria as modelo_financiero
+  let score = 0
+  // DSCR (40 pts)
+  if(dscrMin>=1.5)score+=40; else if(dscrMin>=1.3)score+=30; else if(dscrMin>=1.0)score+=15; else score+=0
+  // Margen EBITDA promedio (30 pts)
+  const mEbAvg = mEbitda.reduce((a,b)=>a+b,0)/mEbitda.length
+  if(mEbAvg>0.25)score+=30; else if(mEbAvg>0.12)score+=18; else if(mEbAvg>0)score+=8; else score+=0
+  // Deuda/Patrimonio año 1 (30 pts)
+  const dp0 = dPat[0]
+  if(dp0!==null&&dp0<0.3)score+=30; else if(dp0!==null&&dp0<0.7)score+=18; else if(dp0!==null&&dp0<1.5)score+=8; else score+=0
+  score = Math.min(score, 100)
+  const verdict = score>=70?'✅ APROBABLE':score>=50?'⚠️ CONDICIONADO':'❌ NO VIABLE'
 
   // Max loanable
   const cfadsMin = cfads.slice(0,6).filter(v=>v>0).length ? Math.min(...cfads.slice(0,6).filter(v=>v>0)) : 0

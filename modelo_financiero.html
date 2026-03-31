@@ -609,11 +609,21 @@ function applyInputsToP(inp){
     P.h_pat = P.h_act - P.h_pas;
   }
 
-  // Growth projections from step 5 (s-ing-0..4, s-mb-0..4, s-opex-0..4)
+  // Growth projections from step 5
   for(let i=0;i<10;i++){
     if(inp[`s-ing-${i}`]  !== undefined) P.p_crecIng[i] = n(inp[`s-ing-${i}`]);
     if(inp[`s-mb-${i}`]   !== undefined) P.p_mb[i]      = n(inp[`s-mb-${i}`]);
     if(inp[`s-opex-${i}`] !== undefined) P.p_gaAdm[i]   = n(inp[`s-opex-${i}`]);
+  }
+  // Convert growth rates into absolute p_ing values for modelo_financiero calcModel
+  // modelo_financiero.calcModel reads P.p_ing[i] (absolute), not P.p_crecIng[i]
+  if(P.h_ing > 0){
+    let ingBase = P.h_ing;
+    for(let i=0;i<10;i++){
+      const g = (P.p_crecIng[i]||0)/100;
+      ingBase = ingBase * (1 + g);
+      P.p_ing[i] = ingBase;
+    }
   }
 
   // Horizonte
@@ -637,12 +647,22 @@ function calcModel(){
   const oi=[],gfVig=[],uai=[],isr_pago=[],uan=[];
 
   for(let i=0;i<n;i++){
-    // Ingresos: use absolute value entered directly by analyst
-    const ing  = P.p_ing[i] || P.h_ing * Math.pow(1.10, i+1);
+    // Ingresos: use absolute p_ing if available, else grow from base
+    let ing;
+    if(P.p_ing[i] > 0){
+      ing = P.p_ing[i];
+    } else if(P.h_ing > 0){
+      // Build from historical base + growth rates
+      let base = P.h_ing;
+      for(let j=0;j<=i;j++) base *= (1 + (P.p_crecIng[j]||0)/100);
+      ing = base;
+    } else {
+      ing = 0;
+    }
 
-    // P&L lines from percentages applied to that year's revenue
-    const mb  = (P.p_mb[i]||23)/100;
-    const ga_ = (P.p_gaAdm[i]||5)/100;
+    // P&L — use analyst-entered margins, default 0 if not set
+    const mb  = (P.p_mb[i]||0)/100;
+    const ga_ = (P.p_gaAdm[i]||0)/100;
     const dep_ = P.p_dep[i]||0;
     const oi_  = P.p_oi[i]||0;
     const gfV_ = P.p_gfVig[i]||0;
@@ -718,17 +738,20 @@ function calcModel(){
   const mNe  = uan.map((u,i)=>ingresos[i]>0?u/ingresos[i]:0);
   const dPat = pasArr.map((p,i)=>patArr[i]>0?+(p/patArr[i]).toFixed(3):null);
 
-  // ── SCORE ──
+  // ── SCORE — unified criteria (same as wizard) ──
   const dscrVals = dscr.filter(v=>v!==null);
   const dscrMin  = dscrVals.length ? Math.min(...dscrVals) : 0;
   let score = 0;
-  if(dscrMin>=1.5)score+=35; else if(dscrMin>=1.3)score+=28; else if(dscrMin>=1.0)score+=15; else score+=5;
-  const mEbMid = mEb[Math.floor(n/2)]||0;
-  if(mEbMid>0.35)score+=25; else if(mEbMid>0.15)score+=16; else score+=6;
+  // DSCR (40 pts)
+  if(dscrMin>=1.5)score+=40; else if(dscrMin>=1.3)score+=30; else if(dscrMin>=1.0)score+=15; else score+=0;
+  // Margen EBITDA promedio (30 pts)
+  const mEbAvg = mEb.reduce((a,b)=>a+b,0)/mEb.length;
+  if(mEbAvg>0.25)score+=30; else if(mEbAvg>0.12)score+=18; else if(mEbAvg>0)score+=8; else score+=0;
+  // Deuda/Patrimonio año 1 (30 pts)
   const dp0 = dPat[0];
-  if(dp0!==null&&dp0<0.3)score+=20; else if(dp0!==null&&dp0<0.7)score+=12; else score+=4;
-  score+=20; score=Math.min(score,100);
-  const verdict = score>=70?'✅ APROBABLE':score>=55?'⚠️ CONDICIONADO':'❌ NO VIABLE';
+  if(dp0!==null&&dp0<0.3)score+=30; else if(dp0!==null&&dp0<0.7)score+=18; else if(dp0!==null&&dp0<1.5)score+=8; else score+=0;
+  score = Math.min(score, 100);
+  const verdict = score>=70?'✅ APROBABLE':score>=50?'⚠️ CONDICIONADO':'❌ NO VIABLE';
 
   // ── CAPACITY ──
   const cfadsPos = cfads.filter(v=>v>0);
