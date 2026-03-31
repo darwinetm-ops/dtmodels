@@ -1330,37 +1330,36 @@ function doRecalc(){
 window.addEventListener('DOMContentLoaded',()=>{
   const qp = new URLSearchParams(window.location.search);
   const modelId = qp.get('id');
+  const isBlank = qp.get('blank') === '1';
 
-  if(modelId){
-    // ── Load full model data from localStorage ──
+  if(isBlank){
+    // ── Calculadora Rápida: start completely blank ──
+    // P keeps its default values — no data loaded
+  } else if(modelId){
+    // ── Open from Dashboard: load full saved model ──
     try{
       const models = JSON.parse(localStorage.getItem('dtmodels_models')||'[]');
       const saved  = models.find(m=>String(m.id)===String(modelId));
       if(saved){
-        // Restore P from saved inputs
         if(saved.inputs){
           const inp = JSON.parse(saved.inputs);
           applyInputsToP(inp);
         }
-        // Override monto from saved model
         if(saved.monto) P.monto = saved.monto;
         if(saved.tasa)  P.tasa  = saved.tasa * 100;
         if(saved.plazo) P.plazo = saved.plazo;
       }
     }catch(e){ console.warn('Could not load saved model', e); }
   } else if(MONTO_URL>0){
+    // ── Direct URL with monto only (e.g. from share link) ──
     P.monto = MONTO_URL;
   }
 
-  // Calculate with loaded/default params
+  // Calculate and render
   R = calcModel();
   updateGlobal();
-
-  // Render first page
   renderDashboard();
   rendered['dash']=true;
-
-  // Setup inputs form with current P values
   setupInputs();
 });
 </script>

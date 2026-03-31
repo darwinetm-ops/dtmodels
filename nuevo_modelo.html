@@ -1714,12 +1714,19 @@ function copyShareLink(){
     if(saved && saved.inputs){
       try {
         const inp = JSON.parse(saved.inputs)
-        // Restore after DOM settles
+        // Restore inputs and jump to step 6 (results)
         setTimeout(()=>{
           restoreInputs(inp)
-          // Also restore preview fields
           if(inp['f-empresa']) updatePreview()
-        }, 150)
+          // Mark steps 1-5 as done and go to results
+          for(let s=1;s<=5;s++){
+            const num = document.getElementById(`step-num-${s}`)
+            const nav = document.getElementById(`step-nav-${s}`)
+            if(num){ num.classList.add('completed'); num.textContent='✓' }
+            if(nav) nav.classList.add('completed')
+          }
+          goStep(6)
+        }, 200)
       } catch(e){ console.warn('Could not restore inputs', e) }
     }
   }
