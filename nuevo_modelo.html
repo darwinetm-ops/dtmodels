@@ -189,6 +189,25 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
   color:var(--text2);border-radius:5px;font-size:12px;cursor:pointer;
   font-family:var(--font-mono);transition:all .15s}
 .upload-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── PDF PRINT STYLES ── */
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body { background: #fff !important; color: #000 !important; font-size: 11px; }
+  #nav, .steps-sidebar, .wizard-nav, #btn-pdf,
+  .btn, [onclick], #share-link-box { display: none !important; }
+  .wizard-wrap { display: block !important; }
+  .wizard-content { padding: 0 !important; margin: 0 !important; }
+  .step-page { display: none !important; }
+  .step-page.active { display: block !important; }
+  #pdf-print-view { display: block !important; }
+  .chart-box, .chart-box-tall { height: 180px !important; }
+  .card { border: 1px solid #ccc !important; background: #fff !important; break-inside: avoid; }
+  .data-table th { background: #1c2d42 !important; color: #fff !important; }
+  .stress-grid { display: grid !important; grid-template-columns: repeat(3,1fr) !important; }
+  .stress-col { background: #f8f9fa !important; }
+  @page { margin: 1.5cm; size: A4 landscape; }
+}
 </style>
 </head>
 <body>
@@ -433,8 +452,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
               <tr><td>Gastos Operativos</td><td><input class="year-input" id="pl-go-1" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-go-2" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-go-3" type="number" placeholder="0" oninput="calcPL()"></td></tr>
               <tr><td>Depreciación</td><td><input class="year-input" id="pl-dep-1" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-dep-2" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-dep-3" type="number" placeholder="0" oninput="calcPL()"></td></tr>
               <tr style="background:rgba(0,212,168,.04)"><td><strong>EBITDA</strong></td><td><input class="year-input" id="pl-ebitda-1" readonly style="color:var(--accent)"></td><td><input class="year-input" id="pl-ebitda-2" readonly style="color:var(--accent)"></td><td><input class="year-input" id="pl-ebitda-3" readonly style="color:var(--accent)"></td></tr>
+              <tr style="background:rgba(0,212,168,.04)"><td><strong>Utilidad Operativa</strong></td><td><input class="year-input" id="pl-uop-1" readonly style="color:var(--accent)"></td><td><input class="year-input" id="pl-uop-2" readonly style="color:var(--accent)"></td><td><input class="year-input" id="pl-uop-3" readonly style="color:var(--accent)"></td></tr>
+              <tr><td>Otros Ingresos No Operacionales</td><td><input class="year-input" id="pl-oi-1" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-oi-2" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-oi-3" type="number" placeholder="0" oninput="calcPL()"></td></tr>
               <tr><td>Gastos Financieros</td><td><input class="year-input" id="pl-gf-1" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-gf-2" type="number" placeholder="0" oninput="calcPL()"></td><td><input class="year-input" id="pl-gf-3" type="number" placeholder="0" oninput="calcPL()"></td></tr>
-              <tr><td>Impuestos (%)</td><td><input class="year-input" id="pl-isr-1" type="number" placeholder="12" value="12" oninput="calcPL()"></td><td><input class="year-input" id="pl-isr-2" type="number" placeholder="12" value="12" oninput="calcPL()"></td><td><input class="year-input" id="pl-isr-3" type="number" placeholder="12" value="12" oninput="calcPL()"></td></tr>
+              <tr style="background:rgba(0,212,168,.04)"><td><strong>Utilidad Antes de Impuestos (UAI)</strong></td><td><input class="year-input" id="pl-uai-1" readonly style="color:var(--accent)"></td><td><input class="year-input" id="pl-uai-2" readonly style="color:var(--accent)"></td><td><input class="year-input" id="pl-uai-3" readonly style="color:var(--accent)"></td></tr>
+              <tr><td>Impuesto sobre utilidades (%)</td><td><input class="year-input" id="pl-isr-1" type="number" placeholder="33" value="33" oninput="calcPL()"></td><td><input class="year-input" id="pl-isr-2" type="number" placeholder="33" value="33" oninput="calcPL()"></td><td><input class="year-input" id="pl-isr-3" type="number" placeholder="33" value="33" oninput="calcPL()"></td></tr>
               <tr style="background:rgba(34,197,94,.04)"><td><strong>Utilidad Neta</strong></td><td><input class="year-input" id="pl-un-1" readonly style="color:var(--ok)"></td><td><input class="year-input" id="pl-un-2" readonly style="color:var(--ok)"></td><td><input class="year-input" id="pl-un-3" readonly style="color:var(--ok)"></td></tr>
             </tbody>
           </table>
@@ -503,10 +525,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
             <label class="form-label">Fecha primer desembolso</label>
             <input class="form-input" id="c-fecha" type="month" value="2026-06">
           </div>
-          <div class="form-group">
-            <label class="form-label">Número de desembolsos</label>
-            <input class="form-input" id="c-ndesembolsos" type="number" value="1" min="1" max="10">
-          </div>
+
         </div>
       </div>
 
@@ -532,13 +551,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
             <label class="form-label">Empresa Avalista</label>
             <input class="form-input" id="c-avalista" placeholder="Nombre del avalista (si aplica)">
           </div>
-          <div class="form-group">
-            <label class="form-label">ISR / Impuesto sobre utilidades (%)</label>
-            <div class="form-input-wrap">
-              <input class="form-input" id="c-isr" type="number" value="12" step="1">
-              <span class="form-input-unit">%</span>
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -597,6 +610,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
         <div class="form-section-title">Macro & Otros</div>
         <div class="form-grid-3">
           <div class="form-group">
+            <label class="form-label">Horizonte del modelo (años)</label>
+            <select class="form-select" id="s-horizonte">
+              <option value="5">5 años</option>
+              <option value="7">7 años</option>
+              <option value="10" selected>10 años</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Impuesto sobre utilidades (%)</label>
+            <div class="form-input-wrap">
+              <input class="form-input" id="c-isr" type="number" value="33" step="1">
+              <span class="form-input-unit">%</span>
+            </div>
+          </div>
+          <div class="form-group">
             <label class="form-label">Inflación anual estimada (%)</label>
             <div class="form-input-wrap">
               <input class="form-input" id="s-inflacion" type="number" value="4.0" step="0.5">
@@ -616,19 +644,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
             <label class="form-label">Vida útil PPE (años)</label>
             <input class="form-input" id="s-ppe-vida" type="number" value="10" min="1" max="30">
           </div>
-          <div class="form-group">
-            <label class="form-label">Inicio de ingresos (meses)</label>
-            <input class="form-input" id="s-inicio-ing" type="number" value="1" min="1" max="36">
-            <div class="form-note">Desde el primer desembolso</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Horizonte del modelo (años)</label>
-            <select class="form-select" id="s-horizonte">
-              <option value="5">5 años</option>
-              <option value="7">7 años</option>
-              <option value="10" selected>10 años</option>
-            </select>
-          </div>
+
+          
         </div>
       </div>
 
@@ -704,6 +721,154 @@ let currentStep = 1
 let calcResults = null
 const YEARS_PROJ = ['2026','2027','2028','2029','2030','2031','2032','2033','2034','2035']
 
+
+// ── EXPORT PDF ──
+function exportPDF(){
+  if(!calcResults) calcResults = calcModel()
+  const R = calcResults
+  const empresa = document.getElementById('f-empresa').value || 'Cliente'
+
+  // Build a clean print page
+  const fecha = new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'})
+  const analista = document.getElementById('f-analista').value || 'Darwin Torres'
+  const moneda = document.getElementById('f-moneda').value || 'USD'
+  const sector = document.getElementById('f-sector').value || ''
+  const sc = R.score>=70?'#22c55e':R.score>=55?'#f59e0b':'#ef4444'
+  const dscrColor = v => v===null?'#888':v>=1.5?'#22c55e':v>=1.0?'#f59e0b':'#ef4444'
+  const fmtM = v => v===null?'—':'$'+(v/1e6).toFixed(1)+'M'
+  const fmtX = v => v===null?'—':v.toFixed(2)+'x'
+  const fmtP = v => (v*100).toFixed(1)+'%'
+
+  const html = `<!DOCTYPE html><html lang="es"><head>
+  <meta charset="UTF-8">
+  <title>DT Models — ${empresa}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;font-size:10px;color:#111;background:#fff;padding:20px}
+    .page-break{page-break-after:always}
+    /* HEADER */
+    .hdr{background:#0e1620;color:#fff;padding:16px 20px;border-radius:6px;margin-bottom:14px}
+    .hdr-title{font-size:16px;font-weight:700;color:#00d4a8;margin-bottom:3px}
+    .hdr-sub{font-size:10px;color:#8ba8c4}
+    /* SCORE BOX */
+    .score-row{display:flex;gap:12px;margin-bottom:14px}
+    .score-box{flex:1;border:2px solid ${sc};border-radius:6px;padding:12px 16px;text-align:center;background:#f0fff4}
+    .score-num{font-size:28px;font-weight:700;color:${sc}}
+    .score-lbl{font-size:9px;color:#555;margin-top:3px}
+    .score-verdict{font-size:13px;font-weight:700;color:${sc};margin-top:4px}
+    .param-box{flex:1;border:1px solid #3b9eff;border-radius:6px;padding:12px 16px;background:#eff6ff}
+    .param-title{font-size:9px;color:#3b9eff;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+    .param-row{display:flex;justify-content:space-between;margin-bottom:3px}
+    .param-lbl{color:#555}
+    .param-val{font-weight:700;color:#111}
+    /* SECTION */
+    .sec-hdr{background:#131e2e;color:#00d4a8;padding:6px 10px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px 4px 0 0;margin-top:12px}
+    /* TABLE */
+    table{width:100%;border-collapse:collapse;margin-bottom:2px}
+    th{background:#1c2d42;color:#fff;padding:5px 8px;text-align:right;font-size:8.5px;font-weight:700}
+    th:first-child{text-align:left}
+    td{padding:4px 8px;text-align:right;border-bottom:1px solid #eee;font-size:9px}
+    td:first-child{text-align:left;color:#444}
+    tr:nth-child(even) td{background:#f8fafc}
+    tr.calc td{background:#f0fff8;font-weight:700;color:#006400}
+    /* STRESS */
+    .stress-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+    .stress-col{border-radius:4px;padding:10px}
+    .stress-col.base{background:#f0fff4;border:1px solid #22c55e}
+    .stress-col.mod{background:#fffbeb;border:1px solid #f59e0b}
+    .stress-col.sev{background:#fff5f5;border:1px solid #ef4444}
+    .stress-head{font-size:9px;font-weight:700;margin-bottom:6px}
+    .stress-row{display:flex;justify-content:space-between;margin-bottom:2px;font-size:9px}
+    /* FOOTER */
+    .footer{margin-top:16px;padding-top:8px;border-top:1px solid #eee;font-size:8px;color:#aaa;text-align:center}
+    @page{margin:1.5cm;size:A4 landscape}
+    @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
+  </style></head><body>
+
+  <div class="hdr">
+    <div class="hdr-title">DT MODELS  ·  MODELO FINANCIERO DE VIABILIDAD CREDITICIA</div>
+    <div class="hdr-sub">${empresa}  ·  ${sector}  ·  Analista: ${analista}  ·  Fecha: ${fecha}  ·  Moneda: ${moneda}</div>
+  </div>
+
+  <div class="score-row">
+    <div class="score-box">
+      <div class="score-num">${R.score}/100</div>
+      <div class="score-lbl">SCORE CREDITICIO</div>
+      <div class="score-verdict">${R.verdict}</div>
+    </div>
+    <div class="param-box">
+      <div class="param-title">Parámetros del Crédito</div>
+      <div class="param-row"><span class="param-lbl">Monto Solicitado</span><span class="param-val" style="color:#3b9eff">${fmtM(R.params.monto)}</span></div>
+      <div class="param-row"><span class="param-lbl">Tasa Anual N.A.</span><span class="param-val">${(R.params.tasa_na*100).toFixed(1)}%</span></div>
+      <div class="param-row"><span class="param-lbl">Plazo</span><span class="param-val">${R.params.plazo} meses</span></div>
+      <div class="param-row"><span class="param-lbl">Gracia</span><span class="param-val">${R.params.gracia} meses</span></div>
+      <div class="param-row"><span class="param-lbl">DSCR Mínimo</span><span class="param-val" style="color:${dscrColor(R.dscrMin)}">${fmtX(R.dscrMin)}</span></div>
+      <div class="param-row"><span class="param-lbl">Capacidad Máx.</span><span class="param-val">${fmtM(R.montoMax)}</span></div>
+    </div>
+  </div>
+
+  <div class="sec-hdr">MÉTRICAS CLAVE DE VIABILIDAD (2026–2030)</div>
+  <table>
+    <thead><tr><th>Métrica</th>${R.years.slice(0,5).map(y=>`<th>${y}</th>`).join('')}<th>Mín/Máx</th><th>Semáforo</th></tr></thead>
+    <tbody>
+      <tr><td>DSCR (x)</td>${R.dscr.slice(0,5).map(v=>`<td style="color:${dscrColor(v)};font-weight:700">${fmtX(v)}</td>`).join('')}<td style="color:${dscrColor(R.dscrMin)};font-weight:700">${fmtX(R.dscrMin)}</td><td>${R.dscrMin>=1.5?'🟢 VERDE':R.dscrMin>=1.0?'🟡 AMARILLO':'🔴 ROJO'}</td></tr>
+      <tr><td>ICR (x)</td>${R.icr.slice(0,5).map(v=>`<td>${fmtX(v)}</td>`).join('')}<td>—</td><td>—</td></tr>
+      <tr><td>Margen EBITDA (%)</td>${R.mEbitda.slice(0,5).map(v=>`<td>${fmtP(v)}</td>`).join('')}<td>${fmtP(Math.min(...R.mEbitda.slice(0,5)))}</td><td style="color:#22c55e">🟢</td></tr>
+      <tr><td>Deuda/Patrimonio (x)</td>${R.dPat.slice(0,5).map(v=>`<td>${fmtX(v)}</td>`).join('')}<td>—</td><td>—</td></tr>
+      <tr class="calc"><td>Ingresos (M ${moneda})</td>${R.ingresos.slice(0,5).map(v=>`<td>${fmtM(v)}</td>`).join('')}<td>—</td><td>—</td></tr>
+      <tr class="calc"><td>EBITDA (M ${moneda})</td>${R.ebitda.slice(0,5).map(v=>`<td>${fmtM(v)}</td>`).join('')}<td>—</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sec-hdr" style="margin-top:14px">PROYECCIONES COMPLETAS (${R.years[0]}–${R.years[R.years.length-1]})</div>
+  <table>
+    <thead><tr><th>Concepto</th>${R.years.map(y=>`<th>${y}</th>`).join('')}</tr></thead>
+    <tbody>
+      <tr><td>Ingresos (M)</td>${R.ingresos.map(v=>`<td>${fmtM(v)}</td>`).join('')}</tr>
+      <tr><td>(-) Costos (M)</td>${R.costos.map(v=>`<td>${fmtM(v)}</td>`).join('')}</tr>
+      <tr class="calc"><td>EBITDA (M)</td>${R.ebitda.map(v=>`<td>${fmtM(v)}</td>`).join('')}</tr>
+      <tr><td>Margen EBITDA</td>${R.mEbitda.map(v=>`<td>${fmtP(v)}</td>`).join('')}</tr>
+      <tr><td>Serv. Deuda (M)</td>${R.servDeuda.map(v=>`<td>${fmtM(v)}</td>`).join('')}</tr>
+      <tr><td style="font-weight:700">DSCR (x)</td>${R.dscr.map(v=>`<td style="color:${dscrColor(v)};font-weight:700">${fmtX(v)}</td>`).join('')}</tr>
+      <tr><td>Activos (M)</td>${R.activos.map(v=>`<td>${fmtM(v)}</td>`).join('')}</tr>
+      <tr><td>Pasivos (M)</td>${R.pasivos.map(v=>`<td>${fmtM(v)}</td>`).join('')}</tr>
+      <tr class="calc"><td>Patrimonio (M)</td>${R.patrimonio.map(v=>`<td>${fmtM(v)}</td>`).join('')}</tr>
+    </tbody>
+  </table>
+
+  <div class="sec-hdr" style="margin-top:14px">STRESS TEST — DSCR POR ESCENARIO</div>
+  <div class="stress-grid">
+    <div class="stress-col base">
+      <div class="stress-head" style="color:#22c55e">📊 Caso Base — Sin shocks</div>
+      ${R.years.slice(0,6).map((y,i)=>`<div class="stress-row"><span>${y}</span><span style="color:${dscrColor(R.stress.base[i])};font-weight:700">${fmtX(R.stress.base[i])}</span></div>`).join('')}
+    </div>
+    <div class="stress-col mod">
+      <div class="stress-head" style="color:#f59e0b">⚠️ Downside Moderado</div>
+      <div style="font-size:8px;color:#888;margin-bottom:4px">−10% Ing · −5pp MB · +200bps · +10% OPEX</div>
+      ${R.years.slice(0,6).map((y,i)=>`<div class="stress-row"><span>${y}</span><span style="color:${dscrColor(R.stress.moderate[i])};font-weight:700">${fmtX(R.stress.moderate[i])}</span></div>`).join('')}
+    </div>
+    <div class="stress-col sev">
+      <div class="stress-head" style="color:#ef4444">🔴 Downside Severo</div>
+      <div style="font-size:8px;color:#888;margin-bottom:4px">−20% Ing · −10pp MB · +400bps · +20% OPEX</div>
+      ${R.years.slice(0,6).map((y,i)=>`<div class="stress-row"><span>${y}</span><span style="color:${dscrColor(R.stress.severe[i])};font-weight:700">${fmtX(R.stress.severe[i])}</span></div>`).join('')}
+    </div>
+  </div>
+
+  <div class="footer">DT Models  ·  dtmodels.com  ·  ${analista}  ·  Barranquilla, Colombia  ·  ${fecha}  ·  Confidencial</div>
+  </body></html>`
+
+  // Open in new window and print
+  const w = window.open('','_blank','width=1200,height=900')
+  w.document.write(html)
+  w.document.close()
+  w.onload = () => {
+    setTimeout(()=>{
+      w.focus()
+      w.print()
+    }, 500)
+  }
+}
+
 // ── NAVIGATION ──
 function goStep(n) {
   document.querySelectorAll('.step-page').forEach(p => p.classList.remove('active'))
@@ -747,20 +912,23 @@ function updateModelType(){
 // ── P&L CALC ──
 function calcPL(){
   for(let y=1;y<=3;y++){
-    const ing = parseFloat(document.getElementById(`pl-ing-${y}`).value)||0
-    const cv  = parseFloat(document.getElementById(`pl-cv-${y}`).value)||0
-    const go  = parseFloat(document.getElementById(`pl-go-${y}`).value)||0
-    const dep = parseFloat(document.getElementById(`pl-dep-${y}`).value)||0
-    const gf  = parseFloat(document.getElementById(`pl-gf-${y}`).value)||0
-    const isr = (parseFloat(document.getElementById(`pl-isr-${y}`).value)||12)/100
-    const ub  = ing - cv
+    const ing  = parseFloat(document.getElementById(`pl-ing-${y}`).value)||0
+    const cv   = parseFloat(document.getElementById(`pl-cv-${y}`).value)||0
+    const go   = parseFloat(document.getElementById(`pl-go-${y}`).value)||0
+    const dep  = parseFloat(document.getElementById(`pl-dep-${y}`).value)||0
+    const oi   = parseFloat(document.getElementById(`pl-oi-${y}`)?.value)||0
+    const gf   = parseFloat(document.getElementById(`pl-gf-${y}`).value)||0
+    const isr  = (parseFloat(document.getElementById(`pl-isr-${y}`).value)||33)/100
+    const ub   = ing - cv
     const ebitda = ub - go
-    const ebit   = ebitda - dep
-    const uai    = ebit - gf
+    const uop    = ebitda - dep          // Utilidad Operativa = EBITDA - Dep
+    const uai    = uop + oi - gf        // UAI = Util.Op + Otros Ing - Gastos Fin
     const un     = uai > 0 ? uai*(1-isr) : uai
-    document.getElementById(`pl-ub-${y}`).value    = ub.toFixed(0)
-    document.getElementById(`pl-ebitda-${y}`).value= ebitda.toFixed(0)
-    document.getElementById(`pl-un-${y}`).value    = un.toFixed(0)
+    document.getElementById(`pl-ub-${y}`).value     = ub.toFixed(0)
+    document.getElementById(`pl-ebitda-${y}`).value = ebitda.toFixed(0)
+    document.getElementById(`pl-uop-${y}`).value    = uop.toFixed(0)
+    document.getElementById(`pl-uai-${y}`).value    = uai.toFixed(0)
+    document.getElementById(`pl-un-${y}`).value     = un.toFixed(0)
   }
   calcBalance()
 }
@@ -975,7 +1143,7 @@ function calcModel(){
   const isr      = (parseFloat(document.getElementById('c-isr').value)||12)/100
   const ppe      = parseFloat(document.getElementById('s-ppe').value)||monto
   const ppeVida  = parseInt(document.getElementById('s-ppe-vida').value)||10
-  const inicioIng= parseInt(document.getElementById('s-inicio-ing').value)||1
+  const inicioIng= 1 // field removed — single disbursement assumed
 
   // Base revenue from last historical year
   const baseIng = (parseFloat(document.getElementById('pl-ing-3').value)||0)*1000
@@ -1185,24 +1353,70 @@ function renderResults(){
 }
 
 // ── SAVE ──
+// ── Helper: collect all raw input values ──
+function collectInputs(){
+  const gv = id => { const el=document.getElementById(id); return el?el.value:'' }
+  const inp = {}
+  // Step 1 — Client info
+  ;['f-empresa','f-nit','f-pais','f-ciudad','f-sector','f-tipo','f-acreedor',
+    'f-moneda','f-analista','f-desc'].forEach(id=>{ inp[id]=gv(id) })
+  // Step 3 — P&L (3 years)
+  for(let y=1;y<=3;y++){
+    ;['ing','cv','go','dep','oi','gf','isr'].forEach(f=>{
+      inp[`pl-${f}-${y}`]=gv(`pl-${f}-${y}`)
+    })
+  }
+  // Step 3 — Balance
+  ;['b-ac','b-anc','b-pc','b-pnc'].forEach(id=>{ inp[id]=gv(id) })
+  // Step 4 — Credit
+  ;['c-monto','c-tasa','c-plazo','c-gracia','c-fecha',
+    'c-garantia','c-val-garantia','c-avalista'].forEach(id=>{ inp[id]=gv(id) })
+  // Step 5 — Assumptions
+  ;['s-inflacion','s-ppe','s-ppe-vida','c-isr'].forEach(id=>{ inp[id]=gv(id) })
+  for(let i=0;i<5;i++){
+    ;['s-ing','s-mb','s-opex'].forEach(f=>{ inp[`${f}-${i}`]=gv(`${f}-${i}`) })
+  }
+  // Year headers
+  ;['yr-h-1','yr-h-2','yr-h-3'].forEach(id=>{ inp[id]=gv(id) })
+  return inp
+}
+
+// ── Helper: restore all raw inputs ──
+function restoreInputs(inp){
+  if(!inp) return
+  Object.keys(inp).forEach(id=>{
+    const el=document.getElementById(id)
+    if(el && inp[id]!==undefined && inp[id]!=='') el.value=inp[id]
+  })
+  // Update year headers display
+  ;['yr-h-1','yr-h-2','yr-h-3'].forEach(id=>{
+    const el=document.getElementById(id)
+    if(el && inp[id]) el.textContent=inp[id]
+  })
+  // Recalculate displayed values
+  calcPL()
+  calcBalance()
+}
+
 function saveAndFinish(){
   if(!calcResults) calcResults = calcModel()
   const R = calcResults
   const models = JSON.parse(localStorage.getItem('dtmodels_models')||'[]')
   const model = {
-    id: Date.now(),
+    id:      Date.now(),
     client:  document.getElementById('f-empresa').value || 'Sin nombre',
-    type:    document.getElementById('f-tipo').value,
-    sector:  document.getElementById('f-sector').value,
+    type:    document.getElementById('f-tipo')?.value || '',
+    sector:  document.getElementById('f-sector')?.value || '',
     monto:   R.params.monto,
     tasa:    R.params.tasa_na,
     plazo:   R.params.plazo,
-    desc:    document.getElementById('f-desc').value,
+    desc:    document.getElementById('f-desc')?.value || '',
     date:    new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}),
     score:   R.score,
     dscr:    R.dscrMin,
     verdict: R.verdict,
     data:    JSON.stringify(R),
+    inputs:  JSON.stringify(collectInputs()),
   }
   models.push(model)
   localStorage.setItem('dtmodels_models', JSON.stringify(models))
@@ -1458,7 +1672,33 @@ function copyShareLink(){
   })
 }
 
-// Init
+// ── INIT — restore saved model if id param present ──
+;(function(){
+  const params = new URLSearchParams(window.location.search)
+  const modelId = params.get('id')
+  if(modelId){
+    const models = JSON.parse(localStorage.getItem('dtmodels_models')||'[]')
+    const saved = models.find(m=>String(m.id)===String(modelId))
+    if(saved && saved.inputs){
+      try {
+        const inp = JSON.parse(saved.inputs)
+        // Restore after DOM settles
+        setTimeout(()=>{
+          restoreInputs(inp)
+          // Also restore preview fields
+          if(inp['f-empresa']) updatePreview()
+        }, 150)
+      } catch(e){ console.warn('Could not restore inputs', e) }
+    }
+  }
+  // Prefill monto from URL if new model
+  const montoUrl = params.get('monto')
+  if(!modelId && montoUrl && parseFloat(montoUrl)>0){
+    const el = document.getElementById('c-monto')
+    if(el) el.value = montoUrl
+  }
+})()
+
 document.getElementById('f-empresa').addEventListener('input', updatePreview)
 </script>
 </body>
