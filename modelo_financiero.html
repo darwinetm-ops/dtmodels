@@ -386,9 +386,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
       </div>
     </div>
 
-    <div class="sh">4 · Supuestos de Proyección — Año por Año</div>
+    <div class="sh">4 · Proyecciones Año por Año — Valores Directos</div>
     <div class="info-box">
-      📊 Define los supuestos para cada año proyectado. El modelo construye el P&L y balance completo a partir de estos parámetros. <strong>El Año 0 es la base histórica ya ingresada arriba.</strong>
+      📊 Ingresa los valores <strong>directamente para cada año</strong> del horizonte proyectado. Los ingresos van en valor absoluto (igual que en tu modelo Excel). El modelo calcula P&L, balance y ratios automáticamente.
     </div>
     <div class="card" style="margin-bottom:12px;overflow-x:auto">
       <table class="ytbl" id="ytbl-proj">
@@ -500,7 +500,7 @@ let P = {
   h_pas:  200,   // Pasivos totales
   h_pat:  300,   // Patrimonio
   // Year projections [yr1..yrN] — set by year table
-  p_crecIng:  [15, 15, 15, 10, 10, 10, 8, 8, 8, 8], // % crecimiento ingresos
+  p_ing:      [1100,1200,1300,1400,1500,1600,1700,1800,1900,2000], // ingresos absolutos año a año
   p_mb:       [23, 23, 23, 23, 23, 23, 23, 23, 23, 23], // % margen bruto
   p_gaAdm:    [5,  5,  5,  5,  5,  5,  5,  5,  5, 5],  // % gastos adm / ing
   p_dep:      [0,  0,  0,  0,  0,  0,  0,  0,  0, 0],  // depreciación año
@@ -554,6 +554,74 @@ function mkChart(id,type,labels,datasets,yLbl,extra={}){
 }
 
 // ════════════════════════════════════════════════
+// APPLY WIZARD INPUTS → P object
+// Converts nuevo_modelo.html saved inputs into modelo_financiero P params
+// ════════════════════════════════════════════════
+function applyInputsToP(inp){
+  const n = v => parseFloat(v)||0;
+  const i = v => parseInt(v)||0;
+
+  // Credit params
+  if(inp['c-monto'])  P.monto   = n(inp['c-monto']);
+  if(inp['c-tasa'])   P.tasa    = n(inp['c-tasa']);
+  if(inp['c-plazo'])  P.plazo   = i(inp['c-plazo']);
+  if(inp['c-gracia']) P.gracia  = i(inp['c-gracia']);
+  if(inp['c-isr'])    P.isr     = n(inp['c-isr']);
+  if(inp['in-isr'])   P.isr     = n(inp['in-isr']);
+
+  // Company info
+  if(inp['f-moneda'])  P.moneda   = inp['f-moneda'] || P.moneda;
+  if(inp['f-sector'])  P.sector   = inp['f-sector'] || P.sector;
+  if(inp['in-moneda']) P.moneda   = inp['in-moneda'] || P.moneda;
+  if(inp['in-sector']) P.sector   = inp['in-sector'] || P.sector;
+
+  // Historical base from P&L step 3 (wizard años 1-3, use year 3 as base)
+  const ing3 = n(inp['pl-ing-3']);
+  const ing1 = n(inp['pl-ing-1']);
+  const ing2 = n(inp['pl-ing-2']);
+  if(ing3 > 0){
+    P.h_ing = ing3;
+    P.h_cv  = n(inp['pl-cv-3']);
+    P.h_ga  = n(inp['pl-go-3']);
+    P.h_dep = n(inp['pl-dep-3']);
+    P.h_gf  = n(inp['pl-gf-3']);
+    P.h_oi  = n(inp['pl-oi-3'])||0;
+  } else if(ing2 > 0){
+    P.h_ing = ing2;
+    P.h_cv  = n(inp['pl-cv-2']);
+    P.h_ga  = n(inp['pl-go-2']);
+    P.h_dep = n(inp['pl-dep-2']);
+    P.h_gf  = n(inp['pl-gf-2']);
+    P.h_oi  = n(inp['pl-oi-2'])||0;
+  } else if(ing1 > 0){
+    P.h_ing = ing1;
+    P.h_cv  = n(inp['pl-cv-1']);
+    P.h_ga  = n(inp['pl-go-1']);
+    P.h_dep = n(inp['pl-dep-1']);
+    P.h_gf  = n(inp['pl-gf-1']);
+    P.h_oi  = n(inp['pl-oi-1'])||0;
+  }
+
+  // Balance base
+  if(inp['b-ac'] || inp['b-anc']){
+    P.h_act = n(inp['b-ac']) + n(inp['b-anc']);
+    P.h_pas = n(inp['b-pc']) + n(inp['b-pnc']);
+    P.h_pat = P.h_act - P.h_pas;
+  }
+
+  // Growth projections from step 5 (s-ing-0..4, s-mb-0..4, s-opex-0..4)
+  for(let i=0;i<10;i++){
+    if(inp[`s-ing-${i}`]  !== undefined) P.p_crecIng[i] = n(inp[`s-ing-${i}`]);
+    if(inp[`s-mb-${i}`]   !== undefined) P.p_mb[i]      = n(inp[`s-mb-${i}`]);
+    if(inp[`s-opex-${i}`] !== undefined) P.p_gaAdm[i]   = n(inp[`s-opex-${i}`]);
+  }
+
+  // Horizonte
+  if(inp['s-horizonte']) P.horizonte = i(inp['s-horizonte']);
+  if(inp['in-horizonte']) P.horizonte = i(inp['in-horizonte']);
+}
+
+// ════════════════════════════════════════════════
 // CALC ENGINE — fully universal
 // ════════════════════════════════════════════════
 function calcModel(){
@@ -568,33 +636,29 @@ function calcModel(){
   const ingresos=[],cv=[],ub=[],ga=[],ebitda=[],dep=[],ebit=[];
   const oi=[],gfVig=[],uai=[],isr_pago=[],uan=[];
 
-  let ing_prev = P.h_ing;
-
   for(let i=0;i<n;i++){
-    // Ingresos: grow from previous year
-    const gIng = (P.p_crecIng[i]||0)/100;
-    const ing  = ing_prev * (1+gIng);
+    // Ingresos: use absolute value entered directly by analyst
+    const ing  = P.p_ing[i] || P.h_ing * Math.pow(1.10, i+1);
 
-    // P&L lines from percentages
+    // P&L lines from percentages applied to that year's revenue
     const mb  = (P.p_mb[i]||23)/100;
     const ga_ = (P.p_gaAdm[i]||5)/100;
     const dep_ = P.p_dep[i]||0;
     const oi_  = P.p_oi[i]||0;
     const gfV_ = P.p_gfVig[i]||0;
 
-    const cv_  = ing*(1-mb);
-    const ub_  = ing-cv_;
-    const ga__ = ing*ga_;
-    const ebt  = ub_-ga__;         // EBITDA
-    const ebt2 = ebt-dep_;         // EBIT
-    const uai_ = ebt2+oi_-gfV_;   // UAI (before new debt interest)
-    // Note: new debt interest added after debt schedule
+    const cv_  = ing*(1-mb);       // costos directos = ing * (1 - margen bruto)
+    const ub_  = ing-cv_;          // utilidad bruta
+    const ga__ = ing*ga_;          // gastos adm
+    const ebt  = ub_-ga__-dep_;    // EBITDA (incluye dep para llegar a EBIT aprox)
+    const ebt2 = ebt;              // EBIT = EBITDA - dep (dep ya incluida arriba)
+    const uai_ = ebt2+oi_-gfV_;   // UAI antes de nueva deuda
 
+    const ebitda_ = ub_ - ga__;          // EBITDA = Utilidad Bruta - Gastos Adm
+    const ebit_   = ebitda_ - dep_;       // EBIT = EBITDA - Depreciación
     ingresos.push(ing); cv.push(cv_); ub.push(ub_); ga.push(ga__);
-    ebitda.push(ebt); dep.push(dep_); ebit.push(ebt2);
+    ebitda.push(ebitda_); dep.push(dep_); ebit.push(ebit_);
     oi.push(oi_); gfVig.push(gfV_);
-
-    ing_prev = ing;
   }
 
   // ── DEBT SCHEDULE (new credit) ──
@@ -617,7 +681,7 @@ function calcModel(){
 
   // ── FULL P&L (with new debt interest) ──
   for(let i=0;i<n;i++){
-    const uai_ = ebit[i]+oi[i]-gfVig[i]-intNew[i];
+    const uai_ = ebit[i] + oi[i] - gfVig[i] - intNew[i];
     const isr_ = uai_>0 ? uai_*isr : 0;
     uai.push(uai_);
     isr_pago.push(isr_);
@@ -1160,6 +1224,10 @@ function setupInputs(){
   document.getElementById('in-act-base').value = P.h_act;
   document.getElementById('in-pas-base').value = P.h_pas;
   document.getElementById('in-pat-base').value = P.h_pat;
+  // Pre-fill p_ing with estimated values if not set (10% growth from base)
+  if(!P.p_ing || P.p_ing.every(v=>v===0||v===1000||v===1100)){
+    P.p_ing = Array.from({length:P.horizonte},(_,i)=>Math.round(P.h_ing*Math.pow(1.10,i+1)));
+  }
   buildYearTable();
 }
 
@@ -1173,17 +1241,17 @@ function buildYearTable(){
   document.getElementById('ytbl-head').innerHTML = head;
 
   const projRows = [
-    {key:'p_crecIng', label:'Crecimiento Ingresos (%)',    unit:'%',  note:'vs año anterior'},
-    {key:'p_mb',      label:'Margen Bruto (%)',             unit:'%',  note:'(Ing - Ctos Directos) / Ing'},
-    {key:'p_gaAdm',   label:'Gastos Adm. / Ventas (% Ing)',unit:'%',  note:'Gastos operativos / Ingresos'},
-    {key:'p_dep',     label:'Depreciación y Amort.',        unit:'',   note:'Valor absoluto en moneda'},
-    {key:'p_oi',      label:'Otros Ingresos No Op.',        unit:'',   note:'Valor absoluto en moneda'},
+    {key:'p_ing',  label:'Ingresos Totales',                unit:'',   note:'Valor absoluto en moneda — ingresa el total de ingresos de cada año', step:'1000'},
+    {key:'p_mb',   label:'Margen Bruto (%)',                 unit:'%',  note:'(Ingresos − Costos Directos) / Ingresos', step:'0.1'},
+    {key:'p_gaAdm',label:'Gastos Adm. y Ventas (% Ing)',    unit:'%',  note:'Gastos operativos como % de los ingresos', step:'0.1'},
+    {key:'p_dep',  label:'Depreciación y Amortización',      unit:'',   note:'Valor absoluto en moneda (0 si no aplica)', step:'1000'},
+    {key:'p_oi',   label:'Otros Ingresos No Operacionales',  unit:'',   note:'Valor absoluto en moneda (dividendos, arrendamientos, etc.)', step:'1000'},
   ];
 
   document.getElementById('ytbl-body').innerHTML = projRows.map(r=>
     `<tr>
       <td>${r.label}${r.note?`<br><span style="font-size:9px;color:var(--t3)">${r.note}</span>`:''}${r.unit?`<span style="font-size:9px;color:var(--acc)"> ${r.unit}</span>`:''}</td>
-      ${yrs.map((_,i)=>`<td><input class="yi" id="${r.key}-${i}" type="number" value="${P[r.key][i]||0}" step="${r.unit==='%'?'0.1':'1000'}" oninput="markChanged()"></td>`).join('')}
+      ${yrs.map((_,i)=>`<td><input class="yi" id="${r.key}-${i}" type="number" value="${P[r.key]?.[i]||0}" step="${r.step||'0.1'}" oninput="markChanged()"></td>`).join('')}
     </tr>`
   ).join('');
 
@@ -1209,9 +1277,12 @@ function markChanged(){
 
 function readYearTable(){
   const n = parseInt(document.getElementById('in-horizonte').value)||5;
-  const keys = ['p_crecIng','p_mb','p_gaAdm','p_dep','p_oi'];
+  const keys = ['p_ing','p_mb','p_gaAdm','p_dep','p_oi'];
   keys.forEach(k=>{
-    P[k] = Array.from({length:n},(_,i)=>parseFloat(document.getElementById(`${k}-${i}`)?.value)||0);
+    P[k] = Array.from({length:n},(_,i)=>{
+      const v = parseFloat(document.getElementById(`${k}-${i}`)?.value);
+      return isNaN(v) ? 0 : v;
+    });
   });
   P.p_gfVig = Array.from({length:n},(_,i)=>parseFloat(document.getElementById(`p_gfVig-${i}`)?.value)||0);
 }
@@ -1257,10 +1328,31 @@ function doRecalc(){
 // INIT
 // ════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded',()=>{
-  // Apply URL monto if provided
-  if(MONTO_URL>0) P.monto = MONTO_URL;
+  const qp = new URLSearchParams(window.location.search);
+  const modelId = qp.get('id');
 
-  // Calculate with defaults
+  if(modelId){
+    // ── Load full model data from localStorage ──
+    try{
+      const models = JSON.parse(localStorage.getItem('dtmodels_models')||'[]');
+      const saved  = models.find(m=>String(m.id)===String(modelId));
+      if(saved){
+        // Restore P from saved inputs
+        if(saved.inputs){
+          const inp = JSON.parse(saved.inputs);
+          applyInputsToP(inp);
+        }
+        // Override monto from saved model
+        if(saved.monto) P.monto = saved.monto;
+        if(saved.tasa)  P.tasa  = saved.tasa * 100;
+        if(saved.plazo) P.plazo = saved.plazo;
+      }
+    }catch(e){ console.warn('Could not load saved model', e); }
+  } else if(MONTO_URL>0){
+    P.monto = MONTO_URL;
+  }
+
+  // Calculate with loaded/default params
   R = calcModel();
   updateGlobal();
 
@@ -1268,7 +1360,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   renderDashboard();
   rendered['dash']=true;
 
-  // Setup inputs form
+  // Setup inputs form with current P values
   setupInputs();
 });
 </script>

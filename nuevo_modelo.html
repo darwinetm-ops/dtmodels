@@ -1662,13 +1662,45 @@ function exportExcel(){
 
 // ── SHARE LINK ──
 function copyShareLink(){
+  // Auto-save first to ensure we have an id
+  if(!calcResults) calcResults = calcModel()
+  const R = calcResults
   const empresa = encodeURIComponent(document.getElementById('f-empresa').value||'Cliente')
   const monto   = document.getElementById('c-monto').value||0
-  const link    = `${window.location.origin}/modelo_financiero.html?client=${empresa}&monto=${monto}&shared=1`
+
+  // Save model inputs to localStorage and get id
+  const models = JSON.parse(localStorage.getItem('dtmodels_models')||'[]')
+  let modelId = null
+  // Check if already saved (same client+monto in last 10s)
+  const recent = models.find(m => m.client === decodeURIComponent(empresa) && m.monto == monto && Date.now()-m.id < 30000)
+  if(recent){
+    modelId = recent.id
+  } else {
+    const model = {
+      id: Date.now(),
+      client: decodeURIComponent(empresa),
+      type: document.getElementById('f-tipo')?.value||'',
+      sector: document.getElementById('f-sector')?.value||'',
+      monto: R.params.monto, tasa: R.params.tasa_na, plazo: R.params.plazo,
+      desc: document.getElementById('f-desc')?.value||'',
+      date: new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}),
+      score: R.score, dscr: R.dscrMin, verdict: R.verdict,
+      data: JSON.stringify(R),
+      inputs: JSON.stringify(collectInputs()),
+    }
+    models.push(model)
+    localStorage.setItem('dtmodels_models', JSON.stringify(models))
+    modelId = model.id
+  }
+
+  const link = `${window.location.origin}/modelo_financiero.html?client=${empresa}&monto=${monto}&id=${modelId}`
   navigator.clipboard.writeText(link).then(()=>{
     const box = document.getElementById('share-link-box')
     box.style.display='block'; box.textContent=link
     alert('✅ Link copiado al portapapeles')
+  }).catch(()=>{
+    const box = document.getElementById('share-link-box')
+    box.style.display='block'; box.textContent=link
   })
 }
 
