@@ -774,18 +774,42 @@ function calcModel(){
     return sdS>0?+(cfS/sdS).toFixed(3):null;
   });
 
+  // ── LLCR ──
+  const llcr = cfads.map((_,i) => {
+    const saldoI = saldoFin[i];
+    if(!saldoI || saldoI<=0) return null;
+    let npv = 0;
+    for(let j=i;j<n;j++) npv += cfads[j]/Math.pow(1+tna,j-i+1);
+    return +(npv/saldoI).toFixed(3);
+  });
+
+  // ── PUNTO DE EQUILIBRIO ──
+  const breakeven = cfads.map((cf,i) => {
+    if(!servDeuda[i]||servDeuda[i]<=0) return null;
+    const margen = (cf - servDeuda[i]) / (ingresos[i]>0?ingresos[i]:1);
+    return +(margen*100).toFixed(1);
+  });
+
+  // ── STRESS TRM ──
+  const pctUSD = 0.30;
+  function stressTRM(deval){
+    return cfads.map((c,i)=>{
+      const costoAdd = cv[i]*pctUSD*deval;
+      const ebS = ebitda[i] - costoAdd;
+      const isrS = ebS>0?ebS*isr:0;
+      const cfS = ebS-isrS;
+      return servDeuda[i]>0?+(cfS/servDeuda[i]).toFixed(3):null;
+    });
+  }
+
   return {
     n,years:YEARS,moneda:P.moneda,
-    // P&L
     ingresos,cv,ub,ga,ebitda,dep,ebit,oi,gfVig,
     intNew,uai,isr_pago,uan,
-    // Debt
     capPago,servDeuda,saldoFin,cfads,
-    // Balance
     activos:actArr,pasivos:pasArr,patrimonio:patArr,
-    // Ratios
     dscr,icr,roe,roa,mEb,mBr,mNe,dPat,
-    // Summary
+    llcr,breakeven,
     dscrMin,cfadsMin,montoMax,deficit:montoMax-P.monto,
     score,verdict,
     params:{monto:P.monto,tasa:tna,plazo:P.plazo,gracia:P.gracia,moneda:P.moneda},
@@ -793,6 +817,8 @@ function calcModel(){
       base:dscr,
       moderate:stressDSCR(-0.10,-0.05,0.02,0.10),
       severe:  stressDSCR(-0.20,-0.10,0.04,0.20),
+      trm20:stressTRM(0.20),
+      trm40:stressTRM(0.40),
     },
   };
 }
@@ -994,7 +1020,9 @@ function renderViabilidad(){
 
   const rows=[
     {l:'DSCR (x)',vals:dscr,fn:fX,cf:dC,lo:1.0,hi:1.5},
+    {l:'LLCR (x)',vals:R.llcr,fn:fX,cf:v=>v===null?'var(--t3)':v>=1.2?'var(--ok)':v>=0.8?'var(--warn)':'var(--danger)',lo:0.8,hi:1.2},
     {l:'ICR (x)',vals:icr,fn:fX,cf:v=>v===null?'var(--t3)':v>=2?'var(--ok)':v>=1.2?'var(--warn)':'var(--danger)',lo:1.2,hi:2},
+    {l:'Holgura Ingr. (%)',vals:R.breakeven,fn:v=>v===null?'—':v.toFixed(1)+'%',cf:v=>v===null?'var(--t3)':v>=15?'var(--ok)':v>=5?'var(--warn)':'var(--danger)',lo:5,hi:15},
     {l:'Margen EBITDA (%)',vals:mEb,fn:fP,cf:v=>v>=0.2?'var(--ok)':v>=0.08?'var(--warn)':'var(--danger)',lo:0.1,hi:0.2},
     {l:'Margen Bruto (%)',vals:mBr,fn:fP,cf:v=>v>=0.3?'var(--ok)':v>=0.15?'var(--warn)':'var(--danger)',lo:0.15,hi:0.3},
     {l:'Deuda/Patrimonio (x)',vals:dPat,fn:fX,cf:v=>v===null?'var(--t3)':v<0.5?'var(--ok)':v<1?'var(--warn)':'var(--danger)',lo:1,hi:0.5,inv:true},
@@ -1055,7 +1083,9 @@ function renderStress(){
   const scens=[
     {k:'base',    n:'📊 Caso Base',        c:'ok',    bg:'rgba(16,185,129,.06)',  d:'Sin shocks aplicados'},
     {k:'moderate',n:'⚠️ Downside Mod.',   c:'warn',  bg:'rgba(245,158,11,.06)',  d:'−10% Ing · −5pp MB · +200bps · +10% OPEX'},
-    {k:'severe',  n:'🔴 Downside Sev.',   c:'danger', bg:'rgba(239,68,68,.06)',  d:'−20% Ing · −10pp MB · +400bps · +20% OPEX'},
+    {k:'severe',  n:'🔴 Downside Sev.',   c:'danger',bg:'rgba(239,68,68,.06)',   d:'−20% Ing · −10pp MB · +400bps · +20% OPEX'},
+    {k:'trm20',   n:'💱 TRM +20%',        c:'warn',  bg:'rgba(245,158,11,.04)',  d:'Devaluación COP/USD +20% (30% costos USD)'},
+    {k:'trm40',   n:'💱 TRM +40%',        c:'danger',bg:'rgba(239,68,68,.04)',   d:'Devaluación COP/USD +40% — crisis cambiaria'},
   ];
 
   document.getElementById('st-detail').innerHTML = scens.map(s=>

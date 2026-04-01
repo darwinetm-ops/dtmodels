@@ -645,9 +645,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
             <input class="form-input" id="s-tc" type="number" value="1" step="0.01" placeholder="1">
           </div>
           <div class="form-group">
-            <label class="form-label">PPE / Inversión total</label>
-            <input class="form-input" id="s-ppe" type="number" placeholder="0">
-            <div class="form-note">Activos fijos del proyecto</div>
+            <label class="form-label">PPE / Activos Fijos (Capex)</label>
+            <input class="form-input" id="s-ppe" type="number" placeholder="0" oninput="calcCapex()">
+            <div class="form-note">Valor total activos fijos. Depreciación = Capex ÷ Vida útil</div>
           </div>
           <div class="form-group">
             <label class="form-label">Vida útil PPE (años)</label>
@@ -703,6 +703,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
       <!-- STRESS TEST -->
       <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">▎ Stress Test — DSCR</div>
       <div class="stress-grid" id="stress-grid"></div>
+
+      <!-- TABLA MENSUAL DE DEUDA -->
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">▎ Tabla de Amortización Mensual</div>
+      <div style="overflow-x:auto;max-height:300px;overflow-y:auto;margin-bottom:16px">
+        <table class="metrics-table" id="tabla-mensual" style="min-width:600px">
+          <thead><tr id="tm-head"></tr></thead>
+          <tbody id="tm-body"></tbody>
+        </table>
+      </div>
+      <button onclick="exportTablaExcel()" style="margin-bottom:16px;padding:6px 14px;background:rgba(0,212,168,.15);border:1px solid var(--accent);border-radius:5px;color:var(--accent);font-family:var(--font-mono);font-size:10px;cursor:pointer">📥 Exportar tabla mensual Excel</button>
+
+      <!-- PUNTO DE EQUILIBRIO -->
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin:4px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">▎ Punto de Equilibrio Financiero</div>
+      <div id="breakeven-display" style="font-size:11px;color:var(--text2);line-height:1.8;margin-bottom:16px"></div>
 
       <!-- ACTION BUTTONS -->
       <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap">
@@ -1266,12 +1280,50 @@ function calcModel(){
     })
   }
 
+  // ── LLCR (Loan Life Coverage Ratio) ──
+  // LLCR = NPV(CFADS durante vida del crédito) / Saldo deuda actual
+  const wacc = tasa_na  // usar tasa del crédito como tasa descuento
+  const llcr = cfads.map((_, i) => {
+    const saldoI = i===0 ? monto : capital.slice(0,i).reduce((a,b)=>a+b,0)
+    const saldoRestante = Math.max(0, monto - saldoI)
+    if(saldoRestante <= 0) return null
+    // NPV of remaining CFADS from year i onwards
+    let npv = 0
+    for(let j=i; j<n; j++){
+      npv += cfads[j] / Math.pow(1+wacc, j-i+1)
+    }
+    return saldoRestante > 0 ? +(npv/saldoRestante).toFixed(3) : null
+  })
+
+  // ── PUNTO DE EQUILIBRIO FINANCIERO ──
+  // ¿En qué % de caída de ingresos el DSCR = 1.0x?
+  const breakeven = cfads.map((cf, i) => {
+    if(!servDeuda[i] || servDeuda[i]<=0) return null
+    // DSCR=1 cuando CFADS = ServDeuda → cuánto puede caer CFADS
+    const margen = (cf - servDeuda[i]) / (ingresos[i]>0 ? ingresos[i] : 1)
+    return +(margen*100).toFixed(1) // % de ingresos de holgura
+  })
+
+  // ── STRESS TRM (+20%, +40% devaluación) ──
+  // Asume que 30% de costos son en USD (típico logística/manufactura)
+  const pctCostoUSD = 0.30
+  function stressTRM(devalPct){
+    return cfads.map((c,i) => {
+      const costoAdicional = costos[i] * pctCostoUSD * devalPct
+      const ebS = ebitda[i] - costoAdicional
+      const isrS = ebS > 0 ? ebS * isr : 0
+      const cfS = ebS - isrS
+      return servDeuda[i]>0 ? +(cfS/servDeuda[i]).toFixed(3) : null
+    })
+  }
+
   return {
     years: YEARS_PROJ.slice(0,n), n,
     ingresos, costos, opex, ebitda, depreciacion,
     intereses, capital, servDeuda, cfads,
     dscr, icr, mEbitda, dPat,
     activos, pasivos, patrimonio, uan,
+    llcr, breakeven,
     score, verdict, dscrMin,
     montoMax, cfadsMin,
     deficit: montoMax - monto,
@@ -1280,8 +1332,111 @@ function calcModel(){
       base:     dscr,
       moderate: stressDscr(-0.10,-0.05,0.02,0.10),
       severe:   stressDscr(-0.20,-0.10,0.04,0.20),
+      trm20:    stressTRM(0.20),
+      trm40:    stressTRM(0.40),
     }
   }
+}
+
+// ── CAPEX AUTO ──
+function calcCapex(){
+  const ppe = parseFloat(document.getElementById('s-ppe')?.value)||0
+  const vida = parseInt(document.getElementById('s-ppe-vida')?.value)||10
+  const depAnual = vida > 0 ? ppe / vida : 0
+  // Auto-fill dep fields if empty
+  for(let i=1;i<=3;i++){
+    const el = document.getElementById(`pl-dep-${i}`)
+    if(el && (!el.value || el.value === '0')) {
+      el.value = depAnual.toFixed(0)
+    }
+  }
+  if(document.getElementById('dep-auto-display')){
+    document.getElementById('dep-auto-display').textContent =
+      depAnual > 0 ? `Depreciación anual estimada: ${fmtCOP(depAnual)}` : ''
+  }
+}
+function fmtCOP(v){
+  if(!v) return '0'
+  if(Math.abs(v)>=1e9) return (v/1e9).toFixed(2)+'B COP'
+  if(Math.abs(v)>=1e6) return (v/1e6).toFixed(1)+'M COP'
+  return v.toLocaleString('es-CO')+' COP'
+}
+
+// ── TABLA MENSUAL ──
+function buildMonthlyTable(monto, tasa_na, plazo, gracia){
+  const tM = tasa_na/12
+  const amort = Math.max(plazo - gracia, 0)
+  const cuotaM = amort > 0 ? monto / amort : 0
+  const rows = []
+  let saldo = monto
+  for(let m=1; m<=plazo; m++){
+    const intM = saldo * tM
+    const capM = m <= gracia ? 0 : Math.min(cuotaM, saldo)
+    const cuota = intM + capM
+    const saldoFin = Math.max(0, saldo - capM)
+    rows.push({mes:m, saldoIni:saldo, interes:intM, capital:capM, cuota, saldoFin})
+    saldo = saldoFin
+    if(saldo <= 0.01) break
+  }
+  return rows
+}
+
+function renderTablaM(R){
+  const head = document.getElementById('tm-head')
+  const body = document.getElementById('tm-body')
+  if(!head||!body) return
+  const mon = document.getElementById('f-moneda')?.value||'COP'
+  const f = v => '$'+(v/1e6).toFixed(2)+'M'
+  const rows = buildMonthlyTable(R.params.monto, R.params.tasa_na, R.params.plazo, R.params.gracia||0)
+  head.innerHTML = '<th>Mes</th><th>Saldo Inicial</th><th>Interés</th><th>Capital</th><th>Cuota Total</th><th>Saldo Final</th>'
+  body.innerHTML = rows.map(r=>`
+    <tr>
+      <td style="color:var(--text3)">${r.mes}</td>
+      <td>${f(r.saldoIni)}</td>
+      <td style="color:var(--warn)">${f(r.interes)}</td>
+      <td style="color:var(--accent)">${f(r.capital)}</td>
+      <td style="font-weight:600">${f(r.cuota)}</td>
+      <td style="color:var(--ok)">${f(r.saldoFin)}</td>
+    </tr>`).join('')
+}
+
+function exportTablaExcel(){
+  if(!calcResults) return
+  const R = calcResults
+  const rows = buildMonthlyTable(R.params.monto, R.params.tasa_na, R.params.plazo, R.params.gracia||0)
+  const empresa = document.getElementById('f-empresa')?.value||'Cliente'
+  const wb = XLSX.utils.book_new()
+  const wsData = [
+    ['Tabla de Amortización Mensual — '+empresa],
+    ['Monto:', R.params.monto, 'Tasa N.A.:', (R.params.tasa_na*100).toFixed(2)+'%', 'Plazo:', R.params.plazo+' meses'],
+    [],
+    ['Mes','Saldo Inicial','Interés','Capital','Cuota Total','Saldo Final'],
+    ...rows.map(r=>[r.mes,r.saldoIni,r.interes,r.capital,r.cuota,r.saldoFin])
+  ]
+  const ws = XLSX.utils.aoa_to_sheet(wsData)
+  ws['!cols'] = [{wch:6},{wch:20},{wch:18},{wch:18},{wch:18},{wch:18}]
+  XLSX.utils.book_append_sheet(wb, ws, 'Amortización')
+  XLSX.writeFile(wb, 'Amortizacion_'+empresa.replace(/ /g,'_')+'.xlsx')
+}
+
+// ── BREAKEVEN DISPLAY ──
+function renderBreakeven(R){
+  const el = document.getElementById('breakeven-display')
+  if(!el) return
+  const mon = document.getElementById('f-moneda')?.value||'COP'
+  const beLines = R.breakeven.map((be, i) => {
+    if(be === null) return ''
+    const yr = R.years[i]
+    const ing = R.ingresos[i]
+    const ingBE = ing * (1 - be/100)
+    const color = be >= 15 ? 'var(--ok)' : be >= 5 ? 'var(--warn)' : 'var(--danger)'
+    return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <span>${yr}</span>
+      <span>Holgura: <strong style="color:${color}">${be.toFixed(1)}%</strong> de ingresos — 
+      DSCR cae a 1.0x si ingresos bajan a <strong>$${(ingBE/1e6).toFixed(1)}M ${mon}</strong></span>
+    </div>`
+  }).filter(Boolean).join('')
+  el.innerHTML = beLines || '<span style="color:var(--text3)">Calcular modelo primero</span>'
 }
 
 // ── RENDER RESULTS ──
@@ -1313,6 +1468,8 @@ function renderResults(){
   document.getElementById('r-verdict').className   = 'result-value '+(R.score>=70?'c-ok':R.score>=55?'c-warn':'c-danger')
 
   updatePreview()
+  renderTablaM(R)
+  renderBreakeven(R)
 
   // Chart
   const ctx = document.getElementById('res-chart')
@@ -1347,17 +1504,27 @@ function renderResults(){
   const body = document.getElementById('res-table-body')
   head.innerHTML = '<th>Métrica</th>'+R.years.map(y=>`<th>${y}</th>`).join('')
   const rows=[
-    {l:'Ingresos ($M)',   vals:R.ingresos,  f:'M'},
-    {l:'EBITDA ($M)',     vals:R.ebitda,    f:'M'},
-    {l:'Margen EBITDA',  vals:R.mEbitda,   f:'%'},
-    {l:'DSCR (x)',        vals:R.dscr,      f:'x'},
-    {l:'ICR (x)',         vals:R.icr,       f:'x'},
-    {l:'Deuda/Patrimonio',vals:R.dPat,      f:'x'},
+    {l:'Ingresos ($M)',        vals:R.ingresos,  f:'M'},
+    {l:'EBITDA ($M)',          vals:R.ebitda,    f:'M'},
+    {l:'Margen EBITDA',        vals:R.mEbitda,   f:'%'},
+    {l:'DSCR (x)',             vals:R.dscr,      f:'x', dscr:true},
+    {l:'LLCR (x)',             vals:R.llcr,      f:'x'},
+    {l:'ICR (x)',              vals:R.icr,       f:'x'},
+    {l:'Holgura Ingresos (%)', vals:R.breakeven, f:'bp'},
+    {l:'Deuda/Patrimonio',     vals:R.dPat,      f:'x'},
   ]
   body.innerHTML = rows.map(r=>{
     const cells = r.vals.map(v=>{
-      const fv = v===null?'—':r.f==='M'?'$'+(v/1e6).toFixed(2)+'M':r.f==='%'?(v*100).toFixed(1)+'%':v===null?'—':v.toFixed(2)+'x'
-      const c  = v===null?'':r.l.includes('DSCR')?(v>=1.3?'color:var(--ok)':v>=1.0?'color:var(--warn)':'color:var(--danger)'):'color:var(--text)'
+      const fv = v===null?'—':
+        r.f==='M'?'$'+(v/1e6).toFixed(2)+'M':
+        r.f==='%'?(v*100).toFixed(1)+'%':
+        r.f==='bp'?v.toFixed(1)+'%':
+        v.toFixed(2)+'x'
+      const c = v===null?'':
+        r.l.includes('DSCR')?(v>=1.3?'color:var(--ok)':v>=1.0?'color:var(--warn)':'color:var(--danger)'):
+        r.l.includes('LLCR')?(v>=1.2?'color:var(--ok)':v>=0.8?'color:var(--warn)':'color:var(--danger)'):
+        r.l.includes('Holgura')?(v>=15?'color:var(--ok)':v>=5?'color:var(--warn)':'color:var(--danger)'):
+        'color:var(--text)'
       return `<td style="${c}">${fv}</td>`
     }).join('')
     return `<tr><td>${r.l}</td>${cells}</tr>`
@@ -1366,9 +1533,11 @@ function renderResults(){
   // Stress grid
   const stressEl = document.getElementById('stress-grid')
   const stressData=[
-    {label:'📊 Caso Base',cls:'c-ok',key:'base',desc:'Sin shocks'},
-    {label:'⚠️ Downside Mod.',cls:'c-warn',key:'moderate',desc:'−10% Ing · −5pp MB · +200bps · +10% OPEX'},
-    {label:'🔴 Downside Sev.',cls:'c-danger',key:'severe',desc:'−20% Ing · −10pp MB · +400bps · +20% OPEX'},
+    {label:'📊 Caso Base',      cls:'c-ok',    key:'base',     desc:'Sin shocks'},
+    {label:'⚠️ Downside Mod.',  cls:'c-warn',  key:'moderate', desc:'−10% Ing · −5pp MB · +200bps · +10% OPEX'},
+    {label:'🔴 Downside Sev.',  cls:'c-danger',key:'severe',   desc:'−20% Ing · −10pp MB · +400bps · +20% OPEX'},
+    {label:'💱 TRM +20%',       cls:'c-warn',  key:'trm20',    desc:'Devaluación COP/USD +20% (30% costos en USD)'},
+    {label:'💱 TRM +40%',       cls:'c-danger',key:'trm40',    desc:'Devaluación COP/USD +40% — crisis cambiaria'},
   ]
   stressEl.innerHTML = stressData.map(s=>`
     <div class="stress-col">
