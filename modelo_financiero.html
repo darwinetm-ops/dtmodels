@@ -476,6 +476,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 const QP = new URLSearchParams(window.location.search);
 const CLIENT = QP.get('client') ? decodeURIComponent(QP.get('client')) : 'Modelo Financiero';
 const MONTO_URL = parseFloat(QP.get('monto')) || 0;
+let CLIENT_OVERRIDE = null; // set when loading from ?d= payload
 
 // ════════════════════════════════════════════════
 // STATE — current inputs
@@ -831,7 +832,7 @@ function renderDashboard(){
          score,verdict,cfads,servDeuda,activos,pasivos,patrimonio,
          montoMax,deficit,params} = R;
 
-  document.getElementById('h-empresa').textContent = CLIENT;
+  document.getElementById('h-empresa').textContent = CLIENT_OVERRIDE || CLIENT;
   document.getElementById('h-sub').textContent = `${P.sector} · ${moneda} · Horizonte ${n} años`;
 
   document.getElementById('k-monto').textContent = M(params.monto);
@@ -1152,7 +1153,7 @@ function renderPres(){
   const {years,n,moneda,ebitda,mEb,dscr,icr,mBr,dPat,dscrMin,score,verdict,
          montoMax,deficit,stress,params,uan,mNe} = R;
 
-  document.getElementById('pco').textContent = CLIENT;
+  document.getElementById('pco').textContent = CLIENT_OVERRIDE || CLIENT;
   document.getElementById('psec').textContent = `${P.sector} · Análisis de Viabilidad Crediticia`;
   document.getElementById('pdt').textContent = new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long'});
   document.getElementById('psn').textContent = score;
@@ -1384,42 +1385,67 @@ window.addEventListener('DOMContentLoaded',()=>{
   const qp = new URLSearchParams(window.location.search);
   const modelId = qp.get('id');
   const isBlank = qp.get('blank') === '1';
+  const dataB64  = qp.get('d'); // base64 encoded full payload (works cross-device)
 
   if(isBlank){
-    // ── Calculadora Rápida: completely blank ──
-    P.monto    = 0;
-    P.h_ing    = 0;
-    P.h_cv     = 0;
-    P.h_ga     = 0;
-    P.h_dep    = 0;
-    P.h_gf     = 0;
-    P.h_oi     = 0;
-    P.h_act    = 0;
-    P.h_pas    = 0;
-    P.h_pat    = 0;
-    P.p_crecIng = Array(10).fill(0);
-    P.p_mb      = Array(10).fill(0);
-    P.p_gaAdm   = Array(10).fill(0);
-    P.p_dep     = Array(10).fill(0);
-    P.p_oi      = Array(10).fill(0);
-    P.p_gfVig   = Array(10).fill(0);
+    // ── Calculadora Rápida: blank ──
+    P.monto=0;P.h_ing=0;P.h_cv=0;P.h_ga=0;P.h_dep=0;P.h_gf=0;P.h_oi=0;
+    P.h_act=0;P.h_pas=0;P.h_pat=0;
+    P.p_crecIng=Array(10).fill(0);P.p_mb=Array(10).fill(0);
+    P.p_gaAdm=Array(10).fill(0);P.p_dep=Array(10).fill(0);
+    P.p_oi=Array(10).fill(0);P.p_gfVig=Array(10).fill(0);
+    P.p_ing=Array(10).fill(0);
+
+  } else if(dataB64){
+    // ── Shared link with full encoded payload — works on ANY device ──
+    try{
+      const payload = JSON.parse(decodeURIComponent(escape(atob(dataB64))));
+      // Map payload → P object
+      if(payload.monto)    P.monto    = payload.monto;
+      if(payload.tasa)     P.tasa     = payload.tasa * 100; // stored as decimal
+      if(payload.plazo)    P.plazo    = payload.plazo;
+      if(payload.gracia!=null) P.gracia = payload.gracia;
+      if(payload.isr)      P.isr      = payload.isr * 100;
+      if(payload.moneda)   P.moneda   = payload.moneda;
+      if(payload.sector)   P.sector   = payload.sector;
+      if(payload.horizonte) P.horizonte = payload.horizonte;
+      // Historical base
+      if(payload.h_ing)    P.h_ing    = payload.h_ing;
+      if(payload.h_cv)     P.h_cv     = payload.h_cv;
+      if(payload.h_ga)     P.h_ga     = payload.h_ga;
+      if(payload.h_dep)    P.h_dep    = payload.h_dep;
+      if(payload.h_gf)     P.h_gf     = payload.h_gf;
+      if(payload.h_oi)     P.h_oi     = payload.h_oi;
+      if(payload.h_act)    P.h_act    = payload.h_act;
+      if(payload.h_pas)    P.h_pas    = payload.h_pas;
+      if(payload.h_pat)    P.h_pat    = payload.h_pat;
+      // Growth projections
+      if(payload.crecIng)  P.p_crecIng = [...payload.crecIng,...Array(10).fill(payload.crecIng[payload.crecIng.length-1]||0)].slice(0,10);
+      if(payload.mb)       P.p_mb      = [...payload.mb,      ...Array(10).fill(payload.mb[payload.mb.length-1]||0)].slice(0,10);
+      if(payload.opex)     P.p_gaAdm   = [...payload.opex,    ...Array(10).fill(payload.opex[payload.opex.length-1]||0)].slice(0,10);
+      // Build absolute p_ing from growth rates and base
+      if(P.h_ing > 0 && P.p_crecIng.some(v=>v>0)){
+        let base = P.h_ing;
+        P.p_ing = P.p_crecIng.map(g=>{ base=base*(1+g/100); return base; });
+      }
+      // Override page title
+      if(payload.client) document.title = payload.client + ' — DT Models';
+      CLIENT_OVERRIDE = payload.client || CLIENT;
+    }catch(e){ console.warn('Could not decode shared payload', e); }
+
   } else if(modelId){
-    // ── Open from Dashboard: load full saved model ──
+    // ── Dashboard open: load from localStorage (same browser) ──
     try{
       const models = JSON.parse(localStorage.getItem('dtmodels_models')||'[]');
       const saved  = models.find(m=>String(m.id)===String(modelId));
-      if(saved){
-        if(saved.inputs){
-          const inp = JSON.parse(saved.inputs);
-          applyInputsToP(inp);
-        }
-        if(saved.monto) P.monto = saved.monto;
-        if(saved.tasa)  P.tasa  = saved.tasa * 100;
-        if(saved.plazo) P.plazo = saved.plazo;
+      if(saved && saved.inputs){
+        const inp = JSON.parse(saved.inputs);
+        applyInputsToP(inp);
       }
+      if(saved && saved.monto) P.monto = saved.monto;
     }catch(e){ console.warn('Could not load saved model', e); }
+
   } else if(MONTO_URL>0){
-    // ── Direct URL with monto only (e.g. from share link) ──
     P.monto = MONTO_URL;
   }
 
