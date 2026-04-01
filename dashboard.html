@@ -451,43 +451,62 @@ function shareModel(i){
   const m = getModels()[i]
   let link
 
-  // If model has full inputs saved, encode them into ?d= for cross-device sharing
-  if(m.inputs){
+  // Use saved full R data if available — guarantees identical numbers
+  if(m.data){
     try{
-      const inp = JSON.parse(m.inputs)
-      const gn = id => parseFloat(inp[id])||0
-      const gi = id => parseInt(inp[id])||0
-
+      const R = JSON.parse(m.data)
+      const inp = m.inputs ? JSON.parse(m.inputs) : {}
       const payload = {
         client:   m.client,
-        sector:   inp['f-sector']  || '',
-        moneda:   inp['f-moneda']  || 'COP',
-        monto:    m.monto,
-        tasa:     m.tasa,          // stored as decimal (e.g. 0.14)
-        plazo:    m.plazo,
-        gracia:   gi('c-gracia'),
-        isr:      gn('c-isr')/100 || 0.33,
-        h_ing:    gn('pl-ing-3') || gn('pl-ing-2') || gn('pl-ing-1'),
-        h_cv:     gn('pl-cv-3')  || gn('pl-cv-2')  || gn('pl-cv-1'),
-        h_ga:     gn('pl-go-3')  || gn('pl-go-2')  || gn('pl-go-1'),
-        h_dep:    gn('pl-dep-3') || gn('pl-dep-2') || gn('pl-dep-1'),
-        h_gf:     gn('pl-gf-3')  || gn('pl-gf-2')  || gn('pl-gf-1'),
-        h_oi:     gn('pl-oi-3')  || gn('pl-oi-2')  || gn('pl-oi-1'),
-        h_act:    gn('b-ac') + gn('b-anc'),
-        h_pas:    gn('b-pc') + gn('b-pnc'),
-        h_pat:    gn('b-pat'),
-        crecIng:  [0,1,2,3,4].map(j=>gn('s-ing-'+j)),
-        mb:       [0,1,2,3,4].map(j=>gn('s-mb-'+j)),
-        opex:     [0,1,2,3,4].map(j=>gn('s-opex-'+j)),
-        horizonte: gi('s-horizonte') || 5,
+        sector:   inp['f-sector'] || m.sector || '',
+        moneda:   inp['f-moneda'] || 'COP',
+        horizonte: R.n || 5,
         score:    m.score,
-        dscr:     m.dscr,
         verdict:  m.verdict,
+        dscrMin:  m.dscr,
+        R: {
+          n:          R.n,
+          years:      R.years,
+          moneda:     R.moneda || inp['f-moneda'] || 'COP',
+          ingresos:   R.ingresos,
+          costos:     R.costos,
+          opex:       R.opex,
+          ebitda:     R.ebitda,
+          depreciacion: R.depreciacion,
+          intereses:  R.intereses,
+          capital:    R.capital,
+          servDeuda:  R.servDeuda,
+          cfads:      R.cfads,
+          dscr:       R.dscr,
+          icr:        R.icr,
+          mEbitda:    R.mEbitda,
+          dPat:       R.dPat,
+          activos:    R.activos,
+          pasivos:    R.pasivos,
+          patrimonio: R.patrimonio,
+          uan:        R.uan,
+          score:      R.score,
+          verdict:    R.verdict,
+          dscrMin:    R.dscrMin,
+          montoMax:   R.montoMax,
+          cfadsMin:   R.cfadsMin,
+          deficit:    R.deficit,
+          stress:     R.stress,
+          llcr:       R.llcr || null,
+          breakeven:  R.breakeven || null,
+          params: {
+            monto:   R.params ? R.params.monto  : m.monto,
+            tasa_na: R.params ? R.params.tasa_na : m.tasa,
+            plazo:   R.params ? R.params.plazo   : m.plazo,
+            gracia:  R.params ? R.params.gracia  : 0,
+            isr:     R.params ? R.params.isr     : 0.33,
+            moneda:  R.moneda || inp['f-moneda'] || 'COP',
+          }
+        }
       }
       const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
       link = `${window.location.origin}/modelo_financiero.html?d=${encoded}`
     } catch(e){
-      // fallback to old format
       link = `${window.location.origin}/modelo_financiero.html?client=${encodeURIComponent(m.client)}&monto=${m.monto}&shared=1`
     }
   } else {
