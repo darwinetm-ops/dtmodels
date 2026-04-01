@@ -1601,8 +1601,12 @@ function saveAndFinish(){
   if(!calcResults) calcResults = calcModel()
   const R = calcResults
   const models = JSON.parse(localStorage.getItem('dtmodels_models')||'[]')
-  const model = {
-    id:      Date.now(),
+
+  // Check if editing an existing model (id in URL)
+  const urlId = new URLSearchParams(window.location.search).get('id')
+  const existingIdx = urlId ? models.findIndex(m => String(m.id) === String(urlId)) : -1
+
+  const modelData = {
     client:  document.getElementById('f-empresa').value || 'Sin nombre',
     type:    document.getElementById('f-tipo')?.value || '',
     sector:  document.getElementById('f-sector')?.value || '',
@@ -1617,9 +1621,24 @@ function saveAndFinish(){
     data:    JSON.stringify(R),
     inputs:  JSON.stringify(collectInputs()),
   }
-  models.push(model)
-  localStorage.setItem('dtmodels_models', JSON.stringify(models))
-  alert(`✅ Modelo guardado para "${model.client}"`)
+
+  if(existingIdx >= 0){
+    // UPDATE existing model — preserve original ID and creation date
+    models[existingIdx] = {
+      ...models[existingIdx],
+      ...modelData,
+      id: models[existingIdx].id, // keep original id
+      updatedDate: modelData.date,
+    }
+    localStorage.setItem('dtmodels_models', JSON.stringify(models))
+    alert(`✅ Modelo actualizado para "${modelData.client}"`)
+  } else {
+    // CREATE new model
+    models.push({ id: Date.now(), ...modelData })
+    localStorage.setItem('dtmodels_models', JSON.stringify(models))
+    alert(`✅ Modelo guardado para "${modelData.client}"`)
+  }
+
   window.location.href = 'dashboard.html'
 }
 
@@ -1864,12 +1883,11 @@ function copyShareLink(){
   if(!calcResults) calcResults = calcModel()
   const R = calcResults
 
-  // Save to localStorage for same-browser use
-  const empresa  = document.getElementById('f-empresa')?.value||'Cliente'
-  const inputs   = collectInputs()
-  const models   = JSON.parse(localStorage.getItem('dtmodels_models')||'[]')
+  // Save to localStorage
+  const empresa = document.getElementById('f-empresa')?.value||'Cliente'
+  const models  = JSON.parse(localStorage.getItem('dtmodels_models')||'[]')
   const model = {
-    id: Date.now(),
+    id:      Date.now(),
     client:  empresa,
     type:    document.getElementById('f-tipo')?.value||'',
     sector:  document.getElementById('f-sector')?.value||'',
@@ -1882,52 +1900,75 @@ function copyShareLink(){
     dscr:    R.dscrMin,
     verdict: R.verdict,
     data:    JSON.stringify(R),
-    inputs:  JSON.stringify(inputs),
+    inputs:  JSON.stringify(collectInputs()),
   }
-  // Replace if same client exists, else push
   const existIdx = models.findIndex(m=>m.client===empresa && m.monto===model.monto)
   if(existIdx>=0) models[existIdx]=model; else models.push(model)
   localStorage.setItem('dtmodels_models', JSON.stringify(models))
 
-  // Encode all P params into URL so link works on ANY browser/device
-  // We encode only the essential calc params (not full DOM inputs)
+  // ── EMBED FULL RESULTS in payload — no recalculation needed ──
+  // This guarantees modelo_financiero shows EXACTLY the same numbers
   const payload = {
-    client:  empresa,
-    sector:  document.getElementById('f-sector')?.value||'',
-    moneda:  document.getElementById('f-moneda')?.value||'COP',
-    monto:   R.params.monto,
-    tasa:    R.params.tasa_na,
-    plazo:   R.params.plazo,
-    gracia:  R.params.gracia||0,
-    isr:     R.params.isr||0.33,
-    h_ing:   parseFloat(document.getElementById('pl-ing-3')?.value)||0,
-    h_cv:    parseFloat(document.getElementById('pl-cv-3')?.value)||0,
-    h_ga:    parseFloat(document.getElementById('pl-go-3')?.value)||0,
-    h_dep:   parseFloat(document.getElementById('pl-dep-3')?.value)||0,
-    h_gf:    parseFloat(document.getElementById('pl-gf-3')?.value)||0,
-    h_oi:    parseFloat(document.getElementById('pl-oi-3')?.value)||0,
-    h_act:   (parseFloat(document.getElementById('b-ac')?.value)||0)+(parseFloat(document.getElementById('b-anc')?.value)||0),
-    h_pas:   (parseFloat(document.getElementById('b-pc')?.value)||0)+(parseFloat(document.getElementById('b-pnc')?.value)||0),
-    h_pat:   parseFloat(document.getElementById('b-pat')?.value)||0,
-    crecIng: [0,1,2,3,4].map(i=>parseFloat(document.getElementById('s-ing-'+i)?.value)||0),
-    mb:      [0,1,2,3,4].map(i=>parseFloat(document.getElementById('s-mb-'+i)?.value)||0),
-    opex:    [0,1,2,3,4].map(i=>parseFloat(document.getElementById('s-opex-'+i)?.value)||0),
-    horizonte: parseInt(document.getElementById('s-horizonte')?.value)||5,
-    score:   R.score,
-    dscr:    R.dscrMin,
-    verdict: R.verdict,
+    client:   empresa,
+    sector:   document.getElementById('f-sector')?.value||'',
+    moneda:   document.getElementById('f-moneda')?.value||'COP',
+    horizonte: R.n,
+    score:    R.score,
+    verdict:  R.verdict,
+    dscrMin:  R.dscrMin,
+    // Full pre-calculated results — displayed directly, no recalc
+    R: {
+      n:         R.n,
+      years:     R.years,
+      moneda:    R.params.moneda||document.getElementById('f-moneda')?.value||'COP',
+      ingresos:  R.ingresos,
+      costos:    R.costos,
+      opex:      R.opex,
+      ebitda:    R.ebitda,
+      depreciacion: R.depreciacion,
+      intereses: R.intereses,
+      capital:   R.capital,
+      servDeuda: R.servDeuda,
+      cfads:     R.cfads,
+      dscr:      R.dscr,
+      icr:       R.icr,
+      mEbitda:   R.mEbitda,
+      dPat:      R.dPat,
+      activos:   R.activos,
+      pasivos:   R.pasivos,
+      patrimonio:R.patrimonio,
+      uan:       R.uan,
+      score:     R.score,
+      verdict:   R.verdict,
+      dscrMin:   R.dscrMin,
+      montoMax:  R.montoMax,
+      cfadsMin:  R.cfadsMin,
+      deficit:   R.deficit,
+      stress:    R.stress,
+      llcr:      R.llcr||null,
+      breakeven: R.breakeven||null,
+      params: {
+        monto:   R.params.monto,
+        tasa_na: R.params.tasa_na,
+        plazo:   R.params.plazo,
+        gracia:  R.params.gracia||0,
+        isr:     R.params.isr||0,
+        moneda:  R.params.moneda||document.getElementById('f-moneda')?.value||'COP',
+      }
+    }
   }
   const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
   const link = `${window.location.origin}/modelo_financiero.html?d=${encoded}`
   navigator.clipboard.writeText(link).then(()=>{
     const box = document.getElementById('share-link-box')
     if(box){ box.style.display='block'; box.textContent=link }
-    alert('✅ Link copiado — funciona en cualquier dispositivo')
+    alert('✅ Link copiado — los datos viajan completos en el link')
   }).catch(()=>{
     const box = document.getElementById('share-link-box')
     if(box){ box.style.display='block'; box.textContent=link }
   })
 }
+
 
 
 // ── INIT — restore saved model if id param present ──
