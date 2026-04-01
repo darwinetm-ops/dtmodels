@@ -167,6 +167,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
     <button class="btn-pres" onclick="goPage('pres',document.querySelectorAll('.nt')[6])">▶ Presentar</button>
   </div>
 </nav>
+<div id="debug-params" style="display:none;position:fixed;top:50px;left:0;right:0;z-index:200;padding:8px 16px;font-family:monospace;font-size:11px;text-align:center;background:rgba(37,99,235,.15);border-bottom:1px solid rgba(37,99,235,.3);color:#60A5FA"></div>
 
 <div class="main">
 
@@ -1447,6 +1448,20 @@ window.addEventListener('DOMContentLoaded',()=>{
 
   } else if(MONTO_URL>0){
     P.monto = MONTO_URL;
+  }
+
+  // Show debug info for what param was detected (helps diagnose link issues)
+  const debugEl = document.getElementById('debug-params');
+  if(debugEl){
+    const detected = dataB64 ? '✅ ?d= (datos completos codificados)' 
+                   : modelId  ? '⚠️ ?id= (requiere mismo navegador)'
+                   : isBlank  ? '🔵 Calculadora en blanco'
+                   : MONTO_URL>0 ? '⚠️ Solo monto en URL'
+                   : '⚠️ Sin parámetros — usando valores por defecto';
+    debugEl.textContent = 'Fuente de datos: ' + detected;
+    debugEl.style.display = 'block';
+    // Hide after 8 seconds
+    setTimeout(()=>{ if(debugEl) debugEl.style.display='none'; }, 8000);
   }
 
   // Calculate and render
