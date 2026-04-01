@@ -852,9 +852,15 @@ function calcModel(){
 // RENDER FUNCTIONS
 // ════════════════════════════════════════════════
 function renderDashboard(){
-  const {years,n,moneda,ingresos,cv,ebitda,mEb,dscr,dscrMin,
-         score,verdict,cfads,servDeuda,activos,pasivos,patrimonio,
-         montoMax,deficit,params} = R;
+  const years=R.years, n=R.n, moneda=R.moneda||P.moneda||'COP';
+  const ingresos=R.ingresos||[], ebitda=R.ebitda||[];
+  const cv=R.cv||R.costos||[], mEb=R.mEb||R.mEbitda||[];
+  const dscr=R.dscr||[], dscrMin=R.dscrMin||0;
+  const score=R.score||0, verdict=R.verdict||'—';
+  const cfads=R.cfads||[], servDeuda=R.servDeuda||[];
+  const activos=R.activos||[], pasivos=R.pasivos||[], patrimonio=R.patrimonio||[];
+  const montoMax=R.montoMax||0, deficit=R.deficit||0;
+  const params=R.params||{monto:P.monto,tasa_na:P.tasa/100,plazo:P.plazo,gracia:P.gracia,moneda};
 
   document.getElementById('h-empresa').textContent = CLIENT_OVERRIDE || CLIENT;
   document.getElementById('h-sub').textContent = `${P.sector} · ${moneda} · Horizonte ${n} años`;
@@ -932,9 +938,28 @@ function renderDashboard(){
 
 // ── ESTADOS FINANCIEROS ──
 function renderEEFF(){
-  const {years,n,moneda,ingresos,cv,ub,ga,dep,ebitda,ebit,oi,gfVig,intNew,
-         uai,isr_pago,uan,capPago,servDeuda,saldoFin,cfads,dscr,
-         activos,pasivos,patrimonio,params} = R;
+  const years=R.years,n=R.n,moneda=R.moneda||P.moneda||'COP';
+  const ingresos=R.ingresos||[],ebitda=R.ebitda||[];
+  const cv=R.cv||R.costos||ingresos.map(v=>v*0.77);
+  const ub=R.ub||ingresos.map((v,i)=>v-(cv[i]||0));
+  const ga=R.ga||R.opex||Array(n).fill(0);
+  const dep=R.dep||R.depreciacion||Array(n).fill(0);
+  const ebit=R.ebit||ebitda;
+  const oi=R.oi||Array(n).fill(0);
+  const gfVig=R.gfVig||Array(n).fill(0);
+  const intNew=R.intNew||R.intereses||Array(n).fill(0);
+  const uai=R.uai||R.uan||Array(n).fill(0);
+  const isr_pago=R.isr_pago||Array(n).fill(0);
+  const uan=R.uan||Array(n).fill(0);
+  const capPago=R.capPago||R.capital||Array(n).fill(0);
+  const servDeuda=R.servDeuda||Array(n).fill(0);
+  const saldoFin=R.saldoFin||Array(n).fill(0);
+  const cfads=R.cfads||Array(n).fill(0);
+  const dscr=R.dscr||Array(n).fill(null);
+  const activos=R.activos||Array(n).fill(0);
+  const pasivos=R.pasivos||Array(n).fill(0);
+  const patrimonio=R.patrimonio||Array(n).fill(0);
+  const params=R.params||{monto:P.monto,tasa_na:P.tasa/100,plazo:P.plazo,gracia:P.gracia,moneda};
 
   document.getElementById('eeff-sub').textContent = `${CLIENT} · ${moneda} · ${n} años proyectados`;
 
@@ -1023,7 +1048,11 @@ function renderEEFF(){
 
 // ── VIABILIDAD ──
 function renderViabilidad(){
-  const {years,n,dscr,icr,mEb,mBr,dPat,dscrMin,score,verdict,params,moneda} = R;
+  const years=R.years,n=R.n,moneda=R.moneda||P.moneda||'COP';
+  const dscr=R.dscr||[],icr=R.icr||[],mEb=R.mEb||R.mEbitda||[];
+  const mBr=R.mBr||mEb.map(v=>v*1.2),dPat=R.dPat||[];
+  const dscrMin=R.dscrMin||0,score=R.score||0,verdict=R.verdict||'—';
+  const params=R.params||{monto:P.monto,tasa_na:P.tasa/100,plazo:P.plazo,gracia:P.gracia,moneda};
 
   document.getElementById('viab-sub').textContent = `${CLIENT} · ${M(params.monto)} · ${(params.tasa*100).toFixed(1)}% N.A. · ${params.plazo}M`;
   document.getElementById('v-score').textContent = `${score}/100`;
@@ -1097,7 +1126,10 @@ function renderViabilidad(){
 
 // ── STRESS TEST ──
 function renderStress(){
-  const {years,n,stress,cfadsMin,montoMax,deficit,params,moneda} = R;
+  const years=R.years,n=R.n,moneda=R.moneda||P.moneda||'COP';
+  const stress=R.stress||{base:[],moderate:[],severe:[],trm20:[],trm40:[]};
+  const cfadsMin=R.cfadsMin||0,montoMax=R.montoMax||0,deficit=R.deficit||0;
+  const params=R.params||{monto:P.monto,tasa_na:P.tasa/100,plazo:P.plazo,gracia:P.gracia,moneda};
 
   document.getElementById('st-b1').textContent = fX(stress.base[0]);
   document.getElementById('st-b1').style.color = dC(stress.base[0]);
@@ -1139,7 +1171,10 @@ function renderStress(){
 
 // ── RATIOS ──
 function renderRatios(){
-  const {years,n,roe,roa,mEb,mBr,mNe,dscr,icr,dPat} = R;
+  const years=R.years,n=R.n;
+  const roe=R.roe||Array(n).fill(null),roa=R.roa||Array(n).fill(null);
+  const mEb=R.mEb||R.mEbitda||[],mBr=R.mBr||mEb.map(v=>v*1.2);
+  const mNe=R.mNe||Array(n).fill(null),dscr=R.dscr||[],icr=R.icr||[],dPat=R.dPat||[];
 
   const hd = '<th>Métrica</th>'+years.map(y=>`<th>${y}</th>`).join('');
   document.getElementById('rh-rent').innerHTML = hd;
@@ -1174,8 +1209,13 @@ function renderRatios(){
 
 // ── PRESENTACIÓN ──
 function renderPres(){
-  const {years,n,moneda,ebitda,mEb,dscr,icr,mBr,dPat,dscrMin,score,verdict,
-         montoMax,deficit,stress,params,uan,mNe} = R;
+  const years=R.years,n=R.n,moneda=R.moneda||P.moneda||'COP';
+  const ebitda=R.ebitda||[],mEb=R.mEb||R.mEbitda||[];
+  const dscr=R.dscr||[],icr=R.icr||[],mBr=R.mBr||mEb.map(v=>v*1.2);
+  const dPat=R.dPat||[],dscrMin=R.dscrMin||0,score=R.score||0,verdict=R.verdict||'—';
+  const montoMax=R.montoMax||0,deficit=R.deficit||0,stress=R.stress||{};
+  const uan=R.uan||[],mNe=R.mNe||Array(n).fill(null);
+  const params=R.params||{monto:P.monto,tasa_na:P.tasa/100,plazo:P.plazo,gracia:P.gracia,moneda};
 
   document.getElementById('pco').textContent = CLIENT_OVERRIDE || CLIENT;
   document.getElementById('psec').textContent = `${P.sector} · Análisis de Viabilidad Crediticia`;
@@ -1426,17 +1466,49 @@ window.addEventListener('DOMContentLoaded',()=>{
       const payload = JSON.parse(decodeURIComponent(escape(atob(dataB64))));
 
       if(payload.R){
-        // Full results object embedded — use directly
-        SHARED_R = payload.R;
+        // Full results object embedded — normalize field names and use directly
+        const raw = payload.R;
+        // Add all alias fields so render functions work regardless of source
+        const normalized = Object.assign({}, raw, {
+          // Wizard uses these names, render functions expect these aliases
+          cv:          raw.cv       || raw.costos,
+          ga:          raw.ga       || raw.opex,
+          intNew:      raw.intNew   || raw.intereses,
+          capPago:     raw.capPago  || raw.capital,
+          dep:         raw.dep      || raw.depreciacion || raw.dep || [],
+          mEb:         raw.mEb      || raw.mEbitda,
+          // Derived fields that render functions need
+          ub:          raw.ub       || (raw.ingresos||[]).map((v,i)=>v-(raw.cv||raw.costos||[])[i]||0),
+          ebit:        raw.ebit     || raw.ebitda,
+          oi:          raw.oi       || Array(raw.n||5).fill(0),
+          gfVig:       raw.gfVig    || Array(raw.n||5).fill(0),
+          saldoFin:    raw.saldoFin || Array(raw.n||5).fill(0),
+          isr_pago:    raw.isr_pago || Array(raw.n||5).fill(0),
+          uai:         raw.uai      || raw.uan,
+          // Ratio aliases
+          mBr:         raw.mBr      || (raw.ingresos||[]).map((v,i)=>v>0?((raw.ub||raw.ingresos.map((v2,j)=>v2-(raw.cv||raw.costos||[])[j]))[i]||0)/v:0),
+          mNe:         raw.mNe      || (raw.uan||[]).map((u,i)=>(raw.ingresos||[])[i]>0?u/(raw.ingresos[i]):0),
+          roe:         raw.roe      || Array(raw.n||5).fill(null),
+          roa:         raw.roa      || Array(raw.n||5).fill(null),
+          llcr:        raw.llcr     || Array(raw.n||5).fill(null),
+          breakeven:   raw.breakeven|| Array(raw.n||5).fill(null),
+          // moneda from params or payload
+          moneda:      raw.moneda   || (raw.params&&raw.params.moneda) || payload.moneda || 'COP',
+          // montoMax and deficit
+          montoMax:    raw.montoMax || 0,
+          deficit:     raw.deficit  || 0,
+          cfadsMin:    raw.cfadsMin || 0,
+        });
+        SHARED_R = normalized;
         // Set P params for display purposes
-        const rp = payload.R.params || {};
+        const rp = raw.params || {};
         P.monto    = rp.monto    || P.monto;
         P.tasa     = (rp.tasa_na || P.tasa/100) * 100;
         P.plazo    = rp.plazo    || P.plazo;
         P.gracia   = rp.gracia   || 0;
         P.isr      = (rp.isr     || P.isr/100) * 100;
         P.moneda   = rp.moneda   || payload.moneda || P.moneda;
-        P.horizonte= payload.R.n || payload.horizonte || P.horizonte;
+        P.horizonte= raw.n || payload.horizonte || P.horizonte;
         P.sector   = payload.sector || P.sector;
       } else {
         // Legacy payload without R — apply params and recalc
