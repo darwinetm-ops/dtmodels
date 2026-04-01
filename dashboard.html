@@ -330,7 +330,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
     <button class="modal-close" onclick="document.getElementById('modal-link').classList.remove('open')">✕</button>
     <h2 class="modal-title">Compartir Modelo</h2>
     <p class="modal-sub">Envía este link al cliente para ver la presentación online</p>
-    <div class="link-box" id="link-box"></div>
+    <div class="link-box" id="link-box" onclick="this.textContent=this.dataset.fullLink||this.textContent" title="Clic para ver link completo" style="cursor:pointer;word-break:break-all"></div>
     <button class="copy-btn" onclick="copyLink()">📋 Copiar link</button>
     <div style="margin-top:12px;font-size:11px;color:var(--text3)">
       El cliente puede ver el modelo desde cualquier dispositivo sin necesidad de descargar nada.
@@ -513,12 +513,18 @@ function shareModel(i){
     link = `${window.location.origin}/modelo_financiero.html?client=${encodeURIComponent(m.client)}&monto=${m.monto}&shared=1`
   }
 
-  document.getElementById('link-box').textContent = link
+  // Store full link for copying but show truncated in box
+  document.getElementById('link-box').dataset.fullLink = link
+  const display = link.length > 80 
+    ? link.substring(0, 77) + '...' 
+    : link
+  document.getElementById('link-box').textContent = display
   document.getElementById('modal-link').classList.add('open')
 }
 
 function copyLink(){
-  const txt = document.getElementById('link-box').textContent
+  const box = document.getElementById('link-box')
+  const txt = box.dataset.fullLink || box.textContent
   navigator.clipboard.writeText(txt).then(()=>{
     document.querySelector('.copy-btn').textContent='✅ Copiado!'
     setTimeout(()=>document.querySelector('.copy-btn').textContent='📋 Copiar link',2000)

@@ -134,6 +134,26 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .pi-t{font-family:var(--mono);font-size:8px;color:var(--acc)}
 .pi-v{font-family:var(--mono);font-size:12px;font-weight:600}
 .pi-s{font-size:9px;color:var(--t3)}
+/* VIEW MODE — read only, hide editing elements */
+.view-mode #inputs-tab { display: none !important; }
+.view-mode .recalc { display: none !important; }
+.view-mode .if, .view-mode .yi, .view-mode input, .view-mode select { 
+  pointer-events: none; opacity: 0.7; cursor: default;
+}
+.view-mode #pg-inputs { display: none !important; }
+.view-mode-banner {
+  display: none;
+  background: rgba(37,99,235,.12);
+  border-bottom: 1px solid rgba(37,99,235,.25);
+  padding: 6px 20px;
+  font-size: 11px;
+  color: #60A5FA;
+  text-align: center;
+  font-family: var(--mono);
+  letter-spacing: .04em;
+}
+.view-mode .view-mode-banner { display: block; }
+
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
@@ -159,7 +179,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
     <button class="nt" onclick="goPage('viab',this)">Viabilidad<span id="s-badge" style="margin-left:5px;background:#2563EB;color:#fff;padding:1px 5px;border-radius:3px;font-size:9px">—</span></button>
     <button class="nt" onclick="goPage('stress',this)">Stress Test</button>
     <button class="nt" onclick="goPage('ratios',this)">Ratios</button>
-    <button class="nt" onclick="goPage('inputs',this)">Inputs</button>
+    <button class="nt" id="inputs-tab" onclick="goPage('inputs',this)">Inputs</button>
     <button class="nt" onclick="goPage('pres',this)">Presentación</button>
   </div>
   <div class="nb2">
@@ -167,6 +187,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
     <button class="btn-pres" onclick="goPage('pres',document.querySelectorAll('.nt')[6])">▶ Presentar</button>
   </div>
 </nav>
+<div class="view-mode-banner">🔒 Modelo en modo presentación — Solo lectura · Generado por DT Models</div>
 <div id="debug-params" style="display:none;position:fixed;top:50px;left:0;right:0;z-index:200;padding:8px 16px;font-family:monospace;font-size:11px;text-align:center;background:rgba(37,99,235,.15);border-bottom:1px solid rgba(37,99,235,.3);color:#60A5FA"></div>
 
 <div class="main">
@@ -477,7 +498,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 const QP = new URLSearchParams(window.location.search);
 const CLIENT = QP.get('client') ? decodeURIComponent(QP.get('client')) : 'Modelo Financiero';
 const MONTO_URL = parseFloat(QP.get('monto')) || 0;
-let CLIENT_OVERRIDE = null; // set when loading from ?d= payload
+let CLIENT_OVERRIDE = null;
+let SHARED_R = null; // pre-calculated results from ?d= payload — no recalc needed
 
 // ════════════════════════════════════════════════
 // STATE — current inputs
@@ -1399,40 +1421,39 @@ window.addEventListener('DOMContentLoaded',()=>{
     P.p_ing=Array(10).fill(0);
 
   } else if(dataB64){
-    // ── Shared link with full encoded payload — works on ANY device ──
+    // ── Shared link: load pre-calculated results — NO recalculation ──
     try{
       const payload = JSON.parse(decodeURIComponent(escape(atob(dataB64))));
-      // Map payload → P object
-      if(payload.monto)    P.monto    = payload.monto;
-      if(payload.tasa)     P.tasa     = payload.tasa * 100; // stored as decimal
-      if(payload.plazo)    P.plazo    = payload.plazo;
-      if(payload.gracia!=null) P.gracia = payload.gracia;
-      if(payload.isr)      P.isr      = payload.isr * 100;
-      if(payload.moneda)   P.moneda   = payload.moneda;
-      if(payload.sector)   P.sector   = payload.sector;
-      if(payload.horizonte) P.horizonte = payload.horizonte;
-      // Historical base
-      if(payload.h_ing)    P.h_ing    = payload.h_ing;
-      if(payload.h_cv)     P.h_cv     = payload.h_cv;
-      if(payload.h_ga)     P.h_ga     = payload.h_ga;
-      if(payload.h_dep)    P.h_dep    = payload.h_dep;
-      if(payload.h_gf)     P.h_gf     = payload.h_gf;
-      if(payload.h_oi)     P.h_oi     = payload.h_oi;
-      if(payload.h_act)    P.h_act    = payload.h_act;
-      if(payload.h_pas)    P.h_pas    = payload.h_pas;
-      if(payload.h_pat)    P.h_pat    = payload.h_pat;
-      // Growth projections
-      if(payload.crecIng)  P.p_crecIng = [...payload.crecIng,...Array(10).fill(payload.crecIng[payload.crecIng.length-1]||0)].slice(0,10);
-      if(payload.mb)       P.p_mb      = [...payload.mb,      ...Array(10).fill(payload.mb[payload.mb.length-1]||0)].slice(0,10);
-      if(payload.opex)     P.p_gaAdm   = [...payload.opex,    ...Array(10).fill(payload.opex[payload.opex.length-1]||0)].slice(0,10);
-      // Build absolute p_ing from growth rates and base
-      if(P.h_ing > 0 && P.p_crecIng.some(v=>v>0)){
-        let base = P.h_ing;
-        P.p_ing = P.p_crecIng.map(g=>{ base=base*(1+g/100); return base; });
+
+      if(payload.R){
+        // Full results object embedded — use directly
+        SHARED_R = payload.R;
+        // Set P params for display purposes
+        const rp = payload.R.params || {};
+        P.monto    = rp.monto    || P.monto;
+        P.tasa     = (rp.tasa_na || P.tasa/100) * 100;
+        P.plazo    = rp.plazo    || P.plazo;
+        P.gracia   = rp.gracia   || 0;
+        P.isr      = (rp.isr     || P.isr/100) * 100;
+        P.moneda   = rp.moneda   || payload.moneda || P.moneda;
+        P.horizonte= payload.R.n || payload.horizonte || P.horizonte;
+        P.sector   = payload.sector || P.sector;
+      } else {
+        // Legacy payload without R — apply params and recalc
+        if(payload.monto)    P.monto    = payload.monto;
+        if(payload.tasa)     P.tasa     = payload.tasa * 100;
+        if(payload.plazo)    P.plazo    = payload.plazo;
+        if(payload.gracia!=null) P.gracia = payload.gracia;
+        if(payload.isr)      P.isr      = payload.isr * 100;
+        if(payload.moneda)   P.moneda   = payload.moneda;
+        if(payload.sector)   P.sector   = payload.sector;
+        if(payload.horizonte) P.horizonte = payload.horizonte;
       }
-      // Override page title
+
       if(payload.client) document.title = payload.client + ' — DT Models';
       CLIENT_OVERRIDE = payload.client || CLIENT;
+      // VIEW MODE: hide editable elements
+      document.body.classList.add('view-mode');
     }catch(e){ console.warn('Could not decode shared payload', e); }
 
   } else if(modelId){
@@ -1465,8 +1486,14 @@ window.addEventListener('DOMContentLoaded',()=>{
     setTimeout(()=>{ if(debugEl) debugEl.style.display='none'; }, 8000);
   }
 
-  // Calculate and render
-  R = calcModel();
+  // Use pre-calculated results if available, else calculate fresh
+  if(SHARED_R){
+    R = SHARED_R;
+    // Ensure YEARS is set for rendering
+    YEARS = R.years || Array.from({length:R.n||5},(_,i)=>(new Date().getFullYear()+i).toString());
+  } else {
+    R = calcModel();
+  }
   updateGlobal();
   renderDashboard();
   rendered['dash']=true;
