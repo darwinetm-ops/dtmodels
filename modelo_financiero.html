@@ -721,8 +721,9 @@ function calcModel(){
   for(let i=0;i<n;i++){
     saldoD = Math.max(0, saldoD-capPago[i]);
     pat += uan[i];
-    // Activos = patrimonio + deuda nueva + estimated other liabilities
-    const otrosPas = P.h_pas * Math.pow(1.05,i); // other liabilities grow slightly
+    // If h_pas provided (real balance data), include other liabilities
+    // Otherwise use only new debt (same as wizard)
+    const otrosPas = P.h_pas > 0 ? P.h_pas * Math.pow(1.02,i) : 0;
     const totalPas = saldoD + otrosPas;
     const totalPat = Math.max(pat,0);
     patArr.push(totalPat);

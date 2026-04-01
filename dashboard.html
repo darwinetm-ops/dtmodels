@@ -449,7 +449,51 @@ function deleteModel(i){
 
 function shareModel(i){
   const m = getModels()[i]
-  const link = `${window.location.origin}/modelo_financiero.html?client=${encodeURIComponent(m.client)}&monto=${m.monto}&shared=1`
+  let link
+
+  // If model has full inputs saved, encode them into ?d= for cross-device sharing
+  if(m.inputs){
+    try{
+      const inp = JSON.parse(m.inputs)
+      const gn = id => parseFloat(inp[id])||0
+      const gi = id => parseInt(inp[id])||0
+
+      const payload = {
+        client:   m.client,
+        sector:   inp['f-sector']  || '',
+        moneda:   inp['f-moneda']  || 'COP',
+        monto:    m.monto,
+        tasa:     m.tasa,          // stored as decimal (e.g. 0.14)
+        plazo:    m.plazo,
+        gracia:   gi('c-gracia'),
+        isr:      gn('c-isr')/100 || 0.33,
+        h_ing:    gn('pl-ing-3') || gn('pl-ing-2') || gn('pl-ing-1'),
+        h_cv:     gn('pl-cv-3')  || gn('pl-cv-2')  || gn('pl-cv-1'),
+        h_ga:     gn('pl-go-3')  || gn('pl-go-2')  || gn('pl-go-1'),
+        h_dep:    gn('pl-dep-3') || gn('pl-dep-2') || gn('pl-dep-1'),
+        h_gf:     gn('pl-gf-3')  || gn('pl-gf-2')  || gn('pl-gf-1'),
+        h_oi:     gn('pl-oi-3')  || gn('pl-oi-2')  || gn('pl-oi-1'),
+        h_act:    gn('b-ac') + gn('b-anc'),
+        h_pas:    gn('b-pc') + gn('b-pnc'),
+        h_pat:    gn('b-pat'),
+        crecIng:  [0,1,2,3,4].map(j=>gn('s-ing-'+j)),
+        mb:       [0,1,2,3,4].map(j=>gn('s-mb-'+j)),
+        opex:     [0,1,2,3,4].map(j=>gn('s-opex-'+j)),
+        horizonte: gi('s-horizonte') || 5,
+        score:    m.score,
+        dscr:     m.dscr,
+        verdict:  m.verdict,
+      }
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+      link = `${window.location.origin}/modelo_financiero.html?d=${encoded}`
+    } catch(e){
+      // fallback to old format
+      link = `${window.location.origin}/modelo_financiero.html?client=${encodeURIComponent(m.client)}&monto=${m.monto}&shared=1`
+    }
+  } else {
+    link = `${window.location.origin}/modelo_financiero.html?client=${encodeURIComponent(m.client)}&monto=${m.monto}&shared=1`
+  }
+
   document.getElementById('link-box').textContent = link
   document.getElementById('modal-link').classList.add('open')
 }
