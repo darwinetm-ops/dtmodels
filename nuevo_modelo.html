@@ -6,6 +6,7 @@
 <title>Nuevo Modelo — DT Models</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
@@ -711,6 +712,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
       </div>
 
       <!-- STRESS TEST -->
+      <!-- ESTADO DE FLUJO DE CAJA -->
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">▎ Estado de Flujo de Caja Proyectado</div>
+      <div style="overflow-x:auto;margin-bottom:20px">
+        <table class="metrics-table" id="efc-table" style="min-width:500px">
+          <thead><tr id="efc-head"></tr></thead>
+          <tbody id="efc-body"></tbody>
+        </table>
+      </div>
+
       <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">▎ Stress Test — DSCR</div>
       <div class="stress-grid" id="stress-grid"></div>
 
@@ -723,6 +733,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
         </table>
       </div>
       <button onclick="exportTablaExcel()" style="margin-bottom:16px;padding:6px 14px;background:rgba(0,212,168,.15);border:1px solid var(--accent);border-radius:5px;color:var(--accent);font-family:var(--font-mono);font-size:10px;cursor:pointer">📥 Exportar tabla mensual Excel</button>
+      <button onclick="exportarPDF()" style="padding:6px 14px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:5px;color:#f87171;font-family:var(--font-mono);font-size:10px;cursor:pointer">📄 Exportar PDF</button>
 
       <!-- PUNTO DE EQUILIBRIO -->
       <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin:4px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">▎ Punto de Equilibrio Financiero</div>
@@ -1284,6 +1295,22 @@ function calcModel(){
   const dkt       = parseFloat(document.getElementById('s-dkt')?.value)||0
   const cfads = ebitda.map((e, i) => e - isr_pago_wiz[i] - capexMant - dkt)
 
+  // ── ESTADO DE FLUJO DE CAJA PROYECTADO ──
+  // Flujo Operativo = Utilidad Neta + Depreciación + ISR no pagado
+  const efc_op = uan.map((u, i) => u + depreciacion[i] + (isr_pago_wiz[i]>0 ? 0 : -isr_pago_wiz[i]))
+  // Flujo de Inversión = Capex total (mantenimiento + crecimiento vía PPE)
+  const ppeTot  = parseFloat(document.getElementById('s-ppe')?.value)||0
+  const ppeVida = parseInt(document.getElementById('s-ppe-vida')?.value)||10
+  const capexCruc = ppeTot > 0 && ppeVida > 0 ? ppeTot / Math.min(ppeVida, n) : 0
+  const efc_inv = uan.map((_, i) => -(capexMant + (i === 0 ? capexCruc : 0)))
+  // Flujo de Financiación = Nuevo crédito (año 0) − Servicio deuda
+  const efc_fin = servDeuda.map((sd, i) => (i === 0 ? monto : 0) - sd)
+  // Flujo Neto y Caja Acumulada
+  const efc_neto = uan.map((_, i) => efc_op[i] + efc_inv[i] + efc_fin[i])
+  let caja = 0
+  const efc_acum = efc_neto.map(v => { caja += v; return caja })
+  const efc = { op: efc_op, inv: efc_inv, fin: efc_fin, neto: efc_neto, acum: efc_acum }
+
   // Ratios
   const dscr = cfads.map((c,i)=>servDeuda[i]>0?+(c/servDeuda[i]).toFixed(3):null)
   const icr  = ebitda.map((e,i)=>intereses[i]>0?+(e/intereses[i]).toFixed(3):null)
@@ -1377,6 +1404,7 @@ function calcModel(){
     activos, pasivos, patrimonio, uan,
     llcr, breakeven,
     score, verdict, dscrMin,
+    efc,
     montoMax, cfadsMin,
     deficit: montoMax - monto,
     params: {monto, tasa_na, plazo, gracia, isr},
@@ -1412,6 +1440,53 @@ function fmtCOP(v){
   if(Math.abs(v)>=1e9) return (v/1e9).toFixed(2)+'B COP'
   if(Math.abs(v)>=1e6) return (v/1e6).toFixed(1)+'M COP'
   return v.toLocaleString('es-CO')+' COP'
+}
+
+// ── ESTADO DE FLUJO DE CAJA ──
+function renderEFC(R){
+  const head = document.getElementById('efc-head')
+  const body = document.getElementById('efc-body')
+  if(!head || !body || !R.efc) return
+  const mon = document.getElementById('f-moneda')?.value || 'COP'
+  const f = v => {
+    if(v === null || v === undefined) return '—'
+    const abs = Math.abs(v)
+    const sign = v < 0 ? '-' : ''
+    if(abs >= 1e9) return sign + '$' + (abs/1e9).toFixed(2) + 'B'
+    if(abs >= 1e6) return sign + '$' + (abs/1e6).toFixed(1) + 'M'
+    return sign + '$' + abs.toFixed(0)
+  }
+  const colorVal = v => v === null ? '' : v >= 0 ? 'color:var(--ok)' : 'color:var(--danger)'
+
+  head.innerHTML = '<th>Concepto</th>' + R.years.map(y => `<th>${y}</th>`).join('')
+
+  const rows = [
+    { l: '🔵 FLUJO OPERATIVO',       vals: R.efc.op,   sect: false, bold: true },
+    { l: '  (+) Utilidad Neta',      vals: R.uan,       sect: false },
+    { l: '  (+) Depreciación',       vals: R.depreciacion, sect: false },
+    { l: '',                          blank: true },
+    { l: '🟡 FLUJO DE INVERSIÓN',    vals: R.efc.inv,  sect: false, bold: true },
+    { l: '  (−) Capex Total',        vals: R.efc.inv.map(v => -v), sect: false },
+    { l: '',                          blank: true },
+    { l: '🟢 FLUJO DE FINANCIACIÓN', vals: R.efc.fin,  sect: false, bold: true },
+    { l: '  (+) Nuevo crédito',      vals: R.efc.fin.map((v,i) => v + R.servDeuda[i]), sect: false },
+    { l: '  (−) Servicio deuda',     vals: R.servDeuda.map(v => -v), sect: false },
+    { l: '',                          blank: true },
+    { l: '━ FLUJO NETO DEL PERÍODO', vals: R.efc.neto,  bold: true, line: true },
+    { l: '━ CAJA ACUMULADA',         vals: R.efc.acum,  bold: true, line: true },
+  ]
+
+  body.innerHTML = rows.map(r => {
+    if(r.blank) return `<tr style="height:6px"><td colspan="${R.n+1}"></td></tr>`
+    const cells = (r.vals || []).map(v => {
+      const fv = f(v)
+      const c = r.line ? colorVal(v) : ''
+      return `<td style="${c}">${fv}</td>`
+    }).join('')
+    const style = r.bold ? 'font-weight:600;color:var(--text)' : 'color:var(--text2)'
+    const border = r.line ? 'border-top:1px solid var(--border)' : ''
+    return `<tr style="${border}"><td style="${style}">${r.l}</td>${cells}</tr>`
+  }).join('')
 }
 
 // ── TABLA MENSUAL ──
@@ -1450,6 +1525,195 @@ function renderTablaM(R){
       <td style="font-weight:600">${f(r.cuota)}</td>
       <td style="color:var(--ok)">${f(r.saldoFin)}</td>
     </tr>`).join('')
+}
+
+function exportarPDF(){
+  if(!calcResults){ alert('Calcula el modelo primero'); return }
+  const R = calcResults
+  const empresa  = document.getElementById('f-empresa')?.value || 'Cliente'
+  const analista = document.getElementById('f-analista')?.value || 'Darwin Torres'
+  const acreedor = document.getElementById('f-acreedor')?.value || ''
+  const sector   = document.getElementById('f-sector')?.value || ''
+  const moneda   = document.getElementById('f-moneda')?.value || 'COP'
+  const fecha    = new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'long',year:'numeric'})
+  const version  = 'v1'
+
+  if(!window.jspdf){ alert('PDF library cargando, intenta en 2 segundos'); return }
+  const { jsPDF } = window.jspdf
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+  const W = doc.internal.pageSize.getWidth()   // 297
+  const H = doc.internal.pageSize.getHeight()  // 210
+
+  // Color palette
+  const C = {
+    dark:  [8,13,24],  blue:  [37,99,235],  white: [232,240,252],
+    gray:  [74,96,144], ok:   [16,185,129],  warn:  [245,158,11],
+    danger:[239,68,68], surf: [13,21,38],    border:[28,45,66]
+  }
+  const fmtM = v => {
+    if(v===null||v===undefined) return '—'
+    const a=Math.abs(v), s=v<0?'-':''
+    if(a>=1e9) return s+'$'+(a/1e9).toFixed(2)+'B'
+    if(a>=1e6) return s+'$'+(a/1e6).toFixed(1)+'M'
+    return s+'$'+(a/1e3).toFixed(0)+'K'
+  }
+  const dscr_c = v => v===null?C.gray:v>=1.3?C.ok:v>=1.0?C.warn:C.danger
+  const score_c = s => s>=70?C.ok:s>=55?C.warn:C.danger
+
+  // ──────── PÁGINA 1: RESUMEN + KPIs + MÉTRICAS ────────
+  doc.setFillColor(...C.dark); doc.rect(0,0,W,H,'F')
+
+  // Header
+  doc.setFillColor(...C.blue); doc.rect(0,0,W,16,'F')
+  doc.setTextColor(255,255,255); doc.setFontSize(10); doc.setFont('helvetica','bold')
+  doc.text('DT MODELS — ANÁLISIS DE VIABILIDAD CREDITICIA', 8, 10)
+  doc.setFontSize(7); doc.setFont('helvetica','normal')
+  doc.text(fecha+'  ·  '+version+'  ·  CONFIDENCIAL', W-8, 10, {align:'right'})
+
+  // Company + sector
+  doc.setTextColor(...C.white); doc.setFontSize(22); doc.setFont('helvetica','bold')
+  doc.text(empresa.toUpperCase(), 8, 32)
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(...C.gray)
+  const subline = [sector, moneda, 'Analista: '+analista, acreedor].filter(Boolean).join('  ·  ')
+  doc.text(subline, 8, 40)
+
+  // Score badge
+  const sc = R.score || 0
+  doc.setFillColor(...score_c(sc)); doc.roundedRect(W-55,20,45,16,2,2,'F')
+  doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','bold')
+  doc.text(R.verdict||'—', W-32.5, 27, {align:'center'})
+  doc.setFontSize(16)
+  doc.text(sc+'/100', W-32.5, 34, {align:'center'})
+
+  // KPI cards (5 cards)
+  const kpis = [
+    {l:'MONTO', v:fmtM(R.params?.monto)+' '+moneda, c:C.blue},
+    {l:'DSCR MÍN', v:R.dscrMin?.toFixed(2)+'x'||'—', c:dscr_c(R.dscrMin)},
+    {l:'EBITDA PICO', v:fmtM(Math.max(...(R.ebitda||[0]))), c:C.ok},
+    {l:'CAP. MÁX', v:fmtM(R.montoMax), c:C.blue},
+    {l:'TASA / PLAZO', v:(R.params?.tasa_na*100).toFixed(1)+'% / '+R.params?.plazo+'M', c:C.gray},
+  ]
+  const cw = (W-16)/5
+  kpis.forEach((k,i)=>{
+    const x = 8+i*cw
+    doc.setFillColor(...C.surf); doc.roundedRect(x,46,cw-2,16,2,2,'F')
+    doc.setDrawColor(...k.c); doc.roundedRect(x,46,cw-2,16,2,2,'S')
+    doc.setTextColor(...C.gray); doc.setFontSize(5.5); doc.setFont('helvetica','normal')
+    doc.text(k.l, x+2, 52)
+    doc.setTextColor(...k.c); doc.setFontSize(9); doc.setFont('helvetica','bold')
+    doc.text(k.v, x+2, 59)
+  })
+
+  // Metrics table
+  doc.setTextColor(...C.white); doc.setFontSize(7); doc.setFont('helvetica','bold')
+  doc.text('MÉTRICAS PROYECTADAS', 8, 72)
+  doc.setFillColor(...C.surf); doc.rect(8,74,W-16,6,'F')
+  doc.setTextColor(...C.gray); doc.setFontSize(5.5); doc.setFont('helvetica','normal')
+  const years = R.years || []
+  const tcol = (W-16)/(years.length+1)
+  doc.text('MÉTRICA', 10, 78)
+  years.forEach((y,i)=> doc.text(y, 10+(i+1)*tcol, 78, {align:'right'}))
+
+  const mRows=[
+    {l:'Ingresos',  vals:R.ingresos, fmt:fmtM, cc:()=>C.white},
+    {l:'EBITDA',    vals:R.ebitda,   fmt:fmtM, cc:v=>v>=0?C.ok:C.danger},
+    {l:'Mg. EBITDA',vals:(R.mEbitda||[]).map(v=>v!==null?v*100:null), fmt:v=>v!==null?v.toFixed(1)+'%':'—', cc:v=>v>=15?C.ok:v>=8?C.warn:C.danger},
+    {l:'DSCR (x)',  vals:R.dscr, fmt:v=>v!==null?v.toFixed(2)+'x':'—', cc:dscr_c},
+    {l:'LLCR (x)',  vals:R.llcr||[], fmt:v=>v!==null?v.toFixed(2)+'x':'—', cc:dscr_c},
+    {l:'CFADS',     vals:R.cfads, fmt:fmtM, cc:v=>v>=0?C.ok:C.danger},
+  ]
+  let ry=84
+  mRows.forEach(row=>{
+    doc.setTextColor(...C.white); doc.setFontSize(5.5)
+    doc.text(row.l, 10, ry)
+    ;(row.vals||[]).forEach((v,i)=>{
+      doc.setTextColor(...row.cc(v))
+      doc.text(row.fmt(v), 10+(i+1)*tcol, ry, {align:'right'})
+    })
+    ry+=7
+    doc.setDrawColor(...C.border); doc.line(8,ry-2,W-8,ry-2)
+  })
+
+  // Footer p1
+  doc.setFillColor(...C.blue); doc.rect(0,H-7,W,7,'F')
+  doc.setTextColor(255,255,255); doc.setFontSize(6)
+  doc.text('DT Models  ·  dtmodels.com', 8, H-2.5)
+  doc.text('Página 1 de 2', W-8, H-2.5, {align:'right'})
+
+  // ──────── PÁGINA 2: STRESS TEST + BREAKEVEN + FIRMA ────────
+  doc.addPage()
+  doc.setFillColor(...C.dark); doc.rect(0,0,W,H,'F')
+  doc.setFillColor(...C.blue); doc.rect(0,0,W,16,'F')
+  doc.setTextColor(255,255,255); doc.setFontSize(10); doc.setFont('helvetica','bold')
+  doc.text('STRESS TEST Y ANÁLISIS DE SENSIBILIDAD', 8, 10)
+  doc.setFontSize(7); doc.setFont('helvetica','normal')
+  doc.text(empresa+'  ·  '+fecha+'  ·  CONFIDENCIAL', W-8, 10, {align:'right'})
+
+  // Stress table
+  doc.setTextColor(...C.white); doc.setFontSize(7); doc.setFont('helvetica','bold')
+  doc.text('DSCR POR ESCENARIO DE ESTRÉS', 8, 26)
+  const stress = R.stress || {}
+  const scens = [
+    {k:'base',     n:'📊 Caso Base',       c:C.ok},
+    {k:'moderate', n:'⚠️ Downside Mod.',   c:C.warn},
+    {k:'severe',   n:'🔴 Downside Sev.',   c:C.danger},
+    {k:'trm20',    n:'💱 TRM +20%',        c:C.warn},
+    {k:'trm40',    n:'💱 TRM +40%',        c:C.danger},
+  ].filter(s=>stress[s.k]&&stress[s.k].some(v=>v!==null))
+
+  doc.setFillColor(...C.surf); doc.rect(8,28,W-16,6,'F')
+  doc.setTextColor(...C.gray); doc.setFontSize(5.5)
+  doc.text('ESCENARIO', 10, 32)
+  years.slice(0,5).forEach((y,i)=> doc.text(y, 70+i*22, 32, {align:'right'}))
+
+  let sy2=38
+  scens.forEach(sc=>{
+    const vals = stress[sc.k]||[]
+    doc.setTextColor(...sc.c); doc.setFontSize(5.5)
+    doc.text(sc.n.replace(/[^ -]/g,''), 10, sy2)
+    vals.slice(0,5).forEach((v,i)=>{
+      const cc = dscr_c(v)
+      doc.setTextColor(...cc)
+      doc.text(v!==null?v.toFixed(2)+'x':'—', 70+i*22, sy2, {align:'right'})
+    })
+    sy2+=7
+    doc.setDrawColor(...C.border); doc.line(8,sy2-2,W-8,sy2-2)
+  })
+
+  // Breakeven
+  if(R.breakeven && R.breakeven.some(v=>v!==null)){
+    doc.setTextColor(...C.white); doc.setFontSize(7); doc.setFont('helvetica','bold')
+    doc.text('PUNTO DE EQUILIBRIO FINANCIERO', 8, sy2+8)
+    doc.setFontSize(5.5); doc.setFont('helvetica','normal')
+    years.slice(0,5).forEach((y,i)=>{
+      const be=R.breakeven[i]
+      if(be===null) return
+      const c=be>=15?C.ok:be>=5?C.warn:C.danger
+      doc.setTextColor(...C.gray); doc.text(y+':', 10, sy2+15+i*7)
+      doc.setTextColor(...c)
+      doc.text('Holgura '+be.toFixed(1)+'% — DSCR cae a 1.0x si ingresos bajan a '+fmtM(R.ingresos[i]*(1-be/100))+' '+moneda, 30, sy2+15+i*7)
+    })
+  }
+
+  // Analyst card
+  doc.setFillColor(...C.surf); doc.roundedRect(W-82,H-38,72,28,2,2,'F')
+  doc.setDrawColor(...C.blue); doc.roundedRect(W-82,H-38,72,28,2,2,'S')
+  doc.setTextColor(...C.gray); doc.setFontSize(6); doc.setFont('helvetica','normal')
+  doc.text('PREPARADO POR', W-80, H-32)
+  doc.setTextColor(...C.white); doc.setFontSize(10); doc.setFont('helvetica','bold')
+  doc.text(analista, W-80, H-25)
+  if(acreedor){ doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(...C.gray); doc.text(acreedor, W-80, H-19) }
+  doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(...C.gray)
+  doc.text('DT Models  ·  dtmodels.com', W-80, H-14)
+  doc.text(fecha+'  ·  '+version, W-80, H-9)
+
+  // Footer p2
+  doc.setFillColor(...C.blue); doc.rect(0,H-7,W,7,'F')
+  doc.setTextColor(255,255,255); doc.setFontSize(6)
+  doc.text('Este documento es confidencial. Solo para uso interno y del acreedor autorizado.', 8, H-2.5)
+  doc.text('Página 2 de 2', W-8, H-2.5, {align:'right'})
+
+  doc.save('DT_Models_'+empresa.replace(/[^a-zA-Z0-9]/g,'_')+'_'+version+'.pdf')
 }
 
 function exportTablaExcel(){
@@ -1525,6 +1789,7 @@ function renderResults(){
   document.getElementById('r-verdict').className   = 'result-value '+(R.score>=70?'c-ok':R.score>=55?'c-warn':'c-danger')
 
   updatePreview()
+  renderEFC(R)
   renderTablaM(R)
   renderBreakeven(R)
 
@@ -1995,6 +2260,7 @@ function copyShareLink(){
       capital:   R.capital,
       servDeuda: R.servDeuda,
       cfads:     R.cfads,
+      efc:       R.efc||null,
       dscr:      R.dscr,
       icr:       R.icr,
       mEbitda:   R.mEbitda,
