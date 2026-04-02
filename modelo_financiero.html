@@ -863,7 +863,9 @@ function renderDashboard(){
   const params=R.params||{monto:P.monto,tasa_na:P.tasa/100,plazo:P.plazo,gracia:P.gracia,moneda};
 
   document.getElementById('h-empresa').textContent = CLIENT_OVERRIDE || CLIENT;
-  document.getElementById('h-sub').textContent = `${P.sector} · ${moneda} · Horizonte ${n} años`;
+  const _anaAcr = (window.ANALISTA_OVERRIDE ? ' · Analista: '+window.ANALISTA_OVERRIDE : '') +
+                   (window.ACREEDOR_OVERRIDE ? ' · '+window.ACREEDOR_OVERRIDE : '')
+  document.getElementById('h-sub').textContent = `${P.sector} · ${moneda} · Horizonte ${n} años${_anaAcr}`;
 
   document.getElementById('k-monto').textContent = M(params.monto);
   document.getElementById('k-monto-s').textContent = `${moneda} · ${n} años`;

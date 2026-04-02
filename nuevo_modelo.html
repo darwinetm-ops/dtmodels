@@ -492,7 +492,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
 
       <div class="wizard-nav">
         <button class="btn btn-ghost" onclick="goStep(2)">← Anterior</button>
-        <button class="btn btn-primary" onclick="goStep(4)">Siguiente → Crédito</button>
+        <button class="btn btn-primary" onclick="validateBalanceAndNext()">Siguiente → Crédito</button>
       </div>
     </div>
 
@@ -632,6 +632,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
               <input class="form-input" id="c-isr" type="number" value="33" step="1">
               <span class="form-input-unit">%</span>
             </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Capex de Mantenimiento Anual</label>
+            <input class="form-input" id="s-capex-mant" type="number" value="0" placeholder="0">
+            <div class="form-note">Inversión anual para mantener operaciones (descuenta del CFADS)</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Variación Capital de Trabajo Anual (ΔKT)</label>
+            <input class="form-input" id="s-dkt" type="number" value="0" placeholder="0">
+            <div class="form-note">Positivo = más KT necesario (usa caja). Negativo = libera caja</div>
           </div>
           <div class="form-group">
             <label class="form-label">Inflación anual estimada (%)</label>
@@ -965,6 +975,46 @@ function calcPL(){
   calcBalance()
 }
 
+function validateBalanceAndNext(){
+  const ac  = parseFloat(document.getElementById('b-ac')?.value)||0
+  const anc = parseFloat(document.getElementById('b-anc')?.value)||0
+  const pc  = parseFloat(document.getElementById('b-pc')?.value)||0
+  const pnc = parseFloat(document.getElementById('b-pnc')?.value)||0
+  const pat = parseFloat(document.getElementById('b-pat')?.value)||0
+
+  const totalActivos  = ac + anc
+  const totalPasivos  = pc + pnc
+  const totalFuentes  = totalPasivos + pat
+
+  // Skip validation if balance fields are all empty
+  if(totalActivos === 0 && totalFuentes === 0){
+    goStep(4)
+    return
+  }
+
+  // Check: |Activos - (Pasivos + Patrimonio)| / Activos < 1%
+  const diferencia = Math.abs(totalActivos - totalFuentes)
+  const pctError   = totalActivos > 0 ? diferencia / totalActivos : 0
+
+  if(pctError > 0.01){
+    const fmt = v => '$' + (v/1e9).toFixed(3) + 'B'
+    const msg = [
+      '⚠️ El balance no cuadra — revisa antes de continuar.',
+      '',
+      `Activos Totales:       ${fmt(totalActivos)}`,
+      `Pasivos + Patrimonio:  ${fmt(totalFuentes)}`,
+      `Diferencia:            ${fmt(diferencia)} (${(pctError*100).toFixed(2)}%)`,
+      '',
+      'El error máximo permitido es 1%.',
+      '¿Deseas continuar de todas formas?'
+    ].join('\n')
+
+    if(!confirm(msg)) return
+  }
+
+  goStep(4)
+}
+
 function calcBalance(){
   const ac  = parseFloat(document.getElementById('b-ac').value)||0
   const anc = parseFloat(document.getElementById('b-anc').value)||0
@@ -1228,9 +1278,11 @@ function calcModel(){
   const ebit = ebitda.map((e,i)=>e-depreciacion[i])
   const uai  = ebit.map((e,i)=>e-intereses[i])
   const uan  = uai.map(u=>u>0?u*(1-isr):u)
-  // CFADS = EBITDA − ISR pagado en efectivo (estándar bancario)
+  // CFADS = EBITDA − ISR pagado − Capex mantenimiento − ΔKT (definición bancaria completa)
   const isr_pago_wiz = uai.map(u => u > 0 ? u * isr : 0)
-  const cfads = ebitda.map((e, i) => e - isr_pago_wiz[i])
+  const capexMant = parseFloat(document.getElementById('s-capex-mant')?.value)||0
+  const dkt       = parseFloat(document.getElementById('s-dkt')?.value)||0
+  const cfads = ebitda.map((e, i) => e - isr_pago_wiz[i] - capexMant - dkt)
 
   // Ratios
   const dscr = cfads.map((c,i)=>servDeuda[i]>0?+(c/servDeuda[i]).toFixed(3):null)
@@ -1446,8 +1498,13 @@ function renderResults(){
   const R = calcResults
   const empresa = document.getElementById('f-empresa').value || 'Cliente'
   document.getElementById('res-empresa-title').textContent = empresa
+  const _analista = document.getElementById('f-analista')?.value || 'Darwin Torres'
+  const _acreedor = document.getElementById('f-acreedor')?.value || ''
+  const _version  = (calcResults && calcResults._version) ? `v${calcResults._version}` : 'v1'
+  const _sector   = document.getElementById('f-sector')?.value || ''
+  const _fecha    = new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'})
   document.getElementById('res-sub').textContent =
-    `Viabilidad Crediticia · ${document.getElementById('f-sector').value} · ${new Date().toLocaleDateString('es-CO')}`
+    `${_sector} · Analista: ${_analista}${_acreedor?' · '+_acreedor:''} · ${_version} · Confidencial · ${_fecha}`
 
   // Score
   const sc = document.getElementById('score-circle')
@@ -1571,7 +1628,7 @@ function collectInputs(){
   ;['c-monto','c-tasa','c-plazo','c-gracia','c-fecha',
     'c-garantia','c-val-garantia','c-avalista'].forEach(id=>{ inp[id]=gv(id) })
   // Step 5 — Assumptions
-  ;['s-inflacion','s-ppe','s-ppe-vida','c-isr'].forEach(id=>{ inp[id]=gv(id) })
+  ;['s-inflacion','s-ppe','s-ppe-vida','c-isr','s-capex-mant','s-dkt'].forEach(id=>{ inp[id]=gv(id) })
   for(let i=0;i<5;i++){
     ;['s-ing','s-mb','s-opex'].forEach(f=>{ inp[`${f}-${i}`]=gv(`${f}-${i}`) })
   }
@@ -1606,6 +1663,10 @@ function saveAndFinish(){
   const urlId = new URLSearchParams(window.location.search).get('id')
   const existingIdx = urlId ? models.findIndex(m => String(m.id) === String(urlId)) : -1
 
+  // Auto-increment version
+  const existingVersion = existingIdx >= 0 ? (models[existingIdx].version || 1) : 0
+  const newVersion = existingIdx >= 0 ? existingVersion + 1 : 1
+
   const modelData = {
     client:  document.getElementById('f-empresa').value || 'Sin nombre',
     type:    document.getElementById('f-tipo')?.value || '',
@@ -1614,6 +1675,8 @@ function saveAndFinish(){
     tasa:    R.params.tasa_na,
     plazo:   R.params.plazo,
     desc:    document.getElementById('f-desc')?.value || '',
+    version: newVersion,
+    analista: document.getElementById('f-analista')?.value || 'Darwin Torres',
     date:    new Date().toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}),
     score:   R.score,
     dscr:    R.dscrMin,
@@ -1811,7 +1874,7 @@ function exportExcel(){
     {label:'Intereses',vals:R.intereses,fmt:'M'},
     {label:'Amortización Capital',vals:R.capital,fmt:'M'},
     {label:'Total Servicio Deuda',vals:R.servDeuda,fmt:'M',calc:true},
-    {label:'CFADS (≈ EBITDA)',vals:R.cfads,fmt:'M'},
+    {label:'CFADS (EBITDA−ISR−CapexMant−ΔKT)',vals:R.cfads,fmt:'M'},
     {label:'',blank:true},
     {label:'RATIOS DE COBERTURA',section:true},
     {label:'DSCR (x)',vals:R.dscr,fmt:'x',dscr:true},
@@ -1910,6 +1973,8 @@ function copyShareLink(){
   // This guarantees modelo_financiero shows EXACTLY the same numbers
   const payload = {
     client:   empresa,
+    analista: document.getElementById('f-analista')?.value || 'Darwin Torres',
+    acreedor: document.getElementById('f-acreedor')?.value || '',
     sector:   document.getElementById('f-sector')?.value||'',
     moneda:   document.getElementById('f-moneda')?.value||'COP',
     horizonte: R.n,
