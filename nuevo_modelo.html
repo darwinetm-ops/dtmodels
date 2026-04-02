@@ -1299,8 +1299,7 @@ function calcModel(){
   // Flujo Operativo = Utilidad Neta + Depreciación + ISR no pagado
   const efc_op = uan.map((u, i) => u + depreciacion[i] + (isr_pago_wiz[i]>0 ? 0 : -isr_pago_wiz[i]))
   // Flujo de Inversión = Capex total (mantenimiento + crecimiento vía PPE)
-  const ppeTot  = parseFloat(document.getElementById('s-ppe')?.value)||0
-  const ppeVida = parseInt(document.getElementById('s-ppe-vida')?.value)||10
+  const ppeTot    = parseFloat(document.getElementById('s-ppe')?.value)||0
   const capexCruc = ppeTot > 0 && ppeVida > 0 ? ppeTot / Math.min(ppeVida, n) : 0
   const efc_inv = uan.map((_, i) => -(capexMant + (i === 0 ? capexCruc : 0)))
   // Flujo de Financiación = Nuevo crédito (año 0) − Servicio deuda
@@ -1654,11 +1653,11 @@ function exportarPDF(){
   doc.text('DSCR POR ESCENARIO DE ESTRÉS', 8, 26)
   const stress = R.stress || {}
   const scens = [
-    {k:'base',     n:'📊 Caso Base',       c:C.ok},
-    {k:'moderate', n:'⚠️ Downside Mod.',   c:C.warn},
-    {k:'severe',   n:'🔴 Downside Sev.',   c:C.danger},
-    {k:'trm20',    n:'💱 TRM +20%',        c:C.warn},
-    {k:'trm40',    n:'💱 TRM +40%',        c:C.danger},
+    {k:'base',     n:'Caso Base',       c:C.ok},
+    {k:'moderate', n:'Downside Mod.',   c:C.warn},
+    {k:'severe',   n:'Downside Sev.',   c:C.danger},
+    {k:'trm20',    n:'TRM +20%',        c:C.warn},
+    {k:'trm40',    n:'TRM +40%',        c:C.danger},
   ].filter(s=>stress[s.k]&&stress[s.k].some(v=>v!==null))
 
   doc.setFillColor(...C.surf); doc.rect(8,28,W-16,6,'F')
@@ -1670,7 +1669,7 @@ function exportarPDF(){
   scens.forEach(sc=>{
     const vals = stress[sc.k]||[]
     doc.setTextColor(...sc.c); doc.setFontSize(5.5)
-    doc.text(sc.n.replace(/[^ -]/g,''), 10, sy2)
+    doc.text(sc.n, 10, sy2)
     vals.slice(0,5).forEach((v,i)=>{
       const cc = dscr_c(v)
       doc.setTextColor(...cc)
