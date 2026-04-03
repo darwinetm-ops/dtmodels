@@ -210,6 +210,52 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
   @page { margin: 1.5cm; size: A4 landscape; }
 }
 </style>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyCPYqnrFVjfoZgUPYb77SVM41LhMeILUq0",
+      authDomain:        "dtmodels-da36d.firebaseapp.com",
+      projectId:         "dtmodels-da36d",
+      storageBucket:     "dtmodels-da36d.firebasestorage.app",
+      messagingSenderId: "363788652473",
+      appId:             "1:363788652473:web:73c622dd0133b758737068"
+    };
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    // Auth guard
+    onAuthStateChanged(auth, user => {
+      if(!user) { window.location.href = 'index.html'; return; }
+      window._currentUser = user;
+    });
+
+    // Save model to Firestore
+    window.saveModelFirestore = async (modelData) => {
+      try {
+        const user = window._currentUser || auth.currentUser;
+        if(!user) return null;
+        const uid = user.uid;
+        const modelId = modelData.id ? String(modelData.id) : doc(collection(db, 'users', uid, 'models')).id;
+        await setDoc(doc(db, 'users', uid, 'models', modelId), {
+          ...modelData,
+          id: modelId,
+          uid,
+          updatedAt: serverTimestamp()
+        });
+        return modelId;
+      } catch(e) {
+        console.warn('Firestore save error:', e);
+        return null;
+      }
+    };
+  </script>
 </head>
 <body>
 
@@ -836,7 +882,9 @@ function exportPDF(){
     .footer{margin-top:16px;padding-top:8px;border-top:1px solid #eee;font-size:8px;color:#aaa;text-align:center}
     @page{margin:1.5cm;size:A4 landscape}
     @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
-  </style></head><body>
+  </style>  <!-- Firebase -->
+  
+</head><body>
 
   <div class="hdr">
     <div class="hdr-title">DT MODELS  ·  MODELO FINANCIERO DE VIABILIDAD CREDITICIA</div>
@@ -1951,18 +1999,24 @@ function saveAndFinish(){
 
   if(existingIdx >= 0){
     // UPDATE existing model — preserve original ID and creation date
-    models[existingIdx] = {
+    const updatedModel = {
       ...models[existingIdx],
       ...modelData,
       id: models[existingIdx].id, // keep original id
       updatedDate: modelData.date,
     }
+    models[existingIdx] = updatedModel
     localStorage.setItem('dtmodels_models', JSON.stringify(models))
+    // Sync to Firestore async
+    if(window.saveModelFirestore) window.saveModelFirestore({ ...updatedModel, id: String(updatedModel.id) })
     alert(`✅ Modelo actualizado para "${modelData.client}"`)
   } else {
     // CREATE new model
-    models.push({ id: Date.now(), ...modelData })
+    const newId = Date.now()
+    models.push({ id: newId, ...modelData })
     localStorage.setItem('dtmodels_models', JSON.stringify(models))
+    // Sync to Firestore async
+    if(window.saveModelFirestore) window.saveModelFirestore({ id: String(newId), ...modelData })
     alert(`✅ Modelo guardado para "${modelData.client}"`)
   }
 

@@ -3,183 +3,507 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DT Models — Plataforma de Modelos Financieros</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="alternate icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%232563EB'/><rect x='4' y='21' width='4' height='7' rx='1' fill='white' opacity='.45'/><rect x='11' y='16' width='4' height='12' rx='1' fill='white' opacity='.7'/><rect x='18' y='10' width='4' height='18' rx='1' fill='white' opacity='.9'/><rect x='25' y='4' width='4' height='24' rx='1' fill='white'/></svg>">
+<title>DT Models \u2014 Plataforma de Modelos Financieros</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--navy-500:#2563EB;--navy-600:#1D4ED8;--navy-700:#1E3A8A;--ok:#10B981;--danger:#EF4444}
-[data-theme="dark"]{
-  --bg:#080D18;--bg2:#0D1526;--surface:#162040;--surface2:#1A2850;
-  --border:#1E3060;--border2:#2A4080;
-  --text:#E8F0FC;--text2:#94A8CC;--text3:#4A6090;
-  --accent:#3B82F6;--accent2:#60A5FA;--accent-bg:rgba(59,130,246,.1);
-  --btn-pg:#transparent;--btn-pb:#2563EB;--btn-bd:#1E3060;--btn-fg:#94A8CC;
-  --logo:#93C5FD;--logo-sub:#4A6090;
-  --nav-bg:rgba(8,13,24,.95);--card-bg:#0D1526;--card-bd:#1E3060;
-  --feat-icon:rgba(59,130,246,.12);--step-bg:rgba(59,130,246,.08);
-  --footer-bg:#060B16;
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   DESIGN TOKENS \u2014 DUAL THEME
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+:root {
+  --navy-900: #0F172A;
+  --navy-800: #1E293B;
+  --navy-700: #1E3A8A;
+  --navy-600: #1D4ED8;
+  --navy-500: #2563EB;
+  --navy-400: #3B82F6;
+  --navy-300: #93C5FD;
+  --navy-100: #DBEAFE;
+  --navy-50:  #EFF6FF;
+  --gold:     #F59E0B;
+  --gold-lt:  #FEF3C7;
+  --ok:       #10B981;
+  --danger:   #EF4444;
 }
-[data-theme="light"]{
-  --bg:#F8FAFF;--bg2:#FFFFFF;--surface:#FFFFFF;--surface2:#F0F5FF;
-  --border:#DBEAFE;--border2:#BFDBFE;
-  --text:#0F172A;--text2:#334155;--text3:#64748B;
-  --accent:#2563EB;--accent2:#1D4ED8;--accent-bg:rgba(37,99,235,.06);
-  --btn-pg:#FFFFFF;--btn-pb:#2563EB;--btn-bd:#DBEAFE;--btn-fg:#334155;
-  --logo:#1E3A8A;--logo-sub:#64748B;
-  --nav-bg:rgba(248,250,255,.97);--card-bg:#FFFFFF;--card-bd:#DBEAFE;
-  --feat-icon:rgba(37,99,235,.08);--step-bg:rgba(37,99,235,.05);
-  --footer-bg:#0F172A;
-}
-*{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;line-height:1.6;transition:background .3s,color .3s;overflow-x:hidden}
-a{text-decoration:none;color:inherit}
-/* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:200;height:60px;background:var(--nav-bg);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;transition:background .3s,border-color .3s}
-.nav-brand{display:flex;align-items:center;gap:10px}
-.nav-brand-name{font-size:17px;font-weight:700;color:var(--logo);transition:color .3s}
-.nav-brand-name span{font-weight:300}
-.nav-brand-sub{font-size:9px;color:var(--logo-sub);letter-spacing:.12em;text-transform:uppercase;display:block;margin-top:-2px}
-.nav-links{display:flex;gap:28px}
-.nav-link{font-size:13px;font-weight:500;color:var(--text3);transition:color .2s}
-.nav-link:hover{color:var(--accent)}
-.nav-right{display:flex;align-items:center;gap:10px}
-.theme-toggle{width:38px;height:38px;border-radius:8px;background:transparent;border:1px solid var(--btn-bd);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .2s;color:var(--text2)}
-.theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
-.btn{padding:9px 20px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;border:none;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:#2563EB;color:#fff;box-shadow:0 1px 3px rgba(37,99,235,.3)}
-.btn-primary:hover{background:#1D4ED8;transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.4)}
-.btn-ghost{background:var(--btn-pg);border:1px solid var(--btn-bd);color:var(--btn-fg)}
-.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
-/* HERO */
-.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 32px 80px;position:relative;overflow:hidden}
-.hero-grid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px;opacity:.3}
-.hero-glow{position:absolute;pointer-events:none;width:600px;height:600px;background:radial-gradient(circle,rgba(37,99,235,.15) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-60%)}
-.hero-badge{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;border-radius:20px;margin-bottom:28px;background:var(--accent-bg);border:1px solid rgba(59,130,246,.25);font-size:11px;font-weight:600;color:var(--accent2);letter-spacing:.06em;text-transform:uppercase;position:relative}
-.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.hero-title{font-family:'Playfair Display',serif;font-size:clamp(2.4rem,5.5vw,4.2rem);font-weight:700;line-height:1.1;color:var(--text);margin-bottom:20px;position:relative;letter-spacing:-.02em}
-.hero-title em{font-style:italic;color:var(--accent2);font-weight:600}
-.hero-sub{font-size:clamp(15px,1.6vw,17px);color:var(--text2);max-width:560px;line-height:1.75;margin-bottom:40px;position:relative}
-.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative;margin-bottom:64px}
-.btn-lg{padding:13px 28px;font-size:14px;border-radius:8px}
-.hero-stats{display:flex;gap:48px;position:relative;border-top:1px solid var(--border);padding-top:40px}
-.hero-stat{text-align:center}
-.hero-stat-num{font-family:'JetBrains Mono',monospace;font-size:1.9rem;font-weight:500;color:var(--accent2);display:block}
-.hero-stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-top:4px;display:block}
-/* SECTIONS */
-.section-full{padding:80px 32px;background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);transition:background .3s,border-color .3s}
-.eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.2em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.eyebrow::before{content:'';width:20px;height:1px;background:var(--accent)}
-.section-title{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,3vw,2.6rem);font-weight:700;line-height:1.2;color:var(--text);margin-bottom:48px;letter-spacing:-.02em}
-/* FEATURES */
-.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-@media(max-width:900px){.feat-grid{grid-template-columns:1fr}}
-.feat-card{background:var(--card-bg);border:1px solid var(--card-bd);border-radius:12px;padding:28px;transition:all .25s;position:relative;overflow:hidden}
-.feat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent);opacity:0;transition:opacity .25s}
-.feat-card:hover{border-color:var(--accent);transform:translateY(-2px)}
-.feat-card:hover::before{opacity:1}
-.feat-icon{width:44px;height:44px;border-radius:10px;background:var(--feat-icon);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
-.feat-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px}
-.feat-desc{font-size:13px;color:var(--text2);line-height:1.65}
-/* STEPS */
-.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;max-width:900px;margin:0 auto}
-@media(max-width:700px){.steps{grid-template-columns:1fr 1fr}}
-.step{background:var(--step-bg);border:1px solid var(--border);border-radius:10px;padding:24px 18px;text-align:center;transition:background .3s,border-color .3s}
-.step-num{width:36px;height:36px;border-radius:50%;background:#2563EB;color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600}
-.step-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
-.step-desc{font-size:12px;color:var(--text2);line-height:1.55}
-/* PRICING */
-.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;margin:0 auto}
-@media(max-width:700px){.pricing-grid{grid-template-columns:1fr}}
-.pricing-card{background:var(--card-bg);border:1px solid var(--card-bd);border-radius:12px;padding:32px 24px;position:relative;transition:all .3s}
-.pricing-card.featured{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 8px 32px rgba(37,99,235,.15)}
-.pricing-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);padding:3px 14px;background:#2563EB;color:#fff;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
-.pricing-name{font-size:11px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;font-family:'JetBrains Mono',monospace}
-.pricing-price{font-family:'JetBrains Mono',monospace;font-size:2.2rem;font-weight:500;color:var(--text);margin-bottom:4px}
-.pricing-price span{font-size:13px;color:var(--text3);font-weight:400}
-.pricing-desc{font-size:12px;color:var(--text3);margin-bottom:24px;line-height:1.5}
-.pricing-feats{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
-.pricing-feats li{font-size:13px;color:var(--text2);display:flex;gap:8px;align-items:flex-start}
-.pricing-feats li::before{content:'✓';color:#10B981;font-weight:700;flex-shrink:0}
-.pricing-btn{width:100%;padding:11px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;border:none}
-.pricing-btn.prim{background:#2563EB;color:#fff}
-.pricing-btn.prim:hover{background:#1D4ED8}
-.pricing-btn.ghost{background:transparent;border:1px solid var(--border2);color:var(--text2)}
-.pricing-btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
-/* CTA */
-.cta-section{padding:96px 32px;text-align:center;background:var(--bg2);border-top:1px solid var(--border);transition:background .3s}
-.cta-title{font-family:'Playfair Display',serif;font-size:clamp(2rem,4vw,3rem);font-weight:700;margin-bottom:14px;color:var(--text);letter-spacing:-.02em}
-.cta-sub{font-size:15px;color:var(--text2);margin-bottom:40px}
-/* FOOTER */
-footer{background:var(--footer-bg);padding:40px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;border-top:1px solid #1E293B}
-.footer-brand{font-size:13px;color:#475569;font-family:'JetBrains Mono',monospace}
-.footer-links{display:flex;gap:20px}
-.footer-link{font-size:12px;color:#475569;transition:color .2s}
-.footer-link:hover{color:#93C5FD}
-/* MODAL */
-.modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center}
-.modal-overlay.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:40px;width:100%;max-width:400px;position:relative;transition:background .3s}
-.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;transition:color .2s}
-.modal-close:hover{color:var(--text)}
-.modal-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px}
-.modal-title{font-family:'Playfair Display',serif;font-size:1.5rem;margin-bottom:6px;color:var(--text)}
-.modal-sub{font-size:13px;color:var(--text3);margin-bottom:24px}
-.form-group{margin-bottom:14px}
-.form-label{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;display:block;font-family:'JetBrains Mono',monospace}
-.form-input{width:100%;padding:10px 13px;background:var(--bg2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:border-color .15s}
-.form-input:focus{border-color:var(--accent)}
-.form-btn{width:100%;padding:12px;background:#2563EB;color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px;transition:all .2s;font-family:'Inter',sans-serif}
-.form-btn:hover{background:#1D4ED8}
-.form-error{font-size:12px;color:#EF4444;margin-top:6px;display:none}
-.form-note{font-size:11px;color:var(--text3);text-align:center;margin-top:14px}
-/* Logo SVG size */
-.logo-sm{width:30px;height:30px;flex-shrink:0}
 
-/* SCROLL ANIMATIONS */
-.reveal{opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .6s ease}
-.reveal.visible{opacity:1;transform:translateY(0)}
-.reveal-delay-1{transition-delay:.1s}
-.reveal-delay-2{transition-delay:.2s}
-.reveal-delay-3{transition-delay:.3s}
-.reveal-delay-4{transition-delay:.4s}
-.reveal-delay-5{transition-delay:.5s}
-.reveal-delay-6{transition-delay:.6s}
-/* TESTIMONIALS */
-.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-@media(max-width:900px){.testi-grid{grid-template-columns:1fr}}
-.testi-card{background:var(--card-bg);border:1px solid var(--card-bd);border-radius:12px;padding:28px;transition:all .25s}
-.testi-card:hover{border-color:var(--accent);transform:translateY(-2px)}
-.testi-quote{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:20px;font-style:italic}
-.testi-quote::before{content:'"';font-size:32px;color:var(--accent);font-family:'Playfair Display',serif;line-height:0;vertical-align:-12px;margin-right:4px;opacity:.6}
-.testi-author{display:flex;align-items:center;gap:12px}
-.testi-avatar{width:40px;height:40px;border-radius:50%;background:#2563EB;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
-.testi-name{font-size:13px;font-weight:600;color:var(--text)}
-.testi-role{font-size:11px;color:var(--text3)}
-.stars{color:#F59E0B;font-size:13px;margin-bottom:10px;letter-spacing:2px}
-/* ABOUT */
-.about-grid{display:grid;grid-template-columns:1fr 1.8fr;gap:48px;align-items:center}
-@media(max-width:800px){.about-grid{grid-template-columns:1fr}}
-.about-avatar{width:160px;height:160px;border-radius:50%;background:linear-gradient(135deg,#1D4ED8,#2563EB);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:48px;color:#fff;font-weight:700;border:4px solid var(--border2);box-shadow:0 0 0 8px var(--accent-bg)}
-.about-name{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--text);margin-bottom:4px}
-.about-role{font-size:13px;color:var(--accent);font-weight:500;margin-bottom:16px;font-family:'JetBrains Mono',monospace;letter-spacing:.05em}
-.about-bio{font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:20px}
-.about-tags{display:flex;flex-wrap:wrap;gap:8px}
-.about-tag{padding:5px 12px;border-radius:20px;background:var(--accent-bg);border:1px solid rgba(59,130,246,.2);font-size:11px;color:var(--accent2);font-weight:500}
-.about-contact{margin-top:20px;font-size:13px;color:var(--text3)}
-.about-contact a{color:var(--accent);transition:color .2s}
-.about-contact a:hover{color:var(--accent2)}
+/* DARK THEME (default) */
+[data-theme="dark"] {
+  --bg:       #080D18;
+  --bg2:      #0D1526;
+  --bg3:      #111D35;
+  --surface:  #162040;
+  --surface2: #1A2850;
+  --border:   #1E3060;
+  --border2:  #2A4080;
+  --text:     #E8F0FC;
+  --text2:    #94A8CC;
+  --text3:    #4A6090;
+  --accent:   #3B82F6;
+  --accent2:  #60A5FA;
+  --accent-bg:rgba(59,130,246,.1);
+  --btn-primary-bg: #2563EB;
+  --btn-primary-fg: #FFFFFF;
+  --btn-ghost-bg:   transparent;
+  --btn-ghost-bd:   #1E3060;
+  --btn-ghost-fg:   #94A8CC;
+  --logo-text:      #93C5FD;
+  --logo-sub:       #4A6090;
+  --hero-title:     #E8F0FC;
+  --hero-accent:    #60A5FA;
+  --card-bg:        #0D1526;
+  --card-border:    #1E3060;
+  --nav-bg:         rgba(8,13,24,.95);
+  --feat-icon-bg:   rgba(59,130,246,.12);
+  --step-bg:        rgba(59,130,246,.08);
+  --footer-bg:      #060B16;
+  --footer-text:    #2A4080;
+  --theme-icon:     "\u2600\ufe0f";
+  --theme-label:    "Tema Claro";
+}
+
+/* LIGHT THEME */
+[data-theme="light"] {
+  --bg:       #F8FAFF;
+  --bg2:      #FFFFFF;
+  --bg3:      #F0F5FF;
+  --surface:  #FFFFFF;
+  --surface2: #F0F5FF;
+  --border:   #DBEAFE;
+  --border2:  #BFDBFE;
+  --text:     #0F172A;
+  --text2:    #334155;
+  --text3:    #64748B;
+  --accent:   #2563EB;
+  --accent2:  #1D4ED8;
+  --accent-bg:rgba(37,99,235,.06);
+  --btn-primary-bg: #2563EB;
+  --btn-primary-fg: #FFFFFF;
+  --btn-ghost-bg:   #FFFFFF;
+  --btn-ghost-bd:   #DBEAFE;
+  --btn-ghost-fg:   #334155;
+  --logo-text:      #1E3A8A;
+  --logo-sub:       #64748B;
+  --hero-title:     #0F172A;
+  --hero-accent:    #2563EB;
+  --card-bg:        #FFFFFF;
+  --card-border:    #DBEAFE;
+  --nav-bg:         rgba(248,250,255,.97);
+  --feat-icon-bg:   rgba(37,99,235,.08);
+  --step-bg:        rgba(37,99,235,.05);
+  --footer-bg:      #0F172A;
+  --footer-text:    #475569;
+  --theme-icon:     "\ud83c\udf19";
+  --theme-label:    "Tema Oscuro";
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   RESET & BASE
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  transition: background .3s, color .3s;
+  overflow-x: hidden;
+}
+a { text-decoration: none; color: inherit; }
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   LOGO SVG INLINE
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.logo-symbol {
+  width: 36px; height: 36px; flex-shrink: 0;
+}
+.logo-symbol-sm { width: 30px; height: 30px; flex-shrink: 0; }
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   NAV
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+nav {
+  position: fixed; top:0; left:0; right:0; z-index: 200;
+  height: 60px;
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px;
+  transition: background .3s, border-color .3s;
+}
+.nav-brand { display:flex; align-items:center; gap:10px; }
+.nav-brand-name {
+  font-size: 17px; font-weight: 700; color: var(--logo-text);
+  transition: color .3s;
+}
+.nav-brand-name span { font-weight: 300; }
+.nav-brand-sub {
+  font-size: 9px; color: var(--logo-sub); letter-spacing: .12em;
+  text-transform: uppercase; display: block; margin-top: -2px;
+}
+.nav-links { display: flex; gap: 28px; align-items: center; }
+.nav-link {
+  font-size: 13px; font-weight: 500; color: var(--text3);
+  transition: color .2s;
+}
+.nav-link:hover { color: var(--accent); }
+.nav-right { display: flex; align-items: center; gap: 10px; }
+
+/* Theme toggle */
+.theme-toggle {
+  width: 38px; height: 38px; border-radius: 8px;
+  background: var(--btn-ghost-bg);
+  border: 1px solid var(--btn-ghost-bd);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 16px; transition: all .2s;
+  color: var(--text2);
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Buttons */
+.btn {
+  padding: 9px 20px; border-radius: 7px; font-size: 13px;
+  font-weight: 600; cursor: pointer; transition: all .2s;
+  font-family: 'Inter', sans-serif; border: none; display: inline-flex;
+  align-items: center; gap: 6px;
+}
+.btn-primary {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+  box-shadow: 0 1px 3px rgba(37,99,235,.3);
+}
+.btn-primary:hover { background: #1D4ED8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,.4); }
+.btn-ghost {
+  background: var(--btn-ghost-bg);
+  border: 1px solid var(--btn-ghost-bd);
+  color: var(--btn-ghost-fg);
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   HERO
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 120px 32px 80px;
+  position: relative; overflow: hidden;
+}
+.hero-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: .3;
+}
+.hero-glow {
+  position: absolute; pointer-events: none;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(37,99,235,.15) 0%, transparent 70%);
+  top: 50%; left: 50%; transform: translate(-50%, -60%);
+}
+
+/* Hero badge */
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 28px;
+  background: var(--accent-bg);
+  border: 1px solid rgba(59,130,246,.25);
+  font-size: 11px; font-weight: 600; color: var(--accent2);
+  letter-spacing: .06em; text-transform: uppercase;
+  position: relative;
+}
+.badge-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* Hero title */
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+  font-weight: 700; line-height: 1.1;
+  color: var(--hero-title);
+  margin-bottom: 20px; position: relative;
+  letter-spacing: -.02em;
+}
+.hero-title em {
+  font-style: italic; color: var(--hero-accent);
+  font-weight: 600;
+}
+
+.hero-sub {
+  font-size: clamp(15px, 1.6vw, 17px);
+  color: var(--text2); max-width: 560px; line-height: 1.75;
+  margin-bottom: 40px; position: relative;
+}
+
+.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; position: relative; margin-bottom: 64px; }
+.btn-lg { padding: 13px 28px; font-size: 14px; border-radius: 8px; }
+
+/* Hero stats */
+.hero-stats {
+  display: flex; gap: 48px; position: relative;
+  border-top: 1px solid var(--border); padding-top: 40px;
+}
+.hero-stat { text-align: center; }
+.hero-stat-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.9rem; font-weight: 500; color: var(--accent2);
+  display: block;
+}
+.hero-stat-label {
+  font-size: 10px; color: var(--text3); text-transform: uppercase;
+  letter-spacing: .1em; margin-top: 4px; display: block;
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   SECTIONS
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.section { padding: 96px 32px; max-width: 1100px; margin: 0 auto; }
+.section-full { padding: 80px 32px; background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); transition: background .3s, border-color .3s; }
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--accent); letter-spacing: .2em;
+  text-transform: uppercase; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.eyebrow::before { content:''; width:20px; height:1px; background:var(--accent); }
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 700; line-height: 1.2;
+  color: var(--text); margin-bottom: 56px;
+  letter-spacing: -.02em;
+}
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   FEATURES
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.feat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+@media(max-width:900px){ .feat-grid { grid-template-columns: 1fr; } }
+
+.feat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px; padding: 28px;
+  transition: all .25s; position: relative; overflow: hidden;
+}
+.feat-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  opacity: 0; transition: opacity .25s;
+}
+.feat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.feat-card:hover::before { opacity: 1; }
+
+.feat-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: var(--feat-icon-bg);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+}
+.feat-icon svg { width: 22px; height: 22px; }
+.feat-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.feat-desc { font-size: 13px; color: var(--text2); line-height: 1.65; }
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   HOW IT WORKS
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.steps { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; max-width: 900px; margin: 0 auto; }
+@media(max-width:700px){ .steps { grid-template-columns: 1fr 1fr; } }
+
+.step {
+  background: var(--step-bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 24px 18px; text-align: center;
+  transition: background .3s, border-color .3s;
+}
+.step-num {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 600;
+}
+.step-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.step-desc { font-size: 12px; color: var(--text2); line-height: 1.55; }
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   PRICING
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; max-width: 900px; margin: 0 auto; }
+@media(max-width:700px){ .pricing-grid { grid-template-columns: 1fr; } }
+
+.pricing-card {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 12px; padding: 32px 24px; position: relative;
+  transition: all .3s;
+}
+.pricing-card.featured {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(37,99,235,.15);
+}
+.pricing-badge {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  padding: 3px 14px; background: var(--accent); color: #fff;
+  border-radius: 20px; font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
+}
+.pricing-name { font-size: 11px; color: var(--text3); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; }
+.pricing-price { font-family: 'JetBrains Mono', monospace; font-size: 2.2rem; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.pricing-price span { font-size: 13px; color: var(--text3); font-weight: 400; }
+.pricing-desc { font-size: 12px; color: var(--text3); margin-bottom: 24px; line-height: 1.5; }
+.pricing-feats { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.pricing-feats li { font-size: 13px; color: var(--text2); display: flex; gap: 8px; align-items: flex-start; }
+.pricing-feats li::before { content: '\u2713'; color: var(--ok); font-weight: 700; flex-shrink: 0; }
+.pricing-btn {
+  width: 100%; padding: 11px; border-radius: 7px; font-size: 13px;
+  font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif;
+  transition: all .2s; border: none;
+}
+.pricing-btn-primary { background: var(--accent); color: #fff; }
+.pricing-btn-primary:hover { background: #1D4ED8; }
+.pricing-btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
+.pricing-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   CTA
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.cta-section {
+  padding: 96px 32px; text-align: center;
+  background: var(--bg2); border-top: 1px solid var(--border);
+  transition: background .3s;
+}
+.cta-title { font-family: 'Playfair Display', serif; font-size: clamp(2rem,4vw,3rem); font-weight: 700; margin-bottom: 14px; color: var(--text); letter-spacing: -.02em; }
+.cta-sub { font-size: 15px; color: var(--text2); margin-bottom: 40px; }
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   FOOTER
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+footer {
+  background: var(--footer-bg);
+  padding: 40px 32px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+  border-top: 1px solid #1E293B;
+}
+.footer-brand { font-size: 13px; color: #475569; font-family: 'JetBrains Mono', monospace; }
+.footer-links { display: flex; gap: 20px; }
+.footer-link { font-size: 12px; color: #475569; transition: color .2s; }
+.footer-link:hover { color: #93C5FD; }
+
+/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+   MODAL
+\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.6); backdrop-filter: blur(10px);
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 40px; width: 100%; max-width: 400px;
+  position: relative; transition: background .3s;
+}
+.modal-close {
+  position: absolute; top:16px; right:16px;
+  background: none; border: none; color: var(--text3);
+  font-size: 18px; cursor: pointer; transition: color .2s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 6px; color: var(--text); }
+.modal-sub { font-size: 13px; color: var(--text3); margin-bottom: 24px; }
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 10px; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 5px; display: block; font-family: 'JetBrains Mono', monospace; }
+.form-input {
+  width: 100%; padding: 10px 13px;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 7px; color: var(--text);
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  outline: none; transition: border-color .15s;
+}
+.form-input:focus { border-color: var(--accent); }
+.form-btn {
+  width: 100%; padding: 12px; background: var(--accent); color: #fff;
+  border: none; border-radius: 7px; font-size: 14px; font-weight: 600;
+  cursor: pointer; margin-top: 6px; transition: all .2s;
+  font-family: 'Inter', sans-serif;
+}
+.form-btn:hover { background: #1D4ED8; }
+.form-error { font-size: 12px; color: var(--danger); margin-top: 6px; display: none; }
+.form-note { font-size: 11px; color: var(--text3); text-align: center; margin-top: 14px; }
 </style>
+  <!-- Firebase Auth -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyCPYqnrFVjfoZgUPYb77SVM41LhMeILUq0",
+      authDomain:        "dtmodels-da36d.firebaseapp.com",
+      projectId:         "dtmodels-da36d",
+      storageBucket:     "dtmodels-da36d.firebasestorage.app",
+      messagingSenderId: "363788652473",
+      appId:             "1:363788652473:web:73c622dd0133b758737068"
+    };
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Auto-redirect if already logged in
+    onAuthStateChanged(auth, user => {
+      if(user) window.location.href = 'dashboard.html';
+    });
+
+    // Google Sign-In
+    window.loginWithGoogle = async () => {
+      const btn = document.getElementById('btn-google');
+      if(btn) btn.disabled = true;
+      const provider = new GoogleAuthProvider();
+      try {
+        await signInWithPopup(auth, provider);
+      } catch(e) {
+        document.getElementById('login-error').textContent = 'Error Google: ' + (e.code || e.message);
+        document.getElementById('login-error').style.display = 'block';
+        if(btn) btn.disabled = false;
+      }
+    };
+
+    // Email/Password
+    window.doLogin = async () => {
+      const email = document.getElementById('login-email').value.trim();
+      const pass  = document.getElementById('login-pass').value;
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch(e) {
+        // Fallback legacy credentials during transition
+        if(email === 'darwinetm@gmail.com' && pass === 'DtModels2026!') {
+          window.location.href = 'dashboard.html';
+        } else {
+          document.getElementById('login-error').textContent = 'Credenciales incorrectas.';
+          document.getElementById('login-error').style.display = 'block';
+        }
+      }
+    };
+  </script>
 </head>
 <body>
 
+<!-- \u2550\u2550\u2550 NAV \u2550\u2550\u2550 -->
 <nav>
   <div class="nav-brand">
-    <svg class="logo-sm" viewBox="0 0 30 30" fill="none">
+    <!-- Logo SVG compacto -->
+    <svg class="logo-symbol-sm" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect width="30" height="30" rx="7" fill="#2563EB"/>
-      <rect x="4"  y="20" width="4" height="7"  rx="1" fill="white" opacity=".45"/>
+      <rect x="4"  y="20" width="4" height="7" rx="1" fill="white" opacity=".5"/>
       <rect x="10" y="15" width="4" height="12" rx="1" fill="white" opacity=".7"/>
       <rect x="16" y="9"  width="4" height="18" rx="1" fill="white" opacity=".9"/>
       <rect x="22" y="4"  width="4" height="23" rx="1" fill="white"/>
@@ -191,217 +515,241 @@ footer{background:var(--footer-bg);padding:40px 32px;display:flex;align-items:ce
     </div>
   </div>
   <div class="nav-links">
-    <a href="#features" class="nav-link">Características</a>
-    <a href="#como-funciona" class="nav-link">Cómo funciona</a>
+    <a href="#features" class="nav-link">Caracter\u00edsticas</a>
+    <a href="#como-funciona" class="nav-link">C\u00f3mo funciona</a>
     <a href="#precios" class="nav-link">Precios</a>
   </div>
   <div class="nav-right">
-    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Cambiar tema">☀️</button>
-    <button class="btn btn-primary" onclick="openLogin()">Acceder →</button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" id="theme-btn">\u2600\ufe0f</button>
+    <button class="btn btn-primary" onclick="openLogin()">Acceder \u2192</button>
   </div>
 </nav>
 
-<!-- HERO -->
+<!-- \u2550\u2550\u2550 HERO \u2550\u2550\u2550 -->
 <section class="hero">
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
-  <div class="hero-badge reveal"><span class="badge-dot"></span>Plataforma Financiera Profesional</div>
-  <h1 class="hero-title reveal reveal-delay-1">Modelos financieros<br>que <em>convencen</em> bancos</h1>
-  <p class="hero-sub reveal reveal-delay-2">Crea, presenta y comparte modelos de viabilidad crediticia, valoraciones y proyecciones financieras con tus clientes — todo desde una sola plataforma.</p>
-  <div class="hero-btns reveal reveal-delay-3">
-    <a href="#" class="btn btn-primary btn-lg" onclick="openLogin()">Crear mi primer modelo →</a>
-    <a href="#como-funciona" class="btn btn-ghost btn-lg">Ver cómo funciona</a>
+
+  <div class="hero-badge"><span class="badge-dot"></span>Plataforma Financiera Profesional</div>
+
+  <h1 class="hero-title">
+    Modelos financieros<br>que <em>convencen</em> bancos
+  </h1>
+
+  <p class="hero-sub">
+    Crea, presenta y comparte modelos de viabilidad crediticia,
+    valoraciones y proyecciones financieras con tus clientes \u2014
+    todo desde una sola plataforma.
+  </p>
+
+  <div class="hero-btns">
+    <a href="#" class="btn btn-primary btn-lg" onclick="openLogin()">
+      Crear mi primer modelo \u2192
+    </a>
+    <a href="#como-funciona" class="btn btn-ghost btn-lg">Ver c\u00f3mo funciona</a>
   </div>
-  <div class="hero-stats reveal reveal-delay-4">
-    <div class="hero-stat"><span class="hero-stat-num">100%</span><span class="hero-stat-label">Online</span></div>
-    <div class="hero-stat"><span class="hero-stat-num">∞</span><span class="hero-stat-label">Clientes</span></div>
-    <div class="hero-stat"><span class="hero-stat-num">XLSX</span><span class="hero-stat-label">Exportable</span></div>
-    <div class="hero-stat"><span class="hero-stat-num">PDF</span><span class="hero-stat-label">Presentable</span></div>
+
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <span class="hero-stat-num">100%</span>
+      <span class="hero-stat-label">Online</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">\u221e</span>
+      <span class="hero-stat-label">Clientes</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">XLSX</span>
+      <span class="hero-stat-label">Exportable</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">PDF</span>
+      <span class="hero-stat-label">Presentable</span>
+    </div>
   </div>
 </section>
 
-<!-- FEATURES -->
+<!-- \u2550\u2550\u2550 FEATURES \u2550\u2550\u2550 -->
 <div class="section-full" id="features">
   <div style="max-width:1100px;margin:0 auto">
-    <div class="eyebrow">Características</div>
+    <div class="eyebrow">Caracter\u00edsticas</div>
     <div class="section-title">Todo lo que necesitas<br>para estructurar negocios</div>
     <div class="feat-grid">
-      <div class="feat-card reveal reveal-delay-1">
-        <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="18" height="18" rx="3"/><path d="M7 14V10M11 14V8M15 14V5"/></svg></div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round">
+            <rect x="2" y="2" width="18" height="18" rx="3"/><path d="M7 14V10M11 14V8M15 14V5"/>
+          </svg>
+        </div>
         <div class="feat-title">Viabilidad Crediticia</div>
-        <div class="feat-desc">DSCR, ICR, stress test y score crediticio automático. Todo lo que un banco necesita para aprobar un crédito.</div>
+        <div class="feat-desc">DSCR, ICR, stress test y score crediticio autom\u00e1tico. Todo lo que un banco necesita para aprobar un cr\u00e9dito.</div>
       </div>
-      <div class="feat-card reveal reveal-delay-2">
-        <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="9"/><path d="M11 6v5l3 3"/></svg></div>
-        <div class="feat-title">Valoración de Empresas</div>
-        <div class="feat-desc">DCF, múltiplos de mercado y análisis comparativo. Determina el valor justo de cualquier empresa con precisión.</div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round">
+            <circle cx="11" cy="11" r="9"/><path d="M11 6v5l3 3"/>
+          </svg>
+        </div>
+        <div class="feat-title">Valoraci\u00f3n de Empresas</div>
+        <div class="feat-desc">DCF, m\u00faltiplos de mercado y an\u00e1lisis comparativo. Determina el valor justo de cualquier empresa con precisi\u00f3n.</div>
       </div>
-      <div class="feat-card reveal reveal-delay-3">
-        <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
         <div class="feat-title">Proyecciones Startup</div>
-        <div class="feat-desc">Unit economics, runway y CAC/LTV. Convence inversionistas con proyecciones financieras sólidas y defendibles.</div>
+        <div class="feat-desc">Unit economics, runway y CAC/LTV. Convence inversionistas con proyecciones financieras s\u00f3lidas y defendibles.</div>
       </div>
-      <div class="feat-card reveal reveal-delay-4">
-        <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div>
-        <div class="feat-title">Presentación Online</div>
-        <div class="feat-desc">Genera un link único por cliente. Presenta el modelo directamente desde el navegador, sin archivos adjuntos.</div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round">
+            <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+          </svg>
+        </div>
+        <div class="feat-title">Presentaci\u00f3n Online</div>
+        <div class="feat-desc">Genera un link \u00fanico por cliente. Presenta el modelo directamente desde el navegador, sin archivos ni instalaciones.</div>
       </div>
-      <div class="feat-card reveal reveal-delay-5">
-        <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
         <div class="feat-title">Exportar Excel y PDF</div>
-        <div class="feat-desc">Descarga el modelo completo en Excel profesional o en PDF listo para el comité de crédito o la junta directiva.</div>
+        <div class="feat-desc">Descarga el modelo completo en Excel profesional o en PDF listo para el comit\u00e9 de cr\u00e9dito o la junta directiva.</div>
       </div>
-      <div class="feat-card reveal reveal-delay-6">
-        <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
-        <div class="feat-title">Recálculo Dinámico</div>
+
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg viewBox="0 0 22 22" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+          </svg>
+        </div>
+        <div class="feat-title">Rec\u00e1lculo Din\u00e1mico</div>
         <div class="feat-desc">Cambia cualquier supuesto y todos los indicadores se actualizan en tiempo real. Sin macros, sin errores, sin espera.</div>
       </div>
+
     </div>
   </div>
 </div>
 
-<!-- HOW IT WORKS -->
+<!-- \u2550\u2550\u2550 HOW IT WORKS \u2550\u2550\u2550 -->
 <div id="como-funciona" style="padding:96px 32px;text-align:center">
   <div style="max-width:900px;margin:0 auto">
     <div class="eyebrow" style="justify-content:center">Proceso</div>
     <div class="section-title" style="margin-bottom:48px">De los datos del cliente<br>al modelo en minutos</div>
     <div class="steps">
-      <div class="step reveal reveal-delay-1"><div class="step-num">1</div><div class="step-title">Ingresas los datos</div><div class="step-desc">Sube el Excel del cliente o completa el formulario paso a paso.</div></div>
-      <div class="step reveal reveal-delay-2"><div class="step-num">2</div><div class="step-title">El modelo calcula</div><div class="step-desc">EBITDA, DSCR, ICR, score y stress test se generan automáticamente.</div></div>
-      <div class="step reveal reveal-delay-3"><div class="step-num">3</div><div class="step-title">Presentas online</div><div class="step-desc">Compartes un link único. El cliente ve el dashboard desde cualquier dispositivo.</div></div>
-      <div class="step reveal reveal-delay-4"><div class="step-num">4</div><div class="step-title">Exportas el entregable</div><div class="step-desc">Excel o PDF profesional listo para entregar al banco o comité.</div></div>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Ingresas los datos</div>
+        <div class="step-desc">Sube el Excel del cliente o completa el formulario paso a paso.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">El modelo calcula</div>
+        <div class="step-desc">EBITDA, DSCR, ICR, score y stress test se generan autom\u00e1ticamente.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">Presentas online</div>
+        <div class="step-desc">Compartes un link \u00fanico. El cliente ve el dashboard desde cualquier dispositivo.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">Exportas el entregable</div>
+        <div class="step-desc">Excel o PDF profesional listo para entregar al banco o comit\u00e9.</div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- PRICING -->
+<!-- \u2550\u2550\u2550 PRICING \u2550\u2550\u2550 -->
 <div class="section-full" id="precios">
   <div style="max-width:900px;margin:0 auto;text-align:center">
     <div class="eyebrow" style="justify-content:center">Planes</div>
     <div class="section-title" style="margin-bottom:48px">Invierte menos de lo que<br>cobras por un modelo</div>
     <div class="pricing-grid">
+
       <div class="pricing-card">
         <div class="pricing-name">Starter</div>
         <div class="pricing-price">Gratis<span>/mes</span></div>
         <div class="pricing-desc">Para explorar la plataforma</div>
-        <ul class="pricing-feats"><li>3 modelos activos</li><li>Dashboard interactivo</li><li>Presentación online</li><li>Exportar PDF</li></ul>
-        <button class="pricing-btn ghost" onclick="openLogin()">Comenzar gratis</button>
+        <ul class="pricing-feats">
+          <li>3 modelos activos</li>
+          <li>Dashboard interactivo</li>
+          <li>Presentaci\u00f3n online</li>
+          <li>Exportar PDF</li>
+        </ul>
+        <button class="pricing-btn pricing-btn-ghost" onclick="openLogin()">Comenzar gratis</button>
       </div>
+
       <div class="pricing-card featured">
-        <div class="pricing-badge">MÁS POPULAR</div>
+        <div class="pricing-badge">M\u00c1S POPULAR</div>
         <div class="pricing-name">Profesional</div>
         <div class="pricing-price">$49<span>/mes</span></div>
-        <div class="pricing-desc">Para consultores con múltiples clientes</div>
-        <ul class="pricing-feats"><li>Modelos ilimitados</li><li>Todos los tipos de modelo</li><li>Exportar Excel + PDF</li><li>Links únicos por cliente</li><li>Recálculo dinámico</li><li>Importación automática de Excel</li></ul>
-        <button class="pricing-btn prim" onclick="openLogin()">Comenzar ahora →</button>
+        <div class="pricing-desc">Para consultores con m\u00faltiples clientes</div>
+        <ul class="pricing-feats">
+          <li>Modelos ilimitados</li>
+          <li>Todos los tipos de modelo</li>
+          <li>Exportar Excel + PDF</li>
+          <li>Links \u00fanicos por cliente</li>
+          <li>Rec\u00e1lculo din\u00e1mico</li>
+          <li>Importaci\u00f3n autom\u00e1tica de Excel</li>
+          <li>Soporte prioritario</li>
+        </ul>
+        <button class="pricing-btn pricing-btn-primary" onclick="openLogin()">Comenzar ahora \u2192</button>
       </div>
+
       <div class="pricing-card">
         <div class="pricing-name">Empresa</div>
         <div class="pricing-price">$149<span>/mes</span></div>
         <div class="pricing-desc">Para firmas con equipo de analistas</div>
-        <ul class="pricing-feats"><li>Todo lo del plan Pro</li><li>Hasta 5 usuarios</li><li>Marca personalizada</li><li>API de integración</li><li>Modelos a medida</li></ul>
-        <button class="pricing-btn ghost" onclick="openLogin()">Contactar</button>
+        <ul class="pricing-feats">
+          <li>Todo lo del plan Pro</li>
+          <li>Hasta 5 usuarios</li>
+          <li>Marca personalizada</li>
+          <li>API de integraci\u00f3n</li>
+          <li>Modelos a medida</li>
+        </ul>
+        <button class="pricing-btn pricing-btn-ghost" onclick="openLogin()">Contactar</button>
       </div>
+
     </div>
   </div>
 </div>
 
-
-<!-- TESTIMONIOS -->
-<div style="padding:96px 32px;background:var(--bg)" id="testimonios">
-  <div style="max-width:1100px;margin:0 auto">
-    <div class="eyebrow reveal">Testimonios</div>
-    <div class="section-title reveal reveal-delay-1">Lo que dicen<br>nuestros clientes</div>
-    <div class="testi-grid">
-      <div class="testi-card reveal reveal-delay-1">
-        <div class="stars">★★★★★</div>
-        <div class="testi-quote">El modelo de viabilidad fue entregado en tiempo récord. El banco aprobó el crédito la primera vez que lo presentamos. La calidad del análisis es increíblemente profesional.</div>
-        <div class="testi-author">
-          <div class="testi-avatar">G</div>
-          <div><div class="testi-name">Gerente General</div><div class="testi-role">Empresa Agroindustrial · Colombia</div></div>
-        </div>
-      </div>
-      <div class="testi-card reveal reveal-delay-2">
-        <div class="stars">★★★★★</div>
-        <div class="testi-quote">El dashboard interactivo fue clave para la presentación al comité de crédito. Los banqueros quedaron impresionados con la calidad del análisis y la claridad de los gráficos.</div>
-        <div class="testi-author">
-          <div class="testi-avatar">C</div>
-          <div><div class="testi-name">Director Financiero</div><div class="testi-role">Empresa de Logística · Centroamérica</div></div>
-        </div>
-      </div>
-      <div class="testi-card reveal reveal-delay-3">
-        <div class="stars">★★★★★</div>
-        <div class="testi-quote">Llevábamos meses buscando un analista que entendiera nuestro negocio. El modelo fue exactamente lo que necesitábamos y nos ayudó a conseguir el financiamiento.</div>
-        <div class="testi-author">
-          <div class="testi-avatar">F</div>
-          <div><div class="testi-name">Fundador</div><div class="testi-role">Empresa de Tecnología · Colombia</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- CTA -->
+<!-- \u2550\u2550\u2550 CTA \u2550\u2550\u2550 -->
 <div class="cta-section">
-  <h2 class="cta-title">Tu próximo modelo,<br>en <span style="color:var(--accent)">dtmodels.com</span></h2>
-  <p class="cta-sub">Únete a los consultores que presentan modelos profesionales en línea</p>
-  <button class="btn btn-primary btn-lg" onclick="openLogin()">Crear mi cuenta gratis →</button>
+  <h2 class="cta-title">Tu pr\u00f3ximo modelo,<br>en <span style="color:var(--accent)">dtmodels.com</span></h2>
+  <p class="cta-sub">\u00danete a los consultores que presentan modelos profesionales en l\u00ednea</p>
+  <button class="btn btn-primary btn-lg" onclick="openLogin()">Crear mi cuenta gratis \u2192</button>
 </div>
 
-
-<!-- ABOUT -->
-<div style="padding:96px 32px;background:var(--bg2);border-top:1px solid var(--border)" id="about">
-  <div style="max-width:900px;margin:0 auto">
-    <div class="about-grid">
-      <div style="display:flex;justify-content:center;align-items:center">
-        <div class="about-avatar reveal">DT</div>
-      </div>
-      <div class="reveal reveal-delay-1">
-        <div class="about-name">Darwin Enrique Torres Meza</div>
-        <div class="about-role">Analista Financiero · Estructurador de Negocios</div>
-        <div class="about-bio">
-          Especialista en modelos financieros para viabilidad crediticia, valoración de empresas y estructuración de negocios. 
-          Trabajo con empresas en Colombia y Centroamérica, ayudando a conectar proyectos sólidos con el financiamiento que necesitan. 
-          Asociado con <strong>Acvay Capital</strong> — firma especializada en estructuración de créditos y búsqueda de fondeadores.
-        </div>
-        <div class="about-tags">
-          <span class="about-tag">Viabilidad Crediticia</span>
-          <span class="about-tag">Valoración de Empresas</span>
-          <span class="about-tag">Modelos para Bancos</span>
-          <span class="about-tag">Proyecciones Financieras</span>
-          <span class="about-tag">Stress Test</span>
-          <span class="about-tag">Colombia · Centroamérica</span>
-        </div>
-        <div class="about-contact" style="margin-top:20px">
-          📧 <a href="mailto:darwinetm@gmail.com">darwinetm@gmail.com</a>
-          &nbsp;&nbsp;·&nbsp;&nbsp;
-          🌐 <a href="https://dtmodels.com">dtmodels.com</a>
-          &nbsp;&nbsp;·&nbsp;&nbsp;
-          📍 Barranquilla, Colombia
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- FOOTER -->
+<!-- \u2550\u2550\u2550 FOOTER \u2550\u2550\u2550 -->
 <footer>
-  <div class="footer-brand">© 2026 DT Models · Darwin Enrique Torres Meza · Barranquilla, Colombia</div>
+  <div class="footer-brand">\u00a9 2026 DT Models \u00b7 Darwin Enrique Torres Meza \u00b7 Barranquilla, Colombia</div>
   <div class="footer-links">
-    <a href="terminos.html" class="footer-link">Términos</a>
-    <a href="privacidad.html" class="footer-link">Privacidad</a>
-    <a href="contacto.html" class="footer-link">Contacto</a>
+    <a href="#" class="footer-link">T\u00e9rminos</a>
+    <a href="#" class="footer-link">Privacidad</a>
+    <a href="mailto:darwinetm@gmail.com" class="footer-link">Contacto</a>
   </div>
 </footer>
 
-<!-- LOGIN MODAL -->
+<!-- \u2550\u2550\u2550 LOGIN MODAL \u2550\u2550\u2550 -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <button class="modal-close" onclick="closeLogin()">✕</button>
+    <button class="modal-close" onclick="closeLogin()">\u2715</button>
     <div class="modal-logo">
-      <svg class="logo-sm" viewBox="0 0 30 30" fill="none">
+      <svg class="logo-symbol-sm" viewBox="0 0 30 30" fill="none">
         <rect width="30" height="30" rx="7" fill="#2563EB"/>
-        <rect x="4"  y="20" width="4" height="7"  rx="1" fill="white" opacity=".45"/>
+        <rect x="4" y="20" width="4" height="7" rx="1" fill="white" opacity=".5"/>
         <rect x="10" y="15" width="4" height="12" rx="1" fill="white" opacity=".7"/>
         <rect x="16" y="9"  width="4" height="18" rx="1" fill="white" opacity=".9"/>
         <rect x="22" y="4"  width="4" height="23" rx="1" fill="white"/>
@@ -416,57 +764,49 @@ footer{background:var(--footer-bg);padding:40px 32px;display:flex;align-items:ce
       <input class="form-input" type="email" id="login-email" placeholder="tu@email.com">
     </div>
     <div class="form-group">
-      <label class="form-label">Contraseña</label>
-      <input class="form-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      <label class="form-label">Contrase\u00f1a</label>
+      <input class="form-input" type="password" id="login-pass" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <div class="form-error" id="login-error">Email o contraseña incorrectos</div>
+    <div class="form-error" id="login-error">Email o contrase\u00f1a incorrectos</div>
     <button class="form-btn" onclick="doLogin()">Acceder →</button>
-    <div class="form-note">¿Problemas? <a href="mailto:darwinetm@gmail.com" style="color:var(--accent)">Contactar soporte</a></div>
+    <button id="btn-google" onclick="loginWithGoogle()" style="width:100%;margin-top:10px;padding:10px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#E8F0FC;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continuar con Google
+    </button>
+    <div class="form-note">\u00bfProblemas? <a href="mailto:darwinetm@gmail.com" style="color:var(--accent)">Contactar soporte</a></div>
   </div>
 </div>
 
 <script>
-const THEME_KEY='dtmodels_theme'
+// \u2500\u2500 THEME TOGGLE \u2500\u2500
+const THEME_KEY = 'dtmodels_theme'
 function applyTheme(t){
-  document.documentElement.setAttribute('data-theme',t)
-  document.getElementById('theme-btn').textContent=t==='dark'?'☀️':'🌙'
-  localStorage.setItem(THEME_KEY,t)
+  document.documentElement.setAttribute('data-theme', t)
+  document.getElementById('theme-btn').textContent = t==='dark' ? '\u2600\ufe0f' : '\ud83c\udf19'
+  localStorage.setItem(THEME_KEY, t)
 }
 function toggleTheme(){
-  applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')
+  const cur = document.documentElement.getAttribute('data-theme')
+  applyTheme(cur==='dark' ? 'light' : 'dark')
 }
-const saved=localStorage.getItem(THEME_KEY)
+// Restore saved theme
+const saved = localStorage.getItem(THEME_KEY)
 if(saved) applyTheme(saved)
 
-function openLogin(){document.getElementById('modal').classList.add('open')}
-function closeLogin(){document.getElementById('modal').classList.remove('open')}
-document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeLogin()})
+// \u2500\u2500 LOGIN \u2500\u2500
+function openLogin(){ document.getElementById('modal').classList.add('open') }
+function closeLogin(){ document.getElementById('modal').classList.remove('open') }
+document.getElementById('modal').addEventListener('click', e=>{ if(e.target===document.getElementById('modal')) closeLogin() })
+
 function doLogin(){
-  const email=document.getElementById('login-email').value.trim()
-  const pass=document.getElementById('login-pass').value
-  if(email==='darwinetm@gmail.com'&&pass==='DtModels2026!'){
-    window.location.href='dashboard.html'
-  }else{
-    document.getElementById('login-error').style.display='block'
+  const email = document.getElementById('login-email').value.trim()
+  const pass  = document.getElementById('login-pass').value
+  if(email==='darwinetm@gmail.com' && pass==='DtModels2026!'){
+    window.location.href = 'dashboard.html'
+  } else {
+    document.getElementById('login-error').style.display = 'block'
   }
 }
-
-// SCROLL REVEAL
-function revealOnScroll(){
-  document.querySelectorAll('.reveal').forEach(el=>{
-    const rect=el.getBoundingClientRect()
-    if(rect.top < window.innerHeight - 60){
-      el.classList.add('visible')
-    }
-  })
-}
-// Trigger immediately for hero elements
-window.addEventListener('load',()=>{
-  setTimeout(revealOnScroll, 100)
-})
-window.addEventListener('scroll', revealOnScroll, {passive:true})
-revealOnScroll()
-
 </script>
 </body>
 </html>

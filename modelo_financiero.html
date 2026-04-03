@@ -158,6 +158,43 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
 </style>
+  <!-- Firebase (for shared link with Firestore ID) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyCPYqnrFVjfoZgUPYb77SVM41LhMeILUq0",
+      authDomain:        "dtmodels-da36d.firebaseapp.com",
+      projectId:         "dtmodels-da36d",
+      storageBucket:     "dtmodels-da36d.firebasestorage.app",
+      messagingSenderId: "363788652473",
+      appId:             "1:363788652473:web:73c622dd0133b758737068"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+    const auth = getAuth(app);
+
+    // Fetch model by Firestore path when ?id= is a Firestore document ID (not a timestamp)
+    // Firestore IDs are non-numeric; timestamps are all digits
+    window.loadModelFromFirestore = async (modelId) => {
+      try {
+        // Try each user — first check auth, fallback to public collection
+        const user = auth.currentUser;
+        if(user) {
+          const snap = await getDoc(doc(db, 'users', user.uid, 'models', modelId));
+          if(snap.exists()) return snap.data();
+        }
+        // Try as a public shared model (future feature)
+        return null;
+      } catch(e) {
+        console.warn('Firestore load error:', e);
+        return null;
+      }
+    };
+  </script>
 </head>
 <body>
 
@@ -1531,16 +1568,29 @@ window.addEventListener('DOMContentLoaded',()=>{
     }catch(e){ console.warn('Could not decode shared payload', e); }
 
   } else if(modelId){
-    // ── Dashboard open: load from localStorage (same browser) ──
-    try{
-      const models = JSON.parse(localStorage.getItem('dtmodels_models')||'[]');
-      const saved  = models.find(m=>String(m.id)===String(modelId));
-      if(saved && saved.inputs){
-        const inp = JSON.parse(saved.inputs);
-        applyInputsToP(inp);
-      }
-      if(saved && saved.monto) P.monto = saved.monto;
-    }catch(e){ console.warn('Could not load saved model', e); }
+    // ── Dashboard open: try Firestore first (cross-device), then localStorage ──
+    const isFirestoreId = /[^0-9]/.test(modelId); // non-numeric = Firestore ID
+    if(isFirestoreId && window.loadModelFromFirestore){
+      // Load async from Firestore
+      window.loadModelFromFirestore(modelId).then(saved => {
+        if(saved){
+          if(saved.data){ try{ const R=JSON.parse(saved.data); SHARED_R=R; renderAll(); }catch(e){} }
+          if(saved.inputs){ try{ applyInputsToP(JSON.parse(saved.inputs)); recalc(); }catch(e){} }
+        }
+      }).catch(e => console.warn('Firestore model load failed', e));
+    } else {
+      // Fallback: localStorage (same browser)
+      try{
+        const models = JSON.parse(localStorage.getItem('dtmodels_models')||'[]');
+        const saved  = models.find(m=>String(m.id)===String(modelId));
+        if(saved && saved.data){ try{ SHARED_R=JSON.parse(saved.data); }catch(e){} }
+        if(saved && saved.inputs){
+          const inp = JSON.parse(saved.inputs);
+          applyInputsToP(inp);
+        }
+        if(saved && saved.monto) P.monto = saved.monto;
+      }catch(e){ console.warn('Could not load saved model', e); }
+    }
 
   } else if(MONTO_URL>0){
     P.monto = MONTO_URL;

@@ -150,6 +150,109 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
   cursor:pointer;transition:all .15s}
 .copy-btn:hover{border-color:var(--accent);color:var(--accent)}
 </style>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc,
+             orderBy, query, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyCPYqnrFVjfoZgUPYb77SVM41LhMeILUq0",
+      authDomain:        "dtmodels-da36d.firebaseapp.com",
+      projectId:         "dtmodels-da36d",
+      storageBucket:     "dtmodels-da36d.firebasestorage.app",
+      messagingSenderId: "363788652473",
+      appId:             "1:363788652473:web:73c622dd0133b758737068"
+    };
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    // ── AUTH GUARD ──
+    onAuthStateChanged(auth, async (user) => {
+      if(!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // Update user pill with real name/email
+      const nameEl   = document.querySelector('.user-name');
+      const emailEl  = document.querySelector('.user-email');
+      const avatarEl = document.querySelector('.user-avatar');
+      if(nameEl)  nameEl.textContent  = user.displayName || 'Analista';
+      if(emailEl) emailEl.textContent = user.email || '';
+      if(avatarEl && user.displayName) {
+        const initials = user.displayName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        avatarEl.textContent = initials;
+      }
+
+      // Load models from Firestore and merge with localStorage
+      window._currentUser = user;
+      await window.loadModelsFromFirestore(user);
+    });
+
+    // ── FIRESTORE: LOAD MODELS ──
+    window.loadModelsFromFirestore = async (user) => {
+      try {
+        const uid = user.uid;
+        const q = query(collection(db, 'users', uid, 'models'), orderBy('updatedAt', 'desc'));
+        const snap = await getDocs(q);
+        const models = [];
+        snap.forEach(d => models.push({ id: d.id, ...d.data() }));
+
+        if(models.length > 0) {
+          // Sync to localStorage for legacy code
+          localStorage.setItem('dtmodels_models', JSON.stringify(models));
+          window._firestoreModels = models;
+        }
+        renderModels();
+      } catch(e) {
+        console.warn('Firestore load error, using localStorage:', e);
+        renderModels();
+      }
+    };
+
+    // ── FIRESTORE: SAVE MODEL ──
+    window.saveModelToFirestore = async (model) => {
+      try {
+        const user = window._currentUser || auth.currentUser;
+        if(!user) return;
+        const uid = user.uid;
+        const modelId = model.id || doc(collection(db, 'users', uid, 'models')).id;
+        model.id = modelId;
+        await setDoc(doc(db, 'users', uid, 'models', modelId), {
+          ...model,
+          uid,
+          updatedAt: serverTimestamp()
+        });
+        return modelId;
+      } catch(e) {
+        console.error('Firestore save error:', e);
+        return null;
+      }
+    };
+
+    // ── FIRESTORE: DELETE MODEL ──
+    window.deleteModelFromFirestore = async (modelId) => {
+      try {
+        const user = window._currentUser || auth.currentUser;
+        if(!user || !modelId) return;
+        await deleteDoc(doc(db, 'users', user.uid, 'models', modelId));
+      } catch(e) {
+        console.warn('Firestore delete error:', e);
+      }
+    };
+
+    // ── LOGOUT ──
+    window.firebaseLogout = async () => {
+      await signOut(auth);
+      window.location.href = 'index.html';
+    };
+
+  </script>
 </head>
 <body>
 
@@ -185,7 +288,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
   <div class="sidebar-footer">
     <div class="user-pill">
       <div class="user-avatar" style="background:linear-gradient(135deg,#1D4ED8,#3B82F6)">DT</div>
-      <div><div class="user-name">Darwin Torres</div><div class="user-role">Administrador</div></div>
+      <div>
+        <div class="user-name">Darwin Torres</div>
+        <div class="user-email" style="font-size:10px;opacity:.6;margin-top:1px">darwinetm@gmail.com</div>
+      </div>
     </div>
   </div>
 </div>
@@ -442,6 +548,11 @@ function openModel(i){
 function deleteModel(i){
   if(!confirm('¿Eliminar este modelo?')) return
   const models = getModels()
+  const model = models[i]
+  // Delete from Firestore if possible
+  if(model && model.id && window.deleteModelFromFirestore) {
+    window.deleteModelFromFirestore(model.id)
+  }
   models.splice(i,1)
   saveModels(models)
   renderModels()
@@ -504,8 +615,14 @@ function shareModel(i){
           }
         }
       }
-      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
-      link = `${window.location.origin}/modelo_financiero.html?d=${encoded}`
+      // Prefer short link using Firestore ID if available
+      const isFirestoreId = m.id && /[^0-9]/.test(String(m.id));
+      if(isFirestoreId){
+        link = `${window.location.origin}/modelo_financiero.html?id=${m.id}`;
+      } else {
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))))
+        link = `${window.location.origin}/modelo_financiero.html?d=${encoded}`
+      }
     } catch(e){
       link = `${window.location.origin}/modelo_financiero.html?client=${encodeURIComponent(m.client)}&monto=${m.monto}&shared=1`
     }
@@ -531,7 +648,7 @@ function copyLink(){
   })
 }
 
-function logout(){ window.location.href='index.html' }
+function logout(){ if(window.firebaseLogout) window.firebaseLogout(); else window.location.href='index.html'; }
 
 // ── INIT ──
 renderModels()
