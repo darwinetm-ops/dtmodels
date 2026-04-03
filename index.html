@@ -795,10 +795,7 @@ function openLogin(){ document.getElementById('modal').classList.add('open') }
 function closeLogin(){ document.getElementById('modal').classList.remove('open') }
 document.getElementById('modal').addEventListener('click', e=>{ if(e.target===document.getElementById('modal')) closeLogin() })
 
-// doLogin handled by Firebase above else {
-    document.getElementById('login-error').style.display = 'block'
-  }
-}
+// doLogin handled by Firebase module
 </script>
 </body>
 </html>
