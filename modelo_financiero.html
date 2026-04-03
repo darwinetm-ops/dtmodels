@@ -165,14 +165,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
     import { getFirestore, doc, getDoc }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey:            "AIzaSyCPYqnrFVjfoZgUPYb77SVM41LhMeILUq0",
-      authDomain:        "dtmodels-da36d.firebaseapp.com",
-      projectId:         "dtmodels-da36d",
-      storageBucket:     "dtmodels-da36d.firebasestorage.app",
-      messagingSenderId: "363788652473",
-      appId:             "1:363788652473:web:73c622dd0133b758737068"
-    };
+    const { firebaseConfig } = await import('./firebase-init.js');
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
     const auth = getAuth(app);

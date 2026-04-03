@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DT Models \u2014 Plataforma de Modelos Financieros</title>
+<title>DT Models — Plataforma de Modelos Financieros</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-   DESIGN TOKENS \u2014 DUAL THEME
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+/* ═══════════════════════════════════════
+   DESIGN TOKENS — DUAL THEME
+═══════════════════════════════════════ */
 :root {
   --navy-900: #0F172A;
   --navy-800: #1E293B;
@@ -56,7 +56,7 @@
   --step-bg:        rgba(59,130,246,.08);
   --footer-bg:      #060B16;
   --footer-text:    #2A4080;
-  --theme-icon:     "\u2600\ufe0f";
+  --theme-icon:     "☀️";
   --theme-label:    "Tema Claro";
 }
 
@@ -91,13 +91,13 @@
   --step-bg:        rgba(37,99,235,.05);
   --footer-bg:      #0F172A;
   --footer-text:    #475569;
-  --theme-icon:     "\ud83c\udf19";
+  --theme-icon:     "🌙";
   --theme-label:    "Tema Oscuro";
 }
 
-/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+/* ═══════════════════════════════════════
    RESET & BASE
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+═══════════════════════════════════════ */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 html { scroll-behavior: smooth; }
 body {
@@ -111,17 +111,17 @@ body {
 }
 a { text-decoration: none; color: inherit; }
 
-/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+/* ═══════════════════════════════════════
    LOGO SVG INLINE
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+═══════════════════════════════════════ */
 .logo-symbol {
   width: 36px; height: 36px; flex-shrink: 0;
 }
 .logo-symbol-sm { width: 30px; height: 30px; flex-shrink: 0; }
 
-/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+/* ═══════════════════════════════════════
    NAV
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+═══════════════════════════════════════ */
 nav {
   position: fixed; top:0; left:0; right:0; z-index: 200;
   height: 60px;
@@ -181,9 +181,9 @@ nav {
 }
 .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
-/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+/* ═══════════════════════════════════════
    HERO
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+═══════════════════════════════════════ */
 .hero {
   min-height: 100vh;
   display: flex; flex-direction: column;
@@ -262,9 +262,9 @@ nav {
   letter-spacing: .1em; margin-top: 4px; display: block;
 }
 
-/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+/* ═══════════════════════════════════════
    SECTIONS
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+═══════════════════════════════════════ */
 .section { padding: 96px 32px; max-width: 1100px; margin: 0 auto; }
 .section-full { padding: 80px 32px; background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); transition: background .3s, border-color .3s; }
 
@@ -283,9 +283,9 @@ nav {
   letter-spacing: -.02em;
 }
 
-/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+/* ═══════════════════════════════════════
    FEATURES
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+═══════════════════════════════════════ */
 .feat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
 @media(max-width:900px){ .feat-grid { grid-template-columns: 1fr; } }
 
@@ -313,9 +313,9 @@ nav {
 .feat-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
 .feat-desc { font-size: 13px; color: var(--text2); line-height: 1.65; }
 
-/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+/* ═══════════════════════════════════════
    HOW IT WORKS
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+═══════════════════════════════════════ */
 .steps { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; max-width: 900px; margin: 0 auto; }
 @media(max-width:700px){ .steps { grid-template-columns: 1fr 1fr; } }
 
@@ -335,9 +335,9 @@ nav {
 .step-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
 .step-desc { font-size: 12px; color: var(--text2); line-height: 1.55; }
 
-/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+/* ═══════════════════════════════════════
    PRICING
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+═══════════════════════════════════════ */
 .pricing-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; max-width: 900px; margin: 0 auto; }
 @media(max-width:700px){ .pricing-grid { grid-template-columns: 1fr; } }
 
@@ -362,7 +362,7 @@ nav {
 .pricing-desc { font-size: 12px; color: var(--text3); margin-bottom: 24px; line-height: 1.5; }
 .pricing-feats { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
 .pricing-feats li { font-size: 13px; color: var(--text2); display: flex; gap: 8px; align-items: flex-start; }
-.pricing-feats li::before { content: '\u2713'; color: var(--ok); font-weight: 700; flex-shrink: 0; }
+.pricing-feats li::before { content: '✓'; color: var(--ok); font-weight: 700; flex-shrink: 0; }
 .pricing-btn {
   width: 100%; padding: 11px; border-radius: 7px; font-size: 13px;
   font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif;
@@ -373,9 +373,9 @@ nav {
 .pricing-btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
 .pricing-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
-/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+/* ═══════════════════════════════════════
    CTA
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+═══════════════════════════════════════ */
 .cta-section {
   padding: 96px 32px; text-align: center;
   background: var(--bg2); border-top: 1px solid var(--border);
@@ -384,9 +384,9 @@ nav {
 .cta-title { font-family: 'Playfair Display', serif; font-size: clamp(2rem,4vw,3rem); font-weight: 700; margin-bottom: 14px; color: var(--text); letter-spacing: -.02em; }
 .cta-sub { font-size: 15px; color: var(--text2); margin-bottom: 40px; }
 
-/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+/* ═══════════════════════════════════════
    FOOTER
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+═══════════════════════════════════════ */
 footer {
   background: var(--footer-bg);
   padding: 40px 32px;
@@ -398,9 +398,9 @@ footer {
 .footer-link { font-size: 12px; color: #475569; transition: color .2s; }
 .footer-link:hover { color: #93C5FD; }
 
-/* \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+/* ═══════════════════════════════════════
    MODAL
-\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
+═══════════════════════════════════════ */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 500;
   background: rgba(0,0,0,.6); backdrop-filter: blur(10px);
@@ -444,17 +444,11 @@ footer {
   <!-- Firebase Auth -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, onAuthStateChanged }
+    import { getAuth, signInWithPopup, GoogleAuthProvider,
+             signInWithEmailAndPassword, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { firebaseConfig } from './firebase-init.js';
 
-    const firebaseConfig = {
-      apiKey:            "AIzaSyCPYqnrFVjfoZgUPYb77SVM41LhMeILUq0",
-      authDomain:        "dtmodels-da36d.firebaseapp.com",
-      projectId:         "dtmodels-da36d",
-      storageBucket:     "dtmodels-da36d.firebasestorage.app",
-      messagingSenderId: "363788652473",
-      appId:             "1:363788652473:web:73c622dd0133b758737068"
-    };
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
@@ -466,38 +460,41 @@ footer {
     // Google Sign-In
     window.loginWithGoogle = async () => {
       const btn = document.getElementById('btn-google');
-      if(btn) btn.disabled = true;
-      const provider = new GoogleAuthProvider();
+      if(btn){ btn.disabled = true; btn.textContent = 'Conectando…'; }
       try {
-        await signInWithPopup(auth, provider);
+        await signInWithPopup(auth, new GoogleAuthProvider());
       } catch(e) {
-        document.getElementById('login-error').textContent = 'Error Google: ' + (e.code || e.message);
-        document.getElementById('login-error').style.display = 'block';
-        if(btn) btn.disabled = false;
+        const err = document.getElementById('login-error');
+        err.textContent = e.code === 'auth/popup-closed-by-user'
+          ? 'Popup cerrado. Intenta de nuevo.'
+          : 'Error Google: ' + (e.code || e.message);
+        err.style.display = 'block';
+        if(btn){ btn.disabled = false; btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Continuar con Google'; }
       }
     };
 
-    // Email/Password
+    // Email / Password Sign-In
     window.doLogin = async () => {
       const email = document.getElementById('login-email').value.trim();
       const pass  = document.getElementById('login-pass').value;
+      const err   = document.getElementById('login-error');
+      err.style.display = 'none';
       try {
         await signInWithEmailAndPassword(auth, email, pass);
       } catch(e) {
-        // Fallback legacy credentials during transition
+        // Legacy fallback during transition
         if(email === 'darwinetm@gmail.com' && pass === 'DtModels2026!') {
-          window.location.href = 'dashboard.html';
-        } else {
-          document.getElementById('login-error').textContent = 'Credenciales incorrectas.';
-          document.getElementById('login-error').style.display = 'block';
+          window.location.href = 'dashboard.html'; return;
         }
+        err.textContent = 'Email o contraseña incorrectos.';
+        err.style.display = 'block';
       }
     };
   </script>
 </head>
 <body>
 
-<!-- \u2550\u2550\u2550 NAV \u2550\u2550\u2550 -->
+<!-- ═══ NAV ═══ -->
 <nav>
   <div class="nav-brand">
     <!-- Logo SVG compacto -->
@@ -515,17 +512,17 @@ footer {
     </div>
   </div>
   <div class="nav-links">
-    <a href="#features" class="nav-link">Caracter\u00edsticas</a>
-    <a href="#como-funciona" class="nav-link">C\u00f3mo funciona</a>
+    <a href="#features" class="nav-link">Características</a>
+    <a href="#como-funciona" class="nav-link">Cómo funciona</a>
     <a href="#precios" class="nav-link">Precios</a>
   </div>
   <div class="nav-right">
-    <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" id="theme-btn">\u2600\ufe0f</button>
-    <button class="btn btn-primary" onclick="openLogin()">Acceder \u2192</button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema" id="theme-btn">☀️</button>
+    <button class="btn btn-primary" onclick="openLogin()">Acceder →</button>
   </div>
 </nav>
 
-<!-- \u2550\u2550\u2550 HERO \u2550\u2550\u2550 -->
+<!-- ═══ HERO ═══ -->
 <section class="hero">
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
@@ -538,15 +535,15 @@ footer {
 
   <p class="hero-sub">
     Crea, presenta y comparte modelos de viabilidad crediticia,
-    valoraciones y proyecciones financieras con tus clientes \u2014
+    valoraciones y proyecciones financieras con tus clientes —
     todo desde una sola plataforma.
   </p>
 
   <div class="hero-btns">
     <a href="#" class="btn btn-primary btn-lg" onclick="openLogin()">
-      Crear mi primer modelo \u2192
+      Crear mi primer modelo →
     </a>
-    <a href="#como-funciona" class="btn btn-ghost btn-lg">Ver c\u00f3mo funciona</a>
+    <a href="#como-funciona" class="btn btn-ghost btn-lg">Ver cómo funciona</a>
   </div>
 
   <div class="hero-stats">
@@ -555,7 +552,7 @@ footer {
       <span class="hero-stat-label">Online</span>
     </div>
     <div class="hero-stat">
-      <span class="hero-stat-num">\u221e</span>
+      <span class="hero-stat-num">∞</span>
       <span class="hero-stat-label">Clientes</span>
     </div>
     <div class="hero-stat">
@@ -569,10 +566,10 @@ footer {
   </div>
 </section>
 
-<!-- \u2550\u2550\u2550 FEATURES \u2550\u2550\u2550 -->
+<!-- ═══ FEATURES ═══ -->
 <div class="section-full" id="features">
   <div style="max-width:1100px;margin:0 auto">
-    <div class="eyebrow">Caracter\u00edsticas</div>
+    <div class="eyebrow">Características</div>
     <div class="section-title">Todo lo que necesitas<br>para estructurar negocios</div>
     <div class="feat-grid">
 
@@ -583,7 +580,7 @@ footer {
           </svg>
         </div>
         <div class="feat-title">Viabilidad Crediticia</div>
-        <div class="feat-desc">DSCR, ICR, stress test y score crediticio autom\u00e1tico. Todo lo que un banco necesita para aprobar un cr\u00e9dito.</div>
+        <div class="feat-desc">DSCR, ICR, stress test y score crediticio automático. Todo lo que un banco necesita para aprobar un crédito.</div>
       </div>
 
       <div class="feat-card">
@@ -592,8 +589,8 @@ footer {
             <circle cx="11" cy="11" r="9"/><path d="M11 6v5l3 3"/>
           </svg>
         </div>
-        <div class="feat-title">Valoraci\u00f3n de Empresas</div>
-        <div class="feat-desc">DCF, m\u00faltiplos de mercado y an\u00e1lisis comparativo. Determina el valor justo de cualquier empresa con precisi\u00f3n.</div>
+        <div class="feat-title">Valoración de Empresas</div>
+        <div class="feat-desc">DCF, múltiplos de mercado y análisis comparativo. Determina el valor justo de cualquier empresa con precisión.</div>
       </div>
 
       <div class="feat-card">
@@ -603,7 +600,7 @@ footer {
           </svg>
         </div>
         <div class="feat-title">Proyecciones Startup</div>
-        <div class="feat-desc">Unit economics, runway y CAC/LTV. Convence inversionistas con proyecciones financieras s\u00f3lidas y defendibles.</div>
+        <div class="feat-desc">Unit economics, runway y CAC/LTV. Convence inversionistas con proyecciones financieras sólidas y defendibles.</div>
       </div>
 
       <div class="feat-card">
@@ -612,8 +609,8 @@ footer {
             <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
           </svg>
         </div>
-        <div class="feat-title">Presentaci\u00f3n Online</div>
-        <div class="feat-desc">Genera un link \u00fanico por cliente. Presenta el modelo directamente desde el navegador, sin archivos ni instalaciones.</div>
+        <div class="feat-title">Presentación Online</div>
+        <div class="feat-desc">Genera un link único por cliente. Presenta el modelo directamente desde el navegador, sin archivos ni instalaciones.</div>
       </div>
 
       <div class="feat-card">
@@ -623,7 +620,7 @@ footer {
           </svg>
         </div>
         <div class="feat-title">Exportar Excel y PDF</div>
-        <div class="feat-desc">Descarga el modelo completo en Excel profesional o en PDF listo para el comit\u00e9 de cr\u00e9dito o la junta directiva.</div>
+        <div class="feat-desc">Descarga el modelo completo en Excel profesional o en PDF listo para el comité de crédito o la junta directiva.</div>
       </div>
 
       <div class="feat-card">
@@ -632,7 +629,7 @@ footer {
             <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
           </svg>
         </div>
-        <div class="feat-title">Rec\u00e1lculo Din\u00e1mico</div>
+        <div class="feat-title">Recálculo Dinámico</div>
         <div class="feat-desc">Cambia cualquier supuesto y todos los indicadores se actualizan en tiempo real. Sin macros, sin errores, sin espera.</div>
       </div>
 
@@ -640,7 +637,7 @@ footer {
   </div>
 </div>
 
-<!-- \u2550\u2550\u2550 HOW IT WORKS \u2550\u2550\u2550 -->
+<!-- ═══ HOW IT WORKS ═══ -->
 <div id="como-funciona" style="padding:96px 32px;text-align:center">
   <div style="max-width:900px;margin:0 auto">
     <div class="eyebrow" style="justify-content:center">Proceso</div>
@@ -654,23 +651,23 @@ footer {
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-title">El modelo calcula</div>
-        <div class="step-desc">EBITDA, DSCR, ICR, score y stress test se generan autom\u00e1ticamente.</div>
+        <div class="step-desc">EBITDA, DSCR, ICR, score y stress test se generan automáticamente.</div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
         <div class="step-title">Presentas online</div>
-        <div class="step-desc">Compartes un link \u00fanico. El cliente ve el dashboard desde cualquier dispositivo.</div>
+        <div class="step-desc">Compartes un link único. El cliente ve el dashboard desde cualquier dispositivo.</div>
       </div>
       <div class="step">
         <div class="step-num">4</div>
         <div class="step-title">Exportas el entregable</div>
-        <div class="step-desc">Excel o PDF profesional listo para entregar al banco o comit\u00e9.</div>
+        <div class="step-desc">Excel o PDF profesional listo para entregar al banco o comité.</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- \u2550\u2550\u2550 PRICING \u2550\u2550\u2550 -->
+<!-- ═══ PRICING ═══ -->
 <div class="section-full" id="precios">
   <div style="max-width:900px;margin:0 auto;text-align:center">
     <div class="eyebrow" style="justify-content:center">Planes</div>
@@ -684,27 +681,27 @@ footer {
         <ul class="pricing-feats">
           <li>3 modelos activos</li>
           <li>Dashboard interactivo</li>
-          <li>Presentaci\u00f3n online</li>
+          <li>Presentación online</li>
           <li>Exportar PDF</li>
         </ul>
         <button class="pricing-btn pricing-btn-ghost" onclick="openLogin()">Comenzar gratis</button>
       </div>
 
       <div class="pricing-card featured">
-        <div class="pricing-badge">M\u00c1S POPULAR</div>
+        <div class="pricing-badge">MÁS POPULAR</div>
         <div class="pricing-name">Profesional</div>
         <div class="pricing-price">$49<span>/mes</span></div>
-        <div class="pricing-desc">Para consultores con m\u00faltiples clientes</div>
+        <div class="pricing-desc">Para consultores con múltiples clientes</div>
         <ul class="pricing-feats">
           <li>Modelos ilimitados</li>
           <li>Todos los tipos de modelo</li>
           <li>Exportar Excel + PDF</li>
-          <li>Links \u00fanicos por cliente</li>
-          <li>Rec\u00e1lculo din\u00e1mico</li>
-          <li>Importaci\u00f3n autom\u00e1tica de Excel</li>
+          <li>Links únicos por cliente</li>
+          <li>Recálculo dinámico</li>
+          <li>Importación automática de Excel</li>
           <li>Soporte prioritario</li>
         </ul>
-        <button class="pricing-btn pricing-btn-primary" onclick="openLogin()">Comenzar ahora \u2192</button>
+        <button class="pricing-btn pricing-btn-primary" onclick="openLogin()">Comenzar ahora →</button>
       </div>
 
       <div class="pricing-card">
@@ -715,7 +712,7 @@ footer {
           <li>Todo lo del plan Pro</li>
           <li>Hasta 5 usuarios</li>
           <li>Marca personalizada</li>
-          <li>API de integraci\u00f3n</li>
+          <li>API de integración</li>
           <li>Modelos a medida</li>
         </ul>
         <button class="pricing-btn pricing-btn-ghost" onclick="openLogin()">Contactar</button>
@@ -725,27 +722,27 @@ footer {
   </div>
 </div>
 
-<!-- \u2550\u2550\u2550 CTA \u2550\u2550\u2550 -->
+<!-- ═══ CTA ═══ -->
 <div class="cta-section">
-  <h2 class="cta-title">Tu pr\u00f3ximo modelo,<br>en <span style="color:var(--accent)">dtmodels.com</span></h2>
-  <p class="cta-sub">\u00danete a los consultores que presentan modelos profesionales en l\u00ednea</p>
-  <button class="btn btn-primary btn-lg" onclick="openLogin()">Crear mi cuenta gratis \u2192</button>
+  <h2 class="cta-title">Tu próximo modelo,<br>en <span style="color:var(--accent)">dtmodels.com</span></h2>
+  <p class="cta-sub">Únete a los consultores que presentan modelos profesionales en línea</p>
+  <button class="btn btn-primary btn-lg" onclick="openLogin()">Crear mi cuenta gratis →</button>
 </div>
 
-<!-- \u2550\u2550\u2550 FOOTER \u2550\u2550\u2550 -->
+<!-- ═══ FOOTER ═══ -->
 <footer>
-  <div class="footer-brand">\u00a9 2026 DT Models \u00b7 Darwin Enrique Torres Meza \u00b7 Barranquilla, Colombia</div>
+  <div class="footer-brand">© 2026 DT Models · Darwin Enrique Torres Meza · Barranquilla, Colombia</div>
   <div class="footer-links">
-    <a href="#" class="footer-link">T\u00e9rminos</a>
+    <a href="#" class="footer-link">Términos</a>
     <a href="#" class="footer-link">Privacidad</a>
     <a href="mailto:darwinetm@gmail.com" class="footer-link">Contacto</a>
   </div>
 </footer>
 
-<!-- \u2550\u2550\u2550 LOGIN MODAL \u2550\u2550\u2550 -->
+<!-- ═══ LOGIN MODAL ═══ -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <button class="modal-close" onclick="closeLogin()">\u2715</button>
+    <button class="modal-close" onclick="closeLogin()">✕</button>
     <div class="modal-logo">
       <svg class="logo-symbol-sm" viewBox="0 0 30 30" fill="none">
         <rect width="30" height="30" rx="7" fill="#2563EB"/>
@@ -764,25 +761,25 @@ footer {
       <input class="form-input" type="email" id="login-email" placeholder="tu@email.com">
     </div>
     <div class="form-group">
-      <label class="form-label">Contrase\u00f1a</label>
-      <input class="form-input" type="password" id="login-pass" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" onkeydown="if(event.key==='Enter')doLogin()">
+      <label class="form-label">Contraseña</label>
+      <input class="form-input" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <div class="form-error" id="login-error">Email o contrase\u00f1a incorrectos</div>
+    <div class="form-error" id="login-error">Email o contraseña incorrectos</div>
     <button class="form-btn" onclick="doLogin()">Acceder →</button>
     <button id="btn-google" onclick="loginWithGoogle()" style="width:100%;margin-top:10px;padding:10px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#E8F0FC;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">
       <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Continuar con Google
     </button>
-    <div class="form-note">\u00bfProblemas? <a href="mailto:darwinetm@gmail.com" style="color:var(--accent)">Contactar soporte</a></div>
+    <div class="form-note">¿Problemas? <a href="mailto:darwinetm@gmail.com" style="color:var(--accent)">Contactar soporte</a></div>
   </div>
 </div>
 
 <script>
-// \u2500\u2500 THEME TOGGLE \u2500\u2500
+// ── THEME TOGGLE ──
 const THEME_KEY = 'dtmodels_theme'
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t)
-  document.getElementById('theme-btn').textContent = t==='dark' ? '\u2600\ufe0f' : '\ud83c\udf19'
+  document.getElementById('theme-btn').textContent = t==='dark' ? '☀️' : '🌙'
   localStorage.setItem(THEME_KEY, t)
 }
 function toggleTheme(){
@@ -793,17 +790,12 @@ function toggleTheme(){
 const saved = localStorage.getItem(THEME_KEY)
 if(saved) applyTheme(saved)
 
-// \u2500\u2500 LOGIN \u2500\u2500
+// ── LOGIN ──
 function openLogin(){ document.getElementById('modal').classList.add('open') }
 function closeLogin(){ document.getElementById('modal').classList.remove('open') }
 document.getElementById('modal').addEventListener('click', e=>{ if(e.target===document.getElementById('modal')) closeLogin() })
 
-function doLogin(){
-  const email = document.getElementById('login-email').value.trim()
-  const pass  = document.getElementById('login-pass').value
-  if(email==='darwinetm@gmail.com' && pass==='DtModels2026!'){
-    window.location.href = 'dashboard.html'
-  } else {
+// doLogin handled by Firebase above else {
     document.getElementById('login-error').style.display = 'block'
   }
 }
