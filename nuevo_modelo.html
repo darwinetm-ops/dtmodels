@@ -737,6 +737,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
 
       <!-- Hidden inputs for calcModel compatibility -->
       <input type="hidden" id="s-ppe-vida" value="10">
+      <input type="hidden" id="s-ppe" value="0">
+      <input type="hidden" id="s-ppe-dep-total" value="0">
       <div class="wizard-nav">
         <button class="btn btn-ghost" onclick="goStep(4)">← Anterior</button>
         <button class="btn btn-primary" onclick="calcAndGoResults()">⟳ Calcular Modelo →</button>
@@ -1010,8 +1012,13 @@ function goStep(n) {
 }
 
 function calcAndGoResults(){
-  calcResults = calcModel()
-  goStep(6)
+  try {
+    calcResults = calcModel()
+    goStep(6)
+  } catch(e) {
+    console.error('calcModel error:', e)
+    alert('Error al calcular el modelo: ' + e.message + '\n\nRevisa la consola para más detalles.')
+  }
 }
 
 // ── PREVIEW ──
@@ -1572,7 +1579,7 @@ function renderCapexTable(){
           onchange="updateCapexRow(${r.id},'vida',parseInt(this.value)||0)">
       </td>
       <td style="padding:6px 6px;text-align:right;color:var(--accent);font-size:12px">
-        ${dep > 0 ? fmt(dep) : '—'}
+        ${dep > 0 ? fmtCOP(dep) : '—'}
       </td>
       <td style="padding:6px 6px;text-align:center">
         <button onclick="removeCapexRow(${r.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 6px"
@@ -1584,8 +1591,8 @@ function renderCapexTable(){
   // Totals
   const totalValor = CAPEX_ROWS.reduce((s,r) => s + (r.valor||0), 0)
   const totalDep   = CAPEX_ROWS.reduce((s,r) => s + getDepAnual(r.valor, r.metodo, r.vida), 0)
-  document.getElementById('capex-total-valor').textContent = totalValor > 0 ? fmt(totalValor) : '—'
-  document.getElementById('capex-total-dep').textContent   = totalDep   > 0 ? fmt(totalDep)   : '—'
+  document.getElementById('capex-total-valor').textContent = totalValor > 0 ? fmtCOP(totalValor) : '—'
+  document.getElementById('capex-total-dep').textContent   = totalDep   > 0 ? fmtCOP(totalDep)   : '—'
 
   // Sync to P&L depreciation fields and s-ppe hidden
   syncCapexToDepFields(totalValor, totalDep)
@@ -1599,25 +1606,14 @@ function updateCapexRow(id, field, value){
 function syncCapexToDepFields(totalValor, totalDep){
   // Auto-fill depreciation in P&L (pl-dep-1, pl-dep-2, pl-dep-3)
   for(let i=1; i<=3; i++){
-    const el = document.getElementById(`pl-dep-${i}`)
+    const el = document.getElementById('pl-dep-'+i)
     if(el) el.value = totalDep > 0 ? Math.round(totalDep) : (el.value || 0)
   }
-  // Keep s-ppe as hidden aggregate for calcModel compatibility
-  let ppeEl = document.getElementById('s-ppe')
-  if(!ppeEl){
-    ppeEl = document.createElement('input')
-    ppeEl.id = 's-ppe'; ppeEl.type = 'hidden'
-    document.body.appendChild(ppeEl)
-  }
-  ppeEl.value = totalValor
-
-  let depEl = document.getElementById('s-ppe-dep-total')
-  if(!depEl){
-    depEl = document.createElement('input')
-    depEl.id = 's-ppe-dep-total'; depEl.type = 'hidden'
-    document.body.appendChild(depEl)
-  }
-  depEl.value = totalDep
+  // Sync aggregates to hidden inputs (always exist in HTML)
+  const ppeEl = document.getElementById('s-ppe')
+  if(ppeEl) ppeEl.value = totalValor
+  const depEl = document.getElementById('s-ppe-dep-total')
+  if(depEl) depEl.value = totalDep
 }
 
 // Serialize/deserialize for save/load
