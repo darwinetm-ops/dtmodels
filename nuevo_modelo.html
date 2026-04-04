@@ -1979,6 +1979,7 @@ function renderBreakeven(R){
 // ── RENDER RESULTS ──
 const resChart = {}
 function renderResults(){
+  try {
   if(!calcResults) calcResults = calcModel()
   const R = calcResults
   const empresa = document.getElementById('f-empresa').value || 'Cliente'
@@ -2092,6 +2093,14 @@ function renderResults(){
         return `<div class="stress-row"><span>${yr}</span><span style="color:${c}">${v!==null?v.toFixed(2)+'x':'—'}</span></div>`
       }).join('')}
     </div>`).join('')
+} catch(e) {
+    console.error('renderResults error:', e)
+    // Mostrar error visible en el step-header en vez de pantalla en blanco
+    const title = document.getElementById('res-empresa-title')
+    if(title) title.textContent = '⚠️ Error al renderizar resultados'
+    const sub = document.getElementById('res-sub')
+    if(sub) sub.textContent = e.message + ' — Abre la consola (F12) para más detalles'
+  }
 }
 
 // ── SAVE ──
@@ -2551,7 +2560,8 @@ function copyShareLink(){
         if(num){ num.classList.add('done'); num.textContent='✓' }
         if(nav) nav.classList.add('done')
       }
-      goStep(6)
+      // Dar un tick al DOM para que los inputs restaurados sean leídos por calcModel
+      setTimeout(()=>{ calcAndGoResults() }, 150)
       return true
     } catch(e){ console.warn('Could not restore inputs', e); return false }
   }
