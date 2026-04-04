@@ -695,20 +695,48 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
             <label class="form-label">Tipo de cambio (si aplica)</label>
             <input class="form-input" id="s-tc" type="number" value="1" step="0.01" placeholder="1">
           </div>
-          <div class="form-group">
-            <label class="form-label">PPE / Activos Fijos (Capex)</label>
-            <input class="form-input" id="s-ppe" type="number" placeholder="0" oninput="calcCapex()">
-            <div class="form-note">Valor total activos fijos. Depreciación = Capex ÷ Vida útil</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Vida útil PPE (años)</label>
-            <input class="form-input" id="s-ppe-vida" type="number" value="10" min="1" max="30">
-          </div>
-
-          
         </div>
       </div>
 
+      <!-- ═══ MÓDULO CAPEX ═══ -->
+      <div class="form-section">
+        <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Tabla de Activos (Capex)</span>
+          <button class="btn btn-ghost" style="font-size:12px;padding:4px 12px" onclick="addCapexRow()">+ Agregar activo</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px" id="capex-table">
+            <thead>
+              <tr style="color:var(--text2);border-bottom:1px solid var(--border)">
+                <th style="text-align:left;padding:8px 6px;font-weight:500">Activo</th>
+                <th style="text-align:right;padding:8px 6px;font-weight:500">Valor (COP)</th>
+                <th style="text-align:center;padding:8px 6px;font-weight:500">Método</th>
+                <th style="text-align:center;padding:8px 6px;font-weight:500">Vida útil (años)</th>
+                <th style="text-align:right;padding:8px 6px;font-weight:500">Dep. anual</th>
+                <th style="padding:4px"></th>
+              </tr>
+            </thead>
+            <tbody id="capex-body">
+              <!-- rows injected by JS -->
+            </tbody>
+            <tfoot>
+              <tr style="border-top:1px solid var(--border);font-weight:600;color:var(--text1)">
+                <td style="padding:8px 6px">TOTAL</td>
+                <td style="text-align:right;padding:8px 6px" id="capex-total-valor">—</td>
+                <td colspan="2"></td>
+                <td style="text-align:right;padding:8px 6px" id="capex-total-dep">—</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="form-note" style="margin-top:8px">La depreciación total se alimenta automáticamente al P&L. El valor total de activos se usa como PPE en el Balance.</div>
+      </div>
+
+      </div>
+
+      <!-- Hidden inputs for calcModel compatibility -->
+      <input type="hidden" id="s-ppe-vida" value="10">
       <div class="wizard-nav">
         <button class="btn btn-ghost" onclick="goStep(4)">← Anterior</button>
         <button class="btn btn-primary" onclick="calcAndGoResults()">⟳ Calcular Modelo →</button>
@@ -970,6 +998,7 @@ function goStep(n) {
   document.querySelectorAll('.step-item').forEach(i => i.classList.remove('active'))
   document.getElementById(`step-${n}`).classList.add('active')
   document.getElementById(`step-nav-${n}`).classList.add('active')
+  if(n === 5) renderCapexTable()
   // Mark previous as done
   for(let i=1;i<n;i++){
     document.getElementById(`step-nav-${i}`).classList.add('done')
@@ -1298,7 +1327,9 @@ function calcModel(){
     const ing = ingActual * ramp
     const cv  = ing * (1 - gMB)
     const op  = ing * gOpex
-    const dep = ppe / ppeVida
+    // Use capex table total dep if available, else fallback to ppe/vida
+    const capexDepTotal = parseFloat(document.getElementById('s-ppe-dep-total')?.value) || 0
+    const dep = capexDepTotal > 0 ? capexDepTotal : (ppeVida > 0 ? ppe / ppeVida : 0)
     ingresos.push(ing)
     costos.push(cv)
     opex.push(op)
@@ -1460,22 +1491,155 @@ function calcModel(){
 }
 
 // ── CAPEX AUTO ──
-function calcCapex(){
-  const ppe = parseFloat(document.getElementById('s-ppe')?.value)||0
-  const vida = parseInt(document.getElementById('s-ppe-vida')?.value)||10
-  const depAnual = vida > 0 ? ppe / vida : 0
-  // Auto-fill dep fields if empty
-  for(let i=1;i<=3;i++){
-    const el = document.getElementById(`pl-dep-${i}`)
-    if(el && (!el.value || el.value === '0')) {
-      el.value = depAnual.toFixed(0)
-    }
-  }
-  if(document.getElementById('dep-auto-display')){
-    document.getElementById('dep-auto-display').textContent =
-      depAnual > 0 ? `Depreciación anual estimada: ${fmtCOP(depAnual)}` : ''
-  }
+// ── CAPEX MODULE ──
+const CAPEX_ROWS = []   // [{nombre, valor, metodo, vida}]
+const CAPEX_TIPOS = [
+  { label:'Maquinaria y equipo',  vida:10 },
+  { label:'Vehículos',            vida:5  },
+  { label:'Muebles y enseres',    vida:10 },
+  { label:'Equipo de cómputo',    vida:5  },
+  { label:'Construcciones',       vida:20 },
+  { label:'Terrenos',             vida:0  },
+  { label:'Intangibles',          vida:5  },
+  { label:'Otro',                 vida:10 },
+]
+
+function addCapexRow(nombre='', valor=0, metodo='lineal', vida=10){
+  const id = Date.now() + Math.random()
+  CAPEX_ROWS.push({ id, nombre, valor, metodo, vida })
+  renderCapexTable()
 }
+
+function removeCapexRow(id){
+  const i = CAPEX_ROWS.findIndex(r => r.id === id)
+  if(i >= 0){ CAPEX_ROWS.splice(i, 1); renderCapexTable() }
+}
+
+function getDepAnual(valor, metodo, vida){
+  if(!valor || vida <= 0) return 0
+  if(metodo === 'lineal') return valor / vida
+  if(metodo === 'acelerada') return (valor / vida) * 1.5  // 150% declining balance approx
+  if(metodo === 'suma_digitos'){
+    // SYD: year-1 dep (most conservative avg)
+    const n = vida
+    return valor * (2 * n) / (n * (n + 1))
+  }
+  return valor / vida
+}
+
+function renderCapexTable(){
+  const tbody = document.getElementById('capex-body')
+  if(!tbody) return
+
+  if(CAPEX_ROWS.length === 0){
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3);font-size:13px">
+      Sin activos — haz clic en "+ Agregar activo" para comenzar
+    </td></tr>`
+    document.getElementById('capex-total-valor').textContent = '—'
+    document.getElementById('capex-total-dep').textContent = '—'
+    syncCapexToDepFields(0, 0)
+    return
+  }
+
+  const tipoOpts = CAPEX_TIPOS.map(t =>
+    `<option value="${t.vida}">${t.label}</option>`
+  ).join('')
+
+  tbody.innerHTML = CAPEX_ROWS.map(r => {
+    const dep = getDepAnual(r.valor, r.metodo, r.vida)
+    return `<tr data-id="${r.id}" style="border-bottom:1px solid var(--border2)">
+      <td style="padding:6px 6px">
+        <input type="text" value="${r.nombre}" placeholder="Descripción del activo"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text1);font-size:12px"
+          onchange="updateCapexRow(${r.id},'nombre',this.value)">
+      </td>
+      <td style="padding:6px 6px">
+        <input type="number" value="${r.valor||''}" placeholder="0" min="0"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text1);font-size:12px;text-align:right"
+          onchange="updateCapexRow(${r.id},'valor',parseFloat(this.value)||0)">
+      </td>
+      <td style="padding:6px 6px;text-align:center">
+        <select style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--text1);font-size:12px"
+          onchange="updateCapexRow(${r.id},'metodo',this.value)">
+          <option value="lineal"        ${r.metodo==='lineal'?'selected':''}>Línea recta</option>
+          <option value="acelerada"     ${r.metodo==='acelerada'?'selected':''}>Acelerada</option>
+          <option value="suma_digitos"  ${r.metodo==='suma_digitos'?'selected':''}>Suma dígitos</option>
+        </select>
+      </td>
+      <td style="padding:6px 6px;text-align:center">
+        <input type="number" value="${r.vida}" min="0" max="50"
+          style="width:60px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--text1);font-size:12px;text-align:center"
+          onchange="updateCapexRow(${r.id},'vida',parseInt(this.value)||0)">
+      </td>
+      <td style="padding:6px 6px;text-align:right;color:var(--accent);font-size:12px">
+        ${dep > 0 ? fmt(dep) : '—'}
+      </td>
+      <td style="padding:6px 6px;text-align:center">
+        <button onclick="removeCapexRow(${r.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 6px"
+          title="Eliminar">✕</button>
+      </td>
+    </tr>`
+  }).join('')
+
+  // Totals
+  const totalValor = CAPEX_ROWS.reduce((s,r) => s + (r.valor||0), 0)
+  const totalDep   = CAPEX_ROWS.reduce((s,r) => s + getDepAnual(r.valor, r.metodo, r.vida), 0)
+  document.getElementById('capex-total-valor').textContent = totalValor > 0 ? fmt(totalValor) : '—'
+  document.getElementById('capex-total-dep').textContent   = totalDep   > 0 ? fmt(totalDep)   : '—'
+
+  // Sync to P&L depreciation fields and s-ppe hidden
+  syncCapexToDepFields(totalValor, totalDep)
+}
+
+function updateCapexRow(id, field, value){
+  const row = CAPEX_ROWS.find(r => r.id === id)
+  if(row){ row[field] = value; renderCapexTable() }
+}
+
+function syncCapexToDepFields(totalValor, totalDep){
+  // Auto-fill depreciation in P&L (pl-dep-1, pl-dep-2, pl-dep-3)
+  for(let i=1; i<=3; i++){
+    const el = document.getElementById(`pl-dep-${i}`)
+    if(el) el.value = totalDep > 0 ? Math.round(totalDep) : (el.value || 0)
+  }
+  // Keep s-ppe as hidden aggregate for calcModel compatibility
+  let ppeEl = document.getElementById('s-ppe')
+  if(!ppeEl){
+    ppeEl = document.createElement('input')
+    ppeEl.id = 's-ppe'; ppeEl.type = 'hidden'
+    document.body.appendChild(ppeEl)
+  }
+  ppeEl.value = totalValor
+
+  let depEl = document.getElementById('s-ppe-dep-total')
+  if(!depEl){
+    depEl = document.createElement('input')
+    depEl.id = 's-ppe-dep-total'; depEl.type = 'hidden'
+    document.body.appendChild(depEl)
+  }
+  depEl.value = totalDep
+}
+
+// Serialize/deserialize for save/load
+function getCapexData(){
+  return JSON.stringify(CAPEX_ROWS)
+}
+
+function loadCapexData(json){
+  try{
+    const rows = JSON.parse(json)
+    CAPEX_ROWS.length = 0
+    rows.forEach(r => CAPEX_ROWS.push(r))
+    renderCapexTable()
+  }catch(e){}
+}
+
+// Legacy calcCapex — kept for compatibility, now delegates to table
+function calcCapex(){
+  renderCapexTable()
+}
+
+
 function fmtCOP(v){
   if(!v) return '0'
   if(Math.abs(v)>=1e9) return (v/1e9).toFixed(2)+'B COP'
@@ -1940,6 +2104,8 @@ function collectInputs(){
   }
   // Year headers
   ;['yr-h-1','yr-h-2','yr-h-3'].forEach(id=>{ inp[id]=gv(id) })
+  // Capex table
+  inp['_capex'] = getCapexData()
   return inp
 }
 
@@ -1958,6 +2124,8 @@ function restoreInputs(inp){
   // Recalculate displayed values
   calcPL()
   calcBalance()
+  // Restore capex table
+  if(inp['_capex']) loadCapexData(inp['_capex'])
 }
 
 function saveAndFinish(){
