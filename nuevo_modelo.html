@@ -216,7 +216,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, serverTimestamp }
+    import { getFirestore, collection, doc, setDoc, getDoc, serverTimestamp }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const { firebaseConfig } = await import('./firebase-init.js');
@@ -224,10 +224,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
-    // Auth guard
+    // Auth guard + pending model load trigger
     onAuthStateChanged(auth, user => {
       if(!user) { window.location.href = 'index.html'; return; }
       window._currentUser = user;
+      if(window._pendingModelLoad) {
+        window._pendingModelLoad();
+        window._pendingModelLoad = null;
+      }
     });
 
     // Save model to Firestore
@@ -249,6 +253,22 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
         return null;
       }
     };
+
+    // Load model from Firestore (fallback when not in localStorage)
+    window.loadModelFirestore = async (modelId) => {
+      try {
+        const user = window._currentUser || auth.currentUser;
+        if(!user) return null;
+        const uid = user.uid;
+        const snap = await getDoc(doc(db, 'users', uid, 'models', String(modelId)));
+        if(snap.exists()) return snap.data();
+        return null;
+      } catch(e) {
+        console.warn('Firestore load error:', e);
+        return null;
+      }
+    };
+
   </script>
 </head>
 <body>
@@ -2515,30 +2535,64 @@ function copyShareLink(){
 
 // ── INIT — restore saved model if id param present ──
 ;(function(){
-  const params = new URLSearchParams(window.location.search)
+  const params  = new URLSearchParams(window.location.search)
   const modelId = params.get('id')
+
+  function applyModel(saved){
+    if(!saved || !saved.inputs) return false
+    try {
+      const inp = JSON.parse(saved.inputs)
+      restoreInputs(inp)
+      if(inp['f-empresa']) updatePreview()
+      // Mark steps 1-5 as done
+      for(let s=1;s<=5;s++){
+        const num = document.getElementById(`step-num-${s}`)
+        const nav = document.getElementById(`step-nav-${s}`)
+        if(num){ num.classList.add('done'); num.textContent='✓' }
+        if(nav) nav.classList.add('done')
+      }
+      goStep(6)
+      return true
+    } catch(e){ console.warn('Could not restore inputs', e); return false }
+  }
+
   if(modelId){
+    // 1) Try localStorage first (instant)
     const models = JSON.parse(localStorage.getItem('dtmodels_models')||'[]')
-    const saved = models.find(m=>String(m.id)===String(modelId))
+    const saved  = models.find(m=>String(m.id)===String(modelId))
+
     if(saved && saved.inputs){
-      try {
-        const inp = JSON.parse(saved.inputs)
-        // Restore inputs and jump to step 6 (results)
-        setTimeout(()=>{
-          restoreInputs(inp)
-          if(inp['f-empresa']) updatePreview()
-          // Mark steps 1-5 as done and go to results
-          for(let s=1;s<=5;s++){
-            const num = document.getElementById(`step-num-${s}`)
-            const nav = document.getElementById(`step-nav-${s}`)
-            if(num){ num.classList.add('completed'); num.textContent='✓' }
-            if(nav) nav.classList.add('completed')
-          }
-          goStep(6)
-        }, 200)
-      } catch(e){ console.warn('Could not restore inputs', e) }
+      setTimeout(()=>{ applyModel(saved) }, 200)
+    } else {
+      // 2) Fallback: load from Firestore (async — wait for auth)
+      const tryFirestore = async () => {
+        if(!window.loadModelFirestore){
+          console.warn('loadModelFirestore not ready'); return
+        }
+        const fsModel = await window.loadModelFirestore(modelId)
+        if(fsModel){
+          // Sync to localStorage for next time
+          const all = JSON.parse(localStorage.getItem('dtmodels_models')||'[]')
+          const idx = all.findIndex(m=>String(m.id)===String(modelId))
+          if(idx>=0) all[idx]={...all[idx],...fsModel}
+          else all.push(fsModel)
+          localStorage.setItem('dtmodels_models', JSON.stringify(all))
+          applyModel(fsModel)
+        } else {
+          console.warn('Model not found in Firestore either:', modelId)
+          // Go to step 1 so page is not blank
+          goStep(1)
+        }
+      }
+      // Auth may not be ready yet — queue or run immediately
+      if(window._currentUser){
+        tryFirestore()
+      } else {
+        window._pendingModelLoad = tryFirestore
+      }
     }
   }
+
   // Prefill monto from URL if new model
   const montoUrl = params.get('monto')
   if(!modelId && montoUrl && parseFloat(montoUrl)>0){
