@@ -1135,7 +1135,7 @@ function renderViabilidad(){
   // Semaforo list
   const semItems=[
     {l:'DSCR Mínimo',v:dscrMin,fn:fX,lo:1,hi:1.5},
-    ...(R.cobEbitda ? [{l:'EBITDA / Serv. Deuda Mín.',v:(()=>{const f=R.cobEbitda.slice(0,6).filter(v=>v!==null);return f.length?Math.min(...f):null})(),fn:fX,lo:1.2,hi:1.5}] : []),
+    ...(R.cobEbitda ? [{l:'EBITDA / Serv. Deuda Mín.',v:(()=>{const f=R.cobEbitda.filter(v=>v!==null);return f.length?Math.min(...f):null})(),fn:fX,lo:1.2,hi:1.5}] : []),
     {l:'ICR Mínimo',v:isFinite(icrMin)?icrMin:null,fn:fX,lo:1.2,hi:2},
     {l:'Margen EBITDA',v:mEb[0],fn:fP,lo:0.1,hi:0.2},
     {l:'Deuda/Patrimonio',v:dPat[0],fn:fX,lo:1,hi:0.5,inv:true},
