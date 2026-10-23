@@ -900,7 +900,7 @@ function renderDashboard(){
   document.getElementById('k-monto').textContent = M(params.monto);
   document.getElementById('k-monto-s').textContent = `${moneda} · ${n} años`;
   document.getElementById('k-score').textContent = `${score}/100`;
-  document.getElementById('k-score').className = 'kpi-v '+(score>=70?'c-ok':score>=55?'c-w':'c-d');
+  document.getElementById('k-score').className = 'kpi-v '+(score>=75?'c-ok':score>=55?'c-w':'c-d');
   document.getElementById('k-verdict').textContent = verdict;
   document.getElementById('k-dscr').textContent = fX(dscrMin);
   document.getElementById('k-dscr').className = 'kpi-v '+(dscrMin>=1.5?'c-ok':dscrMin>=1?'c-w':'c-d');
@@ -1088,7 +1088,7 @@ function renderViabilidad(){
 
   document.getElementById('viab-sub').textContent = `${CLIENT} · ${M(params.monto)} · ${(params.tasa*100).toFixed(1)}% N.A. · ${params.plazo}M`;
   document.getElementById('v-score').textContent = `${score}/100`;
-  document.getElementById('v-score').className = 'kpi-v '+(score>=70?'c-ok':score>=55?'c-w':'c-d');
+  document.getElementById('v-score').className = 'kpi-v '+(score>=75?'c-ok':score>=55?'c-w':'c-d');
   document.getElementById('v-verdict').textContent = verdict;
   document.getElementById('v-dscr').textContent = fX(dscrMin);
   document.getElementById('v-dscr').className = 'kpi-v '+(dscrMin>=1.5?'c-ok':dscrMin>=1?'c-w':'c-d');
@@ -1139,7 +1139,7 @@ function renderViabilidad(){
     {l:'ICR Mínimo',v:isFinite(icrMin)?icrMin:null,fn:fX,lo:1.2,hi:2},
     {l:'Margen EBITDA',v:mEb[0],fn:fP,lo:0.1,hi:0.2},
     {l:'Deuda/Patrimonio',v:dPat[0],fn:fX,lo:1,hi:0.5,inv:true},
-    {l:'Score Crediticio',v:score/100,fn:v=>`${(v*100).toFixed(0)}/100`,lo:0.55,hi:0.70},
+    {l:'Score Crediticio',v:score/100,fn:v=>`${(v*100).toFixed(0)}/100`,lo:0.55,hi:0.75},
   ];
   const semHTML = semItems.map(s=>{
     const ok=s.inv?s.v!==null&&s.v<=s.hi:s.v!==null&&s.v>=s.hi;
@@ -1256,9 +1256,9 @@ function renderPres(){
   document.getElementById('psec').textContent = `${P.sector} · Análisis de Viabilidad Crediticia`;
   document.getElementById('pdt').textContent = new Date().toLocaleDateString('es-CO',{year:'numeric',month:'long'});
   document.getElementById('psn').textContent = score;
-  document.getElementById('psn').style.color = score>=70?'var(--ok)':score>=55?'var(--warn)':'var(--danger)';
+  document.getElementById('psn').style.color = score>=75?'var(--ok)':score>=55?'var(--warn)':'var(--danger)';
   document.getElementById('pvd').textContent = verdict;
-  document.getElementById('pvd').style.color = score>=70?'var(--ok)':score>=55?'var(--warn)':'var(--danger)';
+  document.getElementById('pvd').style.color = score>=75?'var(--ok)':score>=55?'var(--warn)':'var(--danger)';
 
   const pIdx = ebitda.indexOf(Math.max(...ebitda));
   document.getElementById('p-monto').textContent = M(params.monto);
@@ -1303,7 +1303,7 @@ function renderPres(){
     </div>`).join('');
 
   document.getElementById('p-recom').innerHTML =
-    `${score>=70?'✅':'⚠️'} Proyecto con score <strong>${score}/100</strong> — ${verdict}.<br>
+    `${score>=75?'✅':'⚠️'} Proyecto con score <strong>${score}/100</strong> — ${verdict}.<br>
     DSCR mínimo: <strong>${fX(dscrMin)}</strong>.<br>
     ${deficit<0?`⚠️ Ajustar monto a ~<strong>${M(montoMax)}</strong> para DSCR≥1.30x.<br>`:``}
     📋 Monitoreo ${params.plazo<=36?'semestral':'trimestral'} de DSCR recomendado.`;
@@ -1328,7 +1328,7 @@ function updateGlobal(){
   document.getElementById('f-tasa').textContent  = (params.tasa*100).toFixed(1)+'%';
   document.getElementById('f-plazo').textContent = params.plazo+'M';
   document.getElementById('f-score').textContent = score+'/100';
-  document.getElementById('f-score').style.color = score>=70?'var(--ok)':score>=55?'var(--warn)':'var(--danger)';
+  document.getElementById('f-score').style.color = score>=75?'var(--ok)':score>=55?'var(--warn)':'var(--danger)';
   document.title = CLIENT+' — DT Models';
   document.getElementById('f-upd').textContent = 'Calculado '+new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
 }

@@ -482,7 +482,7 @@ function renderModels(filter=''){
 
   grid.innerHTML = models.map((m,i)=>`
     <div class="model-card">
-      <div class="score-badge ${m.score>=70?'score-ok':'score-warn'}">${m.score||'—'}</div>
+      <div class="score-badge ${m.score>=75?'score-ok':'score-warn'}">${m.score||'—'}</div>
       <div class="model-card-type ${typeClass[m.type]||'type-credito'}">${typeLabels[m.type]||'Modelo'}</div>
       <div class="model-card-client">${m.client}</div>
       <div class="model-card-desc">${m.desc||'Sin descripción'}</div>

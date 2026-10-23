@@ -677,6 +677,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
 
       <div class="form-section">
         <div class="form-section-title">Tasas de Crecimiento Proyectadas</div>
+        <div id="hist-ref" style="display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2)">
+          <span id="hist-ref-txt"></span>
+          <button class="btn btn-ghost" style="font-size:12px;padding:4px 12px" onclick="aplicarMargenesHistoricos()">Usar márgenes históricos</button>
+        </div>
         <div style="overflow-x:auto">
           <table class="year-table">
             <thead>
@@ -825,6 +829,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
         </div>
       </div>
 
+      <!-- ALERTAS + DESGLOSE DEL SCORE -->
+      <div id="res-alertas" style="display:none;margin-bottom:16px;padding:12px 16px;border:1px solid var(--warn);border-radius:8px;background:rgba(245,158,11,.06);font-size:12px;color:var(--text2);line-height:1.6"></div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">▎ Desglose del Score <span id="res-sector-tag" style="color:var(--text3);letter-spacing:.05em"></span></div>
+      <div style="overflow-x:auto;margin-bottom:24px">
+        <table class="data-table" style="width:100%">
+          <thead><tr><th style="text-align:left">Criterio</th><th>Valor</th><th>Umbral</th><th>Puntos</th></tr></thead>
+          <tbody id="res-score-detail"></tbody>
+        </table>
+      </div>
+
       <!-- CHART -->
       <div class="chart-box"><canvas id="res-chart"></canvas></div>
 
@@ -903,7 +917,7 @@ function exportPDF(){
   const analista = document.getElementById('f-analista').value || 'Darwin Torres'
   const moneda = document.getElementById('f-moneda').value || 'USD'
   const sector = document.getElementById('f-sector').value || ''
-  const sc = R.score>=70?'#22c55e':R.score>=55?'#f59e0b':'#ef4444'
+  const sc = R.score>=75?'#22c55e':R.score>=55?'#f59e0b':'#ef4444'
   const dscrColor = v => v===null?'#888':v>=1.5?'#22c55e':v>=1.0?'#f59e0b':'#ef4444'
   const fmtM = v => {
     if(v===null||v===undefined) return '—'
@@ -1057,7 +1071,7 @@ function goStep(n) {
   document.getElementById(`step-${n}`).classList.add('active')
   document.getElementById(`step-nav-${n}`).classList.add('active')
   if(n === 4) renderDeudaTable()
-  if(n === 5) renderCapexTable()
+  if(n === 5){ renderCapexTable(); renderHistRef() }
   // Mark previous as done
   for(let i=1;i<n;i++){
     document.getElementById(`step-nav-${i}`).classList.add('done')
@@ -1374,6 +1388,59 @@ function handleExcelUpload(input){
   reader.readAsBinaryString(file)
 }
 
+// ── REFERENCIA HISTÓRICA (Paso 5) ──
+// Márgenes y crecimiento reales de los 3 años del P&L, para anclar los supuestos.
+function getHistorico(){
+  const g = id => parseFloat(document.getElementById(id)?.value)||0
+  const ing = [1,2,3].map(y=>g(`pl-ing-${y}`))
+  const y3 = { ing: ing[2], cv: g('pl-cv-3'), go: g('pl-go-3') }
+  if(y3.ing <= 0) return null
+  const mb    = (y3.ing - y3.cv) / y3.ing
+  const opex  = y3.go / y3.ing
+  // Crecimiento anual compuesto del histórico (año 1 → año 3)
+  const cagr  = ing[0] > 0 ? Math.pow(ing[2]/ing[0], 1/2) - 1 : null
+  return { mb, opex, ebitda: mb - opex, cagr }
+}
+
+function renderHistRef(){
+  const box = document.getElementById('hist-ref')
+  if(!box) return
+  const h = getHistorico()
+  if(!h){ box.style.display = 'none'; return }
+  const yr = document.getElementById('yr-h-3')?.textContent?.replace(/\s*\(.*\)/,'') || 'último año'
+  const pct = v => (v*100).toFixed(1)+'%'
+  document.getElementById('hist-ref-txt').innerHTML =
+    `Histórico ${yr}: <strong>Margen bruto ${pct(h.mb)}</strong> · <strong>OPEX ${pct(h.opex)}</strong> · ` +
+    `Margen EBITDA ${pct(h.ebitda)}` + (h.cagr!==null ? ` · Crecimiento anual histórico ${pct(h.cagr)}` : '')
+  box.style.display = 'flex'
+}
+
+function aplicarMargenesHistoricos(){
+  const h = getHistorico()
+  if(!h) return
+  for(let i=0;i<5;i++){
+    document.getElementById(`s-mb-${i}`).value   = (h.mb*100).toFixed(1)
+    document.getElementById(`s-opex-${i}`).value = (h.opex*100).toFixed(1)
+  }
+}
+
+// ── UMBRALES POR SECTOR (práctica de bancos y fondos de deuda) ──
+// dscr: DSCR mínimo de aprobación · lev: Deuda financiera/EBITDA máxima · mEb: margen EBITDA típico [bajo, alto]
+const SECTOR_UMBRALES = {
+  'Agroindustrial':         { dscr:1.30, lev:3.0, mEb:[0.10,0.22] },
+  'Ganadero / Pecuario':    { dscr:1.30, lev:3.0, mEb:[0.08,0.20] },
+  'Manufacturero':          { dscr:1.25, lev:3.0, mEb:[0.08,0.15] },
+  'Comercial':              { dscr:1.20, lev:2.5, mEb:[0.04,0.10] },
+  'Servicios':              { dscr:1.25, lev:3.0, mEb:[0.10,0.20] },
+  'Construcción':           { dscr:1.30, lev:3.0, mEb:[0.06,0.14] },
+  'Energía':                { dscr:1.35, lev:3.5, mEb:[0.20,0.45] },
+  'Tecnología':             { dscr:1.50, lev:2.0, mEb:[0.15,0.40] },
+  'Logística / Transporte': { dscr:1.25, lev:3.0, mEb:[0.08,0.18] },
+  'Turismo':                { dscr:1.35, lev:3.0, mEb:[0.10,0.25] },
+  'Salud':                  { dscr:1.30, lev:3.0, mEb:[0.10,0.20] },
+  'Otro':                   { dscr:1.30, lev:3.0, mEb:[0.08,0.20] },
+}
+
 // ── CALCULATION ENGINE ──
 // Lee un input numérico; usa el valor por defecto SOLO si el campo está vacío o no es número.
 // (Antes se usaba `valor || defecto`, que convertía un 0 escrito por el usuario en el defecto.)
@@ -1391,7 +1458,10 @@ function calcModel(){
   const plazo    = parseInt(document.getElementById('c-plazo').value)||60
   const gracia   = parseInt(document.getElementById('c-gracia').value)||0
   const isr      = numOr('c-isr', 33)/100
-  const ppe      = parseFloat(document.getElementById('s-ppe').value)||monto
+  // PPE: valor de la tabla Capex. Si no hay tabla, la depreciación usa la histórica del último año
+  // (antes suponía que el crédito compraba activos: PPE = monto ÷ 10 años).
+  const ppe      = parseFloat(document.getElementById('s-ppe').value)||0
+  const depHist  = parseFloat(document.getElementById('pl-dep-3')?.value)||0
   const ppeVida  = parseInt(document.getElementById('s-ppe-vida').value)||10
   const inicioIng= 1 // field removed — single disbursement assumed
 
@@ -1415,7 +1485,7 @@ function calcModel(){
     const op  = ing * gOpex
     // Use capex table total dep if available, else fallback to ppe/vida
     const capexDepTotal = parseFloat(document.getElementById('s-ppe-dep-total')?.value) || 0
-    const dep = capexDepTotal > 0 ? capexDepTotal : (ppeVida > 0 ? ppe / ppeVida : 0)
+    const dep = capexDepTotal > 0 ? capexDepTotal : (ppe > 0 && ppeVida > 0 ? ppe / ppeVida : depHist)
     ingresos.push(ing)
     costos.push(cv)
     opex.push(op)
@@ -1494,21 +1564,9 @@ function calcModel(){
   // Vida de la deuda: años con servicio de deuda consolidado (todo el plazo, no solo 6 años)
   const lastDebtYear = servDeuda.reduce((last,v,i)=>v>0?i:last, -1)
 
-  // Score
+  // DSCR mínimo consolidado en toda la vida de la deuda (el score se calcula más abajo, después del estrés)
   const dscrVals = dscr.filter(v=>v!==null)
   const dscrMin  = dscrVals.length ? Math.min(...dscrVals) : 0
-  // Unified score — same criteria as modelo_financiero
-  let score = 0
-  // DSCR (40 pts)
-  if(dscrMin>=1.5)score+=40; else if(dscrMin>=1.3)score+=30; else if(dscrMin>=1.0)score+=15; else score+=0
-  // Margen EBITDA promedio (30 pts)
-  const mEbAvg = mEbitda.reduce((a,b)=>a+b,0)/mEbitda.length
-  if(mEbAvg>0.25)score+=30; else if(mEbAvg>0.12)score+=18; else if(mEbAvg>0)score+=8; else score+=0
-  // Deuda/Patrimonio año 1 (30 pts)
-  const dp0 = dPat[0]
-  if(dp0!==null&&dp0<0.3)score+=30; else if(dp0!==null&&dp0<0.7)score+=18; else if(dp0!==null&&dp0<1.5)score+=8; else score+=0
-  score = Math.min(score, 100)
-  const verdict = score>=70?'✅ APROBABLE':score>=50?'⚠️ CONDICIONADO':'❌ NO VIABLE'
 
   // ── MONTO MÁXIMO ──
   // El servicio del crédito nuevo es lineal en el monto (misma tasa, plazo, gracia y abono constante):
@@ -1596,8 +1654,76 @@ function calcModel(){
     })
   }
 
+  const stressMod = stressDscr(-0.10,0.05,0.02,0.10)
+
+  // ══ SCORE CREDITICIO (100 pts) — criterios de bancos y fondos de deuda ══
+  const sector = document.getElementById('f-sector')?.value || 'Otro'
+  const U = SECTOR_UMBRALES[sector] || SECTOR_UMBRALES['Otro']
+  const enVida  = (arr) => arr.filter((v,i)=>v!==null && servDeuda[i]>0)
+  const minOf   = (arr) => arr.length ? Math.min(...arr) : null
+  const maxOf   = (arr) => arr.length ? Math.max(...arr) : null
+  const levMax  = maxOf(enVida(deudaEbitda))
+  const icrMin  = minOf(enVida(icr))
+  const strMin  = minOf(enVida(stressMod))
+  const bAC = parseFloat(document.getElementById('b-ac')?.value)||0
+  const bPC = parseFloat(document.getElementById('b-pc')?.value)||0
+  const rc  = bPC > 0 ? bAC / bPC : null
+  const patHist  = parseFloat(document.getElementById('b-pat')?.value)||0
+  const tipoGar  = document.getElementById('c-garantia')?.value || ''
+  const valGar   = parseFloat(document.getElementById('c-val-garantia')?.value)||0
+  const sinGarantiaReal = /sin garant|aval/i.test(tipoGar)   // los avales no son garantía real
+  const cobGar   = monto > 0 && !sinGarantiaReal ? valGar / monto : 0
+  const mEbVida  = enVida(mEbitda)
+  const mEbProm  = mEbVida.length ? mEbVida.reduce((a,b)=>a+b,0)/mEbVida.length : (mEbitda[0]||0)
+  const x = v => v===null ? '—' : v.toFixed(2)+'x'
+  const pc = v => (v*100).toFixed(1)+'%'
+
+  const scoreDetail = [
+    { criterio:'DSCR consolidado mínimo', valor:x(dscrMin), umbral:`≥ ${U.dscr.toFixed(2)}x (sector)`, max:30,
+      pts: dscrMin>=U.dscr+0.25?30 : dscrMin>=U.dscr?22 : dscrMin>=1.0?10 : 0 },
+    { criterio:'Deuda financiera / EBITDA máx.', valor:x(levMax), umbral:`≤ ${U.lev.toFixed(1)}x (sector)`, max:20,
+      pts: levMax===null?20 : levMax<=U.lev*0.67?20 : levMax<=U.lev?14 : levMax<=U.lev+1.5?6 : 0 },
+    { criterio:'DSCR en estrés moderado', valor:x(strMin), umbral:'≥ 1.10x', max:15,
+      pts: strMin===null?15 : strMin>=1.10?15 : strMin>=1.0?8 : 0 },
+    { criterio:'Cobertura de intereses (EBITDA/intereses)', valor:x(icrMin), umbral:'≥ 3.0x', max:10,
+      pts: icrMin===null?10 : icrMin>=3?10 : icrMin>=2?7 : icrMin>=1.5?3 : 0 },
+    { criterio:'Liquidez — razón corriente', valor:rc===null?'Sin dato':x(rc), umbral:'≥ 1.20x', max:10,
+      pts: rc===null?5 : rc>=1.5?10 : rc>=1.2?7 : rc>=1.0?4 : 0 },
+    { criterio:'Cobertura de garantía (valor/monto)', valor:sinGarantiaReal?'Sin garantía real':x(cobGar), umbral:'≥ 1.25x', max:10,
+      pts: cobGar>=1.5?10 : cobGar>=1.25?7 : cobGar>=1.0?4 : 0 },
+    { criterio:'Margen EBITDA promedio', valor:pc(mEbProm), umbral:`≥ ${pc(U.mEb[0])} (sector)`, max:5,
+      pts: mEbProm>=U.mEb[0]?5 : mEbProm>0?2 : 0 },
+  ]
+  let score = Math.min(100, scoreDetail.reduce((a,c)=>a+c.pts,0))
+
+  // Reglas de rechazo / tope (política de crédito estándar)
+  const knockouts = []
+  if(dscrMin < 1.0) knockouts.push('DSCR consolidado menor a 1.0x: la caja operativa no cubre la deuda')
+  if(patHist < 0)   knockouts.push('Patrimonio histórico negativo')
+  const topeCondicionado = dscrMin < U.dscr || (levMax!==null && levMax > U.lev + 1.5)
+  let verdict = score>=75?'✅ APROBABLE':score>=55?'⚠️ CONDICIONADO':'❌ NO VIABLE'
+  if(knockouts.length){ verdict='❌ NO VIABLE'; score=Math.min(score,54) }
+  else if(topeCondicionado && score>=75){ verdict='⚠️ CONDICIONADO'; score=74 }
+
+  // ══ ALERTAS DEL ANALISTA — supuestos que se alejan del histórico ══
+  const alertas = [...knockouts]
+  if(!knockouts.length && topeCondicionado) alertas.push(`DSCR o apalancamiento fuera del umbral del sector (${sector}): veredicto limitado a CONDICIONADO`)
+  const H = getHistorico()
+  if(H){
+    const mEbMaxProj = Math.max(...mEbitda.slice(0,5))
+    if(mEbMaxProj - H.ebitda > 0.03)
+      alertas.push(`Margen EBITDA proyectado (hasta ${pc(mEbMaxProj)}) supera el histórico (${pc(H.ebitda)}) en más de 3 pp — sustentar la mejora o usar márgenes históricos`)
+    const gProj = ingresos[4]>0 && baseIng2>0 ? Math.pow(ingresos[4]/baseIng2, 1/5)-1 : null
+    if(gProj!==null && H.cagr!==null && gProj - H.cagr > 0.05)
+      alertas.push(`Crecimiento proyectado de ingresos (${pc(gProj)} anual) supera el histórico (${pc(H.cagr)}) en más de 5 pp`)
+  }
+  if(mEbProm > U.mEb[1]) alertas.push(`Margen EBITDA promedio (${pc(mEbProm)}) por encima del rango típico del sector (${pc(U.mEb[0])}–${pc(U.mEb[1])})`)
+  if(dkt===0 && capexMant===0) alertas.push('Capex de mantenimiento y ΔKT en cero: el CFADS puede estar sobrestimado')
+  if(rc===null) alertas.push('Sin activo/pasivo corriente: la liquidez no se pudo evaluar')
+
   return {
     years: YEARS_PROJ.slice(0,n), n,
+    scoreDetail, alertas, sector, umbrales: U,
     ingresos, costos, opex, ebitda, depreciacion,
     intereses, capital, servDeuda, cfads,
     interesesNuevo, capitalNuevo, servDeudaNuevo, servDeudaExist, saldoDeuda,
@@ -1612,7 +1738,7 @@ function calcModel(){
     params: {monto, tasa_na, plazo, gracia, isr},
     stress: {
       base:     dscr,
-      moderate: stressDscr(-0.10,0.05,0.02,0.10),
+      moderate: stressMod,
       severe:   stressDscr(-0.20,0.10,0.04,0.20),
       trm20:    stressTRM(0.20),
       trm40:    stressTRM(0.40),
@@ -2229,9 +2355,9 @@ function renderResults(){
 
   // Score
   const sc = document.getElementById('score-circle')
-  sc.className = 'score-circle'+(R.score>=70?'':R.score>=55?' warn':' danger')
+  sc.className = 'score-circle'+(R.score>=75?'':R.score>=55?' warn':' danger')
   document.getElementById('res-score-num').textContent = R.score
-  document.getElementById('res-score-num').className = 'score-num '+(R.score>=70?'c-ok':R.score>=55?'c-warn':'c-danger')
+  document.getElementById('res-score-num').className = 'score-num '+(R.score>=75?'c-ok':R.score>=55?'c-warn':'c-danger')
 
   const fmt=(v,t='x')=>v===null||v===undefined?'—':t==='x'?v.toFixed(2)+'x':t==='%'?(v*100).toFixed(1)+'%':t==='M'?'$'+(v/1e6).toFixed(2)+'M':v
   const monto = R.params.monto
@@ -2252,7 +2378,26 @@ function renderResults(){
   document.getElementById('r-capmax').textContent  = fmt(R.montoMax,'M')
   document.getElementById('r-tasa').textContent    = `${(R.params.tasa_na*100).toFixed(1)}% / ${R.params.plazo}M`
   document.getElementById('r-verdict').textContent = R.verdict
-  document.getElementById('r-verdict').className   = 'result-value '+(R.score>=70?'c-ok':R.score>=55?'c-warn':'c-danger')
+  document.getElementById('r-verdict').className   = 'result-value '+(R.score>=75?'c-ok':R.score>=55?'c-warn':'c-danger')
+
+  // Desglose del score y alertas
+  const sdBody = document.getElementById('res-score-detail')
+  if(sdBody){
+    sdBody.innerHTML = (R.scoreDetail||[]).map(c=>{
+      const ratio = c.max ? c.pts/c.max : 0
+      const col = ratio>=0.7?'var(--ok)':ratio>=0.35?'var(--warn)':'var(--danger)'
+      return `<tr><td style="text-align:left">${c.criterio}</td><td>${c.valor}</td><td style="color:var(--text3)">${c.umbral}</td>
+        <td style="color:${col};font-weight:600">${c.pts} / ${c.max}</td></tr>`
+    }).join('') || '<tr><td colspan="4" style="color:var(--text3)">Recalcula el modelo para ver el desglose</td></tr>'
+  }
+  const tag = document.getElementById('res-sector-tag')
+  if(tag) tag.textContent = R.sector ? `· umbrales ${R.sector}` : ''
+  const alBox = document.getElementById('res-alertas')
+  if(alBox){
+    const al = R.alertas||[]
+    alBox.style.display = al.length ? 'block' : 'none'
+    alBox.innerHTML = '<strong style="color:var(--warn)">⚠️ Alertas para el comité</strong><br>' + al.map(a=>'• '+a).join('<br>')
+  }
 
   updatePreview()
   renderEFC(R)
@@ -2782,6 +2927,9 @@ function copyShareLink(){
       servDeudaNuevo: R.servDeudaNuevo||null,
       servDeudaExist: R.servDeudaExist||null,
       deudaExistente: R.deudaExistente||0,
+      scoreDetail: R.scoreDetail||null,
+      alertas:     R.alertas||null,
+      sector:      R.sector||null,
       params: {
         monto:   R.params.monto,
         tasa_na: R.params.tasa_na,
