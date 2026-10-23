@@ -1106,8 +1106,10 @@ function renderViabilidad(){
 
   const rows=[
     {l:'DSCR (x)',vals:dscr,fn:fX,cf:dC,lo:1.0,hi:1.5},
+    ...(R.cobEbitda ? [{l:'EBITDA / Serv. Deuda (x)',vals:R.cobEbitda,fn:fX,cf:v=>v===null?'var(--t3)':v>=1.5?'var(--ok)':v>=1.2?'var(--warn)':'var(--danger)',lo:1.2,hi:1.5}] : []),
     {l:'LLCR (x)',vals:R.llcr,fn:fX,cf:v=>v===null?'var(--t3)':v>=1.2?'var(--ok)':v>=0.8?'var(--warn)':'var(--danger)',lo:0.8,hi:1.2},
     {l:'ICR (x)',vals:icr,fn:fX,cf:v=>v===null?'var(--t3)':v>=2?'var(--ok)':v>=1.2?'var(--warn)':'var(--danger)',lo:1.2,hi:2},
+    ...(R.deudaEbitda ? [{l:'Deuda Fin. / EBITDA (x)',vals:R.deudaEbitda,fn:fX,cf:v=>v===null?'var(--t3)':v<=3?'var(--ok)':v<=5?'var(--warn)':'var(--danger)',lo:5,hi:3,inv:true}] : []),
     {l:'Holgura Ingr. (%)',vals:R.breakeven,fn:v=>v===null?'—':v.toFixed(1)+'%',cf:v=>v===null?'var(--t3)':v>=15?'var(--ok)':v>=5?'var(--warn)':'var(--danger)',lo:5,hi:15},
     {l:'Margen EBITDA (%)',vals:mEb,fn:fP,cf:v=>v>=0.2?'var(--ok)':v>=0.08?'var(--warn)':'var(--danger)',lo:0.1,hi:0.2},
     {l:'Margen Bruto (%)',vals:mBr,fn:fP,cf:v=>v>=0.3?'var(--ok)':v>=0.15?'var(--warn)':'var(--danger)',lo:0.15,hi:0.3},
@@ -1133,6 +1135,7 @@ function renderViabilidad(){
   // Semaforo list
   const semItems=[
     {l:'DSCR Mínimo',v:dscrMin,fn:fX,lo:1,hi:1.5},
+    ...(R.cobEbitda ? [{l:'EBITDA / Serv. Deuda Mín.',v:(()=>{const f=R.cobEbitda.slice(0,6).filter(v=>v!==null);return f.length?Math.min(...f):null})(),fn:fX,lo:1.2,hi:1.5}] : []),
     {l:'ICR Mínimo',v:isFinite(icrMin)?icrMin:null,fn:fX,lo:1.2,hi:2},
     {l:'Margen EBITDA',v:mEb[0],fn:fP,lo:0.1,hi:0.2},
     {l:'Deuda/Patrimonio',v:dPat[0],fn:fX,lo:1,hi:0.5,inv:true},

@@ -599,6 +599,42 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
         </div>
       </div>
 
+      <!-- ═══ DEUDA FINANCIERA EXISTENTE ═══ -->
+      <div class="form-section">
+        <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Deuda Financiera Existente</span>
+          <button class="btn btn-ghost" style="font-size:12px;padding:4px 12px" onclick="addDeudaRow()">+ Agregar crédito</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px" id="deuda-table">
+            <thead>
+              <tr style="color:var(--text2);border-bottom:1px solid var(--border)">
+                <th style="text-align:left;padding:8px 6px;font-weight:500">Entidad</th>
+                <th style="text-align:right;padding:8px 6px;font-weight:500">Saldo actual (COP)</th>
+                <th style="text-align:center;padding:8px 6px;font-weight:500">Tasa N.A. (%)</th>
+                <th style="text-align:center;padding:8px 6px;font-weight:500">Plazo restante (meses)</th>
+                <th style="text-align:center;padding:8px 6px;font-weight:500">Amortización</th>
+                <th style="text-align:right;padding:8px 6px;font-weight:500">Servicio año 1</th>
+                <th style="padding:4px"></th>
+              </tr>
+            </thead>
+            <tbody id="deuda-body">
+              <!-- rows injected by JS -->
+            </tbody>
+            <tfoot>
+              <tr style="border-top:1px solid var(--border);font-weight:600;color:var(--text1)">
+                <td style="padding:8px 6px">TOTAL</td>
+                <td style="text-align:right;padding:8px 6px" id="deuda-total-saldo">—</td>
+                <td colspan="3"></td>
+                <td style="text-align:right;padding:8px 6px" id="deuda-total-serv">—</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="form-note" style="margin-top:8px">Créditos vigentes del cliente (bancos, leasing, otras entidades). Su servicio se suma al del crédito solicitado para calcular el DSCR y la cobertura EBITDA consolidados. Si no tiene deuda, deja la tabla vacía.</div>
+      </div>
+
       <div class="form-section">
         <div class="form-section-title">Garantías</div>
         <div class="form-grid-2">
@@ -779,7 +815,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-sans);min-hei
         </div>
         <div class="results-grid" style="flex:1">
           <div class="result-kpi"><div class="result-label">Monto</div><div class="result-value c-accent" id="r-monto">—</div></div>
-          <div class="result-kpi"><div class="result-label">DSCR Mínimo</div><div class="result-value" id="r-dscr">—</div></div>
+          <div class="result-kpi"><div class="result-label">DSCR Mín. (consolidado)</div><div class="result-value" id="r-dscr">—</div></div>
+          <div class="result-kpi"><div class="result-label">EBITDA / Serv. Deuda Mín.</div><div class="result-value" id="r-cobebitda">—</div></div>
+          <div class="result-kpi"><div class="result-label">Deuda / EBITDA Máx.</div><div class="result-value" id="r-deudaebitda">—</div></div>
           <div class="result-kpi"><div class="result-label">EBITDA Pico</div><div class="result-value c-ok" id="r-ebitda">—</div></div>
           <div class="result-kpi"><div class="result-label">Capacidad Máx.</div><div class="result-value c-warn" id="r-capmax">—</div></div>
           <div class="result-kpi"><div class="result-label">Tasa / Plazo</div><div class="result-value c-blue" id="r-tasa">—</div></div>
@@ -1018,6 +1056,7 @@ function goStep(n) {
   document.querySelectorAll('.step-item').forEach(i => i.classList.remove('active'))
   document.getElementById(`step-${n}`).classList.add('active')
   document.getElementById(`step-nav-${n}`).classList.add('active')
+  if(n === 4) renderDeudaTable()
   if(n === 5) renderCapexTable()
   // Mark previous as done
   for(let i=1;i<n;i++){
@@ -1067,7 +1106,7 @@ function calcPL(){
     const dep  = parseFloat(document.getElementById(`pl-dep-${y}`).value)||0
     const oi   = parseFloat(document.getElementById(`pl-oi-${y}`)?.value)||0
     const gf   = parseFloat(document.getElementById(`pl-gf-${y}`).value)||0
-    const isr  = (parseFloat(document.getElementById(`pl-isr-${y}`).value)||33)/100
+    const isr  = numOr(`pl-isr-${y}`, 33)/100
     const ub   = ing - cv
     const ebitda = ub - go
     const uop    = ebitda - dep          // Utilidad Operativa = EBITDA - Dep
@@ -1163,10 +1202,21 @@ function handleExcelUpload(input){
       // Helper: get numeric value from row/col
       const getN = (raw,r,c) => typeof raw[r]?.[c]==='number' ? Math.abs(raw[r][c]) : 0
 
-      // Helper: set input field value (divide by 1000 for "miles")
+      // Unidad del archivo: el formulario espera PESOS (valor absoluto).
+      // Si la hoja indica "miles" o "millones" en sus primeras filas, se convierte a pesos.
+      const unitFactor = (raw) => {
+        const head = raw.slice(0,8).map(r=>(r||[]).join(' ')).join(' ').toUpperCase()
+        if(/MILLONES/.test(head)) return 1e6
+        if(/MILES/.test(head)) return 1e3
+        return 1
+      }
+      const unitName = f => f===1e6 ? 'millones' : f===1e3 ? 'miles' : 'pesos'
+      let FACT = 1
+
+      // Helper: set input field value, converted to pesos
       const setK = (id,val) => {
         const el = document.getElementById(id)
-        if(el) el.value = val>0 ? Math.round(val/1000) : ''
+        if(el) el.value = val>0 ? Math.round(val*FACT) : ''
       }
 
       // ── Detect year columns ──
@@ -1192,6 +1242,7 @@ function handleExcelUpload(input){
         const raw = XLSX.utils.sheet_to_json(ws,{header:1,defval:null})
         const {headerRowIdx, yearCols} = getYearCols(raw)
         const y3 = yearCols.slice(-3) // last 3 year columns
+        FACT = unitFactor(raw)
 
         // Detect currency
         for(let r=0;r<Math.min(raw.length,5);r++){
@@ -1241,7 +1292,7 @@ function handleExcelUpload(input){
               if(uai>0) document.getElementById(`pl-isr-${yi}`).value = Math.round(isr/uai*100)
             }
           }
-          msg.push(`✅ P&L cargado desde plantilla DT Models`)
+          msg.push(`✅ P&L cargado desde plantilla DT Models (cifras en ${unitName(FACT)})`)
 
         } else if(y3.length>=3){
           // ── Generic Excel: search by keywords ──
@@ -1259,7 +1310,7 @@ function handleExcelUpload(input){
             if(rDep>=0) setK(`pl-dep-${yi}`, getN(raw,rDep,c))
             if(rGF>=0)  setK(`pl-gf-${yi}`,  getN(raw,rGF,c))
           }
-          msg.push(`✅ P&L cargado desde "${plName}"`)
+          msg.push(`✅ P&L cargado desde "${plName}" (cifras en ${unitName(FACT)})`)
         }
         calcPL()
       }
@@ -1271,10 +1322,11 @@ function handleExcelUpload(input){
         const raw = XLSX.utils.sheet_to_json(ws,{header:1,defval:null})
         const {yearCols} = getYearCols(raw)
         const lastCol = yearCols.length ? yearCols[yearCols.length-1] : 4
+        const factB = unitFactor(raw)
 
         const setB = (id,val) => {
           const el=document.getElementById(id)
-          if(el) el.value = val>0 ? Math.round(val/1000) : ''
+          if(el) el.value = val>0 ? Math.round(val*factB) : ''
         }
 
         if(isDTTemplate){
@@ -1323,13 +1375,22 @@ function handleExcelUpload(input){
 }
 
 // ── CALCULATION ENGINE ──
+// Lee un input numérico; usa el valor por defecto SOLO si el campo está vacío o no es número.
+// (Antes se usaba `valor || defecto`, que convertía un 0 escrito por el usuario en el defecto.)
+function numOr(id, def){
+  const el = document.getElementById(id)
+  if(!el || String(el.value).trim() === '') return def
+  const v = parseFloat(el.value)
+  return isNaN(v) ? def : v
+}
+
 function calcModel(){
   const n = parseInt(document.getElementById('s-horizonte').value)||10
   const monto    = parseFloat(document.getElementById('c-monto').value)||0
-  const tasa_na  = (parseFloat(document.getElementById('c-tasa').value)||14)/100
+  const tasa_na  = numOr('c-tasa', 14)/100
   const plazo    = parseInt(document.getElementById('c-plazo').value)||60
   const gracia   = parseInt(document.getElementById('c-gracia').value)||0
-  const isr      = (parseFloat(document.getElementById('c-isr').value)||12)/100
+  const isr      = numOr('c-isr', 33)/100
   const ppe      = parseFloat(document.getElementById('s-ppe').value)||monto
   const ppeVida  = parseInt(document.getElementById('s-ppe-vida').value)||10
   const inicioIng= 1 // field removed — single disbursement assumed
@@ -1343,9 +1404,9 @@ function calcModel(){
   let ingActual = baseIng2
   for(let i=0;i<n;i++){
     const growIdx = Math.min(i,4)
-    const gIng  = (parseFloat(document.getElementById(`s-ing-${growIdx}`)?.value)||10)/100
-    const gMB   = (parseFloat(document.getElementById(`s-mb-${growIdx}`)?.value)||40)/100
-    const gOpex = (parseFloat(document.getElementById(`s-opex-${growIdx}`)?.value)||20)/100
+    const gIng  = numOr(`s-ing-${growIdx}`, 10)/100
+    const gMB   = numOr(`s-mb-${growIdx}`, 40)/100
+    const gOpex = numOr(`s-opex-${growIdx}`, 20)/100
     ingActual = i===0 ? ingActual*(1+gIng) : ingActual*(1+gIng)
     // Ramp-up: if inicio > 1 month, first year partial
     const ramp = inicioIng <= 1 ? 1 : (i===0 ? 0 : i===1 ? 0.5 : 1)
@@ -1367,7 +1428,7 @@ function calcModel(){
   const cuotaM = amort > 0 ? monto/amort : 0
   const tM = tasa_na/12
   const nAmortYr = Math.ceil(amort/12)
-  const intereses=[], capital=[]
+  const interesesNuevo=[], capitalNuevo=[]
   let saldo = monto
   for(let i=0;i<n;i++){
     let cy = 0
@@ -1380,10 +1441,23 @@ function calcModel(){
     // Use average balance for more accurate annual interest
     const saldoFin = Math.max(0, saldo - cy)
     const iy = ((saldo + saldoFin) / 2) * tasa_na
-    intereses.push(iy); capital.push(cy)
+    interesesNuevo.push(iy); capitalNuevo.push(cy)
     saldo = saldoFin
   }
-  const servDeuda = intereses.map((v,i)=>v+capital[i])
+
+  // ── DEUDA CONSOLIDADA = crédito solicitado + deuda financiera existente ──
+  // A partir de aquí `intereses`, `capital` y `servDeuda` son CONSOLIDADOS:
+  // alimentan UAI/impuestos, DSCR, ICR, estrés, flujo de caja y balance.
+  const ex = scheduleDeudaExistente(n)
+  const intereses = interesesNuevo.map((v,i)=>v+ex.intereses[i])
+  const capital   = capitalNuevo.map((v,i)=>v+ex.capital[i])
+  const servDeuda      = intereses.map((v,i)=>v+capital[i])
+  const servDeudaNuevo = interesesNuevo.map((v,i)=>v+capitalNuevo[i])
+  const servDeudaExist = ex.intereses.map((v,i)=>v+ex.capital[i])
+  const deudaInicial   = monto + ex.saldoIni
+  // Saldo de deuda financiera total al cierre de cada año
+  const saldoDeuda = []
+  { let sdt = deudaInicial; for(let i=0;i<n;i++){ sdt = Math.max(0, sdt - capital[i]); saldoDeuda.push(sdt) } }
   const ebit = ebitda.map((e,i)=>e-depreciacion[i])
   const uai  = ebit.map((e,i)=>e-intereses[i])
   const uan  = uai.map(u=>u>0?u*(1-isr):u)
@@ -1412,11 +1486,15 @@ function calcModel(){
   const dscr = cfads.map((c,i)=>servDeuda[i]>0?+(c/servDeuda[i]).toFixed(3):null)
   const icr  = ebitda.map((e,i)=>intereses[i]>0?+(e/intereses[i]).toFixed(3):null)
   const mEbitda = ebitda.map((e,i)=>ingresos[i]>0?+(e/ingresos[i]).toFixed(3):0)
+  // Cobertura EBITDA / Servicio de la deuda consolidado (antes de impuestos, capex y ΔKT)
+  const cobEbitda = ebitda.map((e,i)=>servDeuda[i]>0?+(e/servDeuda[i]).toFixed(3):null)
+  // Deuda financiera total al cierre / EBITDA del año
+  const deudaEbitda = saldoDeuda.map((d,i)=>ebitda[i]>0?+(d/ebitda[i]).toFixed(3):null)
 
   // Balance
   let pat = parseFloat(document.getElementById('b-pat').value)||0
   const activos=[], pasivos=[], patrimonio=[]
-  let sd = monto
+  let sd = deudaInicial
   for(let i=0;i<n;i++){
     sd=Math.max(0,sd-capital[i]); pat+=uan[i]
     pasivos.push(sd); patrimonio.push(Math.max(pat,0))
@@ -1440,10 +1518,13 @@ function calcModel(){
   score = Math.min(score, 100)
   const verdict = score>=70?'✅ APROBABLE':score>=50?'⚠️ CONDICIONADO':'❌ NO VIABLE'
 
-  // Max loanable
+  // Max loanable — capacidad de servicio para el crédito NUEVO:
+  // CFADS/1.3 menos el servicio de la deuda existente (DSCR consolidado ≥ 1.30x)
   const cfadsMin = cfads.slice(0,6).filter(v=>v>0).length ? Math.min(...cfads.slice(0,6).filter(v=>v>0)) : 0
+  const capServ  = cfads.slice(0,6).map((c,i)=>c/1.3 - servDeudaExist[i])
+  const capServMin = capServ.length ? Math.max(0, Math.min(...capServ)) : 0
   const pvFactor = tM>0&&amort>0?(1-(1+tM)**(-amort))/tM:0
-  const montoMax = pvFactor>0?(cfadsMin/1.3/12)*pvFactor:0
+  const montoMax = pvFactor>0?(capServMin/12)*pvFactor:0
 
   // Stress
   function stressDscr(sI,sMB,sBps,sOp){
@@ -1460,8 +1541,9 @@ function calcModel(){
   // LLCR = NPV(CFADS durante vida del crédito) / Saldo deuda actual
   const wacc = tasa_na  // usar tasa del crédito como tasa descuento
   const llcr = cfads.map((_, i) => {
-    const saldoI = i===0 ? monto : capital.slice(0,i).reduce((a,b)=>a+b,0)
-    const saldoRestante = Math.max(0, monto - saldoI)
+    // Saldo de deuda consolidada al inicio del año i
+    const pagado = capital.slice(0,i).reduce((a,b)=>a+b,0)
+    const saldoRestante = Math.max(0, deudaInicial - pagado)
     if(saldoRestante <= 0) return null
     // NPV of remaining CFADS from year i onwards
     let npv = 0
@@ -1497,7 +1579,9 @@ function calcModel(){
     years: YEARS_PROJ.slice(0,n), n,
     ingresos, costos, opex, ebitda, depreciacion,
     intereses, capital, servDeuda, cfads,
-    dscr, icr, mEbitda, dPat,
+    interesesNuevo, capitalNuevo, servDeudaNuevo, servDeudaExist, saldoDeuda,
+    deudaExistente: ex.saldoIni,
+    dscr, icr, mEbitda, dPat, cobEbitda, deudaEbitda,
     activos, pasivos, patrimonio, uan,
     llcr, breakeven,
     score, verdict, dscrMin,
@@ -1645,6 +1729,135 @@ function loadCapexData(json){
     CAPEX_ROWS.length = 0
     rows.forEach(r => CAPEX_ROWS.push(r))
     renderCapexTable()
+  }catch(e){}
+}
+
+// ── DEUDA FINANCIERA EXISTENTE ──
+const DEUDA_ROWS = []   // [{id, entidad, saldo, tasa, plazo, tipo}]  tasa en % N.A., plazo en meses restantes
+
+function addDeudaRow(entidad='', saldo=0, tasa=14, plazo=36, tipo='cuota'){
+  DEUDA_ROWS.push({ id: Date.now() + Math.random(), entidad, saldo, tasa, plazo, tipo })
+  renderDeudaTable()
+}
+
+function removeDeudaRow(id){
+  const i = DEUDA_ROWS.findIndex(r => r.id === id)
+  if(i >= 0){ DEUDA_ROWS.splice(i, 1); renderDeudaTable() }
+}
+
+function updateDeudaRow(id, field, value){
+  const row = DEUDA_ROWS.find(r => r.id === id)
+  if(!row) return
+  row[field] = value
+  // Solo refresca las celdas calculadas (no re-dibuja la tabla, para no perder el foco al tabular)
+  const tr = document.querySelector(`#deuda-body tr[data-id="${id}"]`)
+  if(tr){
+    const s = scheduleDeuda(row, 1), serv1 = s.intereses[0] + s.capital[0]
+    tr.children[5].textContent = serv1 > 0 ? fmtCOP(serv1) : '—'
+  }
+  updateDeudaTotals()
+}
+
+function updateDeudaTotals(){
+  const tot = scheduleDeudaExistente(1), serv = tot.intereses[0] + tot.capital[0]
+  document.getElementById('deuda-total-saldo').textContent = tot.saldoIni > 0 ? fmtCOP(tot.saldoIni) : '—'
+  document.getElementById('deuda-total-serv').textContent  = serv > 0 ? fmtCOP(serv) : '—'
+}
+
+// Cronograma mensual de un crédito existente, agregado en años del modelo
+// tipo 'cuota' = cuota fija (francés) · 'abono' = abono constante a capital
+function scheduleDeuda(row, nYears){
+  const intereses = Array(nYears).fill(0), capital = Array(nYears).fill(0)
+  let saldo = parseFloat(row.saldo) || 0
+  const r = (parseFloat(row.tasa) || 0) / 100 / 12
+  const m = parseInt(row.plazo) || 0
+  if(saldo <= 0 || m <= 0) return { intereses, capital }
+  const cuotaFija = r > 0 ? saldo * r / (1 - Math.pow(1 + r, -m)) : saldo / m
+  const abono = saldo / m
+  for(let k = 0; k < m && k < nYears * 12; k++){
+    const y = Math.floor(k / 12)
+    const intM = saldo * r
+    let capM = row.tipo === 'abono' ? abono : cuotaFija - intM
+    if(k === m - 1) capM = saldo            // último mes cancela el saldo
+    capM = Math.min(Math.max(capM, 0), saldo)
+    intereses[y] += intM; capital[y] += capM
+    saldo -= capM
+  }
+  return { intereses, capital }
+}
+
+// Suma de todos los créditos existentes por año
+function scheduleDeudaExistente(nYears){
+  const intereses = Array(nYears).fill(0), capital = Array(nYears).fill(0)
+  let saldoIni = 0
+  DEUDA_ROWS.forEach(row => {
+    saldoIni += parseFloat(row.saldo) || 0
+    const s = scheduleDeuda(row, nYears)
+    for(let i = 0; i < nYears; i++){ intereses[i] += s.intereses[i]; capital[i] += s.capital[i] }
+  })
+  return { intereses, capital, saldoIni }
+}
+
+function renderDeudaTable(){
+  const tbody = document.getElementById('deuda-body')
+  if(!tbody) return
+  const totSaldoEl = document.getElementById('deuda-total-saldo')
+  const totServEl  = document.getElementById('deuda-total-serv')
+
+  if(DEUDA_ROWS.length === 0){
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3);font-size:13px">
+      Sin deuda existente — haz clic en "+ Agregar crédito" si el cliente tiene créditos vigentes
+    </td></tr>`
+    totSaldoEl.textContent = '—'; totServEl.textContent = '—'
+    return
+  }
+
+  const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')
+  const inputStyle = 'background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text1);font-size:12px'
+  tbody.innerHTML = DEUDA_ROWS.map(r => {
+    const s = scheduleDeuda(r, 1)
+    const serv1 = s.intereses[0] + s.capital[0]
+    return `<tr data-id="${r.id}" style="border-bottom:1px solid var(--border2)">
+      <td style="padding:6px 6px">
+        <input type="text" value="${esc(r.entidad)}" placeholder="Ej: Bancolombia"
+          style="width:100%;${inputStyle}" onchange="updateDeudaRow(${r.id},'entidad',this.value)">
+      </td>
+      <td style="padding:6px 6px">
+        <input type="number" value="${r.saldo||''}" placeholder="0" min="0"
+          style="width:100%;${inputStyle};text-align:right" onchange="updateDeudaRow(${r.id},'saldo',parseFloat(this.value)||0)">
+      </td>
+      <td style="padding:6px 6px;text-align:center">
+        <input type="number" value="${r.tasa}" min="0" step="0.25"
+          style="width:70px;${inputStyle};text-align:center" onchange="updateDeudaRow(${r.id},'tasa',parseFloat(this.value)||0)">
+      </td>
+      <td style="padding:6px 6px;text-align:center">
+        <input type="number" value="${r.plazo}" min="1" step="1"
+          style="width:70px;${inputStyle};text-align:center" onchange="updateDeudaRow(${r.id},'plazo',parseInt(this.value)||0)">
+      </td>
+      <td style="padding:6px 6px;text-align:center">
+        <select style="${inputStyle}" onchange="updateDeudaRow(${r.id},'tipo',this.value)">
+          <option value="cuota" ${r.tipo!=='abono'?'selected':''}>Cuota fija</option>
+          <option value="abono" ${r.tipo==='abono'?'selected':''}>Abono constante</option>
+        </select>
+      </td>
+      <td style="padding:6px 6px;text-align:right;color:var(--accent);font-size:12px">${serv1 > 0 ? fmtCOP(serv1) : '—'}</td>
+      <td style="padding:6px 6px;text-align:center">
+        <button onclick="removeDeudaRow(${r.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 6px" title="Eliminar">✕</button>
+      </td>
+    </tr>`
+  }).join('')
+
+  updateDeudaTotals()
+}
+
+function getDeudaData(){ return JSON.stringify(DEUDA_ROWS) }
+
+function loadDeudaData(json){
+  try{
+    const rows = JSON.parse(json)
+    DEUDA_ROWS.length = 0
+    rows.forEach(r => DEUDA_ROWS.push(r))
+    renderDeudaTable()
   }catch(e){}
 }
 
@@ -1838,6 +2051,7 @@ function exportarPDF(){
     {l:'EBITDA',    vals:R.ebitda,   fmt:fmtM, cc:v=>v>=0?C.ok:C.danger},
     {l:'Mg. EBITDA',vals:(R.mEbitda||[]).map(v=>v!==null?v*100:null), fmt:v=>v!==null?v.toFixed(1)+'%':'—', cc:v=>v>=15?C.ok:v>=8?C.warn:C.danger},
     {l:'DSCR (x)',  vals:R.dscr, fmt:v=>v!==null?v.toFixed(2)+'x':'—', cc:dscr_c},
+    ...(R.cobEbitda ? [{l:'EBITDA/SD (x)', vals:R.cobEbitda, fmt:v=>v!==null?v.toFixed(2)+'x':'—', cc:dscr_c}] : []),
     {l:'LLCR (x)',  vals:R.llcr||[], fmt:v=>v!==null?v.toFixed(2)+'x':'—', cc:dscr_c},
     {l:'CFADS',     vals:R.cfads, fmt:fmtM, cc:v=>v>=0?C.ok:C.danger},
   ]
@@ -2001,6 +2215,15 @@ function renderResults(){
   document.getElementById('r-monto').textContent   = fmt(monto,'M')
   document.getElementById('r-dscr').textContent    = fmt(R.dscrMin,'x')
   document.getElementById('r-dscr').className      = 'result-value '+(R.dscrMin>=1.3?'c-ok':R.dscrMin>=1.0?'c-warn':'c-danger')
+  // Cobertura EBITDA / Servicio deuda (mínimo) y Deuda / EBITDA (máximo) — mismos 6 años que el DSCR mínimo
+  const cobVals = (R.cobEbitda||[]).slice(0,6).filter(v=>v!==null)
+  const cobMin  = cobVals.length ? Math.min(...cobVals) : null
+  const deVals  = (R.deudaEbitda||[]).slice(0,6).filter(v=>v!==null)
+  const deMax   = deVals.length ? Math.max(...deVals) : null
+  const rCob = document.getElementById('r-cobebitda')
+  if(rCob){ rCob.textContent = fmt(cobMin,'x'); rCob.className = 'result-value '+(cobMin===null?'':cobMin>=1.5?'c-ok':cobMin>=1.2?'c-warn':'c-danger') }
+  const rDe = document.getElementById('r-deudaebitda')
+  if(rDe){ rDe.textContent = fmt(deMax,'x'); rDe.className = 'result-value '+(deMax===null?'':deMax<=3?'c-ok':deMax<=5?'c-warn':'c-danger') }
   const peakIdx = R.ebitda.indexOf(Math.max(...R.ebitda))
   document.getElementById('r-ebitda').textContent  = fmt(R.ebitda[peakIdx],'M')
   document.getElementById('r-capmax').textContent  = fmt(R.montoMax,'M')
@@ -2049,9 +2272,12 @@ function renderResults(){
     {l:'Ingresos ($M)',        vals:R.ingresos,  f:'M'},
     {l:'EBITDA ($M)',          vals:R.ebitda,    f:'M'},
     {l:'Margen EBITDA',        vals:R.mEbitda,   f:'%'},
+    {l:'Serv. Deuda Total ($M)', vals:R.servDeuda, f:'M'},
     {l:'DSCR (x)',             vals:R.dscr,      f:'x', dscr:true},
+    {l:'EBITDA/Serv. Deuda (x)', vals:R.cobEbitda||R.dscr.map(()=>null), f:'x'},
     {l:'LLCR (x)',             vals:R.llcr,      f:'x'},
     {l:'ICR (x)',              vals:R.icr,       f:'x'},
+    {l:'Deuda Fin./EBITDA (x)', vals:R.deudaEbitda||R.dscr.map(()=>null), f:'x'},
     {l:'Holgura Ingresos (%)', vals:R.breakeven, f:'bp'},
     {l:'Deuda/Patrimonio',     vals:R.dPat,      f:'x'},
   ]
@@ -2066,6 +2292,8 @@ function renderResults(){
         r.l.includes('DSCR')?(v>=1.3?'color:var(--ok)':v>=1.0?'color:var(--warn)':'color:var(--danger)'):
         r.l.includes('LLCR')?(v>=1.2?'color:var(--ok)':v>=0.8?'color:var(--warn)':'color:var(--danger)'):
         r.l.includes('Holgura')?(v>=15?'color:var(--ok)':v>=5?'color:var(--warn)':'color:var(--danger)'):
+        r.l.startsWith('EBITDA/Serv')?(v>=1.5?'color:var(--ok)':v>=1.2?'color:var(--warn)':'color:var(--danger)'):
+        r.l.startsWith('Deuda Fin.')?(v<=3?'color:var(--ok)':v<=5?'color:var(--warn)':'color:var(--danger)'):
         'color:var(--text)'
       return `<td style="${c}">${fv}</td>`
     }).join('')
@@ -2129,6 +2357,8 @@ function collectInputs(){
   ;['yr-h-1','yr-h-2','yr-h-3'].forEach(id=>{ inp[id]=gv(id) })
   // Capex table
   inp['_capex'] = getCapexData()
+  // Existing debt table
+  inp['_deuda'] = getDeudaData()
   return inp
 }
 
@@ -2149,6 +2379,8 @@ function restoreInputs(inp){
   calcBalance()
   // Restore capex table
   if(inp['_capex']) loadCapexData(inp['_capex'])
+  // Restore existing debt table
+  if(inp['_deuda']) loadDeudaData(inp['_deuda'])
 }
 
 function saveAndFinish(){
@@ -2377,11 +2609,17 @@ function exportExcel(){
     {label:'Intereses',vals:R.intereses,fmt:'M'},
     {label:'Amortización Capital',vals:R.capital,fmt:'M'},
     {label:'Total Servicio Deuda',vals:R.servDeuda,fmt:'M',calc:true},
+    ...(R.servDeudaExist ? [
+      {label:'  · Crédito solicitado',vals:R.servDeudaNuevo,fmt:'M'},
+      {label:'  · Deuda existente',vals:R.servDeudaExist,fmt:'M'},
+    ] : []),
     {label:'CFADS (EBITDA−ISR−CapexMant−ΔKT)',vals:R.cfads,fmt:'M'},
     {label:'',blank:true},
     {label:'RATIOS DE COBERTURA',section:true},
-    {label:'DSCR (x)',vals:R.dscr,fmt:'x',dscr:true},
+    {label:'DSCR consolidado (x)',vals:R.dscr,fmt:'x',dscr:true},
+    ...(R.cobEbitda ? [{label:'EBITDA / Servicio Deuda (x)',vals:R.cobEbitda,fmt:'x'}] : []),
     {label:'ICR (x)',vals:R.icr,fmt:'x'},
+    ...(R.deudaEbitda ? [{label:'Deuda Financiera / EBITDA (x)',vals:R.deudaEbitda,fmt:'x'}] : []),
     {label:'',blank:true},
     {label:'BALANCE SIMPLIFICADO',section:true},
     {label:'Total Activos',vals:R.activos,fmt:'M'},
@@ -2516,6 +2754,11 @@ function copyShareLink(){
       stress:    R.stress,
       llcr:      R.llcr||null,
       breakeven: R.breakeven||null,
+      cobEbitda:   R.cobEbitda||null,
+      deudaEbitda: R.deudaEbitda||null,
+      servDeudaNuevo: R.servDeudaNuevo||null,
+      servDeudaExist: R.servDeudaExist||null,
+      deudaExistente: R.deudaExistente||0,
       params: {
         monto:   R.params.monto,
         tasa_na: R.params.tasa_na,
