@@ -1086,7 +1086,7 @@ function updatePreview(){
   document.getElementById('prev-monto').textContent  = monto ? `$${(monto/1e6).toFixed(1)}M` : '—'
   if(calcResults){
     document.getElementById('prev-score').textContent  = calcResults.score+'/100'
-    const dscrMin = Math.min(...calcResults.dscr.slice(1,6).filter(v=>v!==null))
+    const dscrMin = calcResults.dscrMin
     document.getElementById('prev-dscr').textContent   = isFinite(dscrMin)?dscrMin.toFixed(2)+'x':'—'
     document.getElementById('prev-verdict').textContent= calcResults.verdict
   }
@@ -1423,27 +1423,16 @@ function calcModel(){
     ebitda.push(ing - cv - op)
   }
 
-  // Debt schedule
+  // Debt schedule — crédito solicitado, mes a mes (abono constante a capital tras la gracia),
+  // agregado en años del modelo. Es el mismo cronograma de la Tabla de Amortización Mensual,
+  // así que la gracia en meses (6, 18…) cae en el año correcto.
   const amort = plazo - gracia
-  const cuotaM = amort > 0 ? monto/amort : 0
   const tM = tasa_na/12
-  const nAmortYr = Math.ceil(amort/12)
-  const interesesNuevo=[], capitalNuevo=[]
-  let saldo = monto
-  for(let i=0;i<n;i++){
-    let cy = 0
-    const graciaYrs = Math.ceil(gracia/12)
-    if(i >= graciaYrs && i < graciaYrs + nAmortYr){
-      cy = Math.min(cuotaM*12, saldo)
-    } else if(i >= graciaYrs + nAmortYr){
-      cy = saldo // final balloon if any
-    }
-    // Use average balance for more accurate annual interest
-    const saldoFin = Math.max(0, saldo - cy)
-    const iy = ((saldo + saldoFin) / 2) * tasa_na
-    interesesNuevo.push(iy); capitalNuevo.push(cy)
-    saldo = saldoFin
-  }
+  const interesesNuevo = Array(n).fill(0), capitalNuevo = Array(n).fill(0)
+  buildMonthlyTable(monto, tasa_na, plazo, gracia).forEach(r=>{
+    const y = Math.floor((r.mes-1)/12)
+    if(y < n){ interesesNuevo[y] += r.interes; capitalNuevo[y] += r.capital }
+  })
 
   // ── DEUDA CONSOLIDADA = crédito solicitado + deuda financiera existente ──
   // A partir de aquí `intereses`, `capital` y `servDeuda` son CONSOLIDADOS:
@@ -1502,8 +1491,11 @@ function calcModel(){
   }
   const dPat = pasivos.map((p,i)=>patrimonio[i]>0?+(p/patrimonio[i]).toFixed(3):null)
 
+  // Vida de la deuda: años con servicio de deuda consolidado (todo el plazo, no solo 6 años)
+  const lastDebtYear = servDeuda.reduce((last,v,i)=>v>0?i:last, -1)
+
   // Score
-  const dscrVals = dscr.slice(0,6).filter(v=>v!==null)
+  const dscrVals = dscr.filter(v=>v!==null)
   const dscrMin  = dscrVals.length ? Math.min(...dscrVals) : 0
   // Unified score — same criteria as modelo_financiero
   let score = 0
@@ -1518,60 +1510,89 @@ function calcModel(){
   score = Math.min(score, 100)
   const verdict = score>=70?'✅ APROBABLE':score>=50?'⚠️ CONDICIONADO':'❌ NO VIABLE'
 
-  // Max loanable — capacidad de servicio para el crédito NUEVO:
-  // CFADS/1.3 menos el servicio de la deuda existente (DSCR consolidado ≥ 1.30x)
-  const cfadsMin = cfads.slice(0,6).filter(v=>v>0).length ? Math.min(...cfads.slice(0,6).filter(v=>v>0)) : 0
-  const capServ  = cfads.slice(0,6).map((c,i)=>c/1.3 - servDeudaExist[i])
-  const capServMin = capServ.length ? Math.max(0, Math.min(...capServ)) : 0
-  const pvFactor = tM>0&&amort>0?(1-(1+tM)**(-amort))/tM:0
-  const montoMax = pvFactor>0?(capServMin/12)*pvFactor:0
+  // ── MONTO MÁXIMO ──
+  // El servicio del crédito nuevo es lineal en el monto (misma tasa, plazo, gracia y abono constante):
+  // servicio_i(M) = M × sdU_i, intereses_i(M) = M × intU_i. Un monto mayor también paga más
+  // intereses, que reducen el impuesto (escudo fiscal) y suben el CFADS. El monto máximo es el
+  // mayor M que mantiene el DSCR consolidado ≥ 1.30x en TODOS los años del crédito:
+  //   CFADS_i + t·intU_i·(M − monto) ≥ 1.3 × (servicio existente_i + M × sdU_i)
+  const cfadsVida = cfads.filter((_,i)=>servDeuda[i]>0)
+  const cfadsMin = cfadsVida.length ? Math.min(...cfadsVida) : 0
+  let montoMax = 0
+  if(monto > 0){
+    let mMax = Infinity
+    servDeudaNuevo.forEach((sdN,i)=>{
+      if(sdN <= 0) return
+      const sdU  = sdN / monto, intU = interesesNuevo[i] / monto
+      const tEff = uai[i] > 0 ? isr : 0
+      const num  = cfads[i] - 1.3*servDeudaExist[i] - tEff*intU*monto
+      const den  = 1.3*sdU - tEff*intU
+      mMax = Math.min(mMax, num <= 0 || den <= 0 ? 0 : num/den)
+    })
+    montoMax = isFinite(mMax) ? mMax : 0
+  }
 
-  // Stress
-  function stressDscr(sI,sMB,sBps,sOp){
-    return cfads.map((c,i)=>{
-      const ingS=ingresos[i]*(1+sI), costS=costos[i]*(1-sMB)
-      const ebS=(ingS-costS)-opex[i]*(1+sOp)
-      const tS=tasa_na+sBps, intS=intereses[i]*(tasa_na>0?tS/tasa_na:1)
-      const sdS=intS+capital[i]
-      return sdS>0?+(ebS/sdS).toFixed(3):null
+  // ── STRESS — misma lógica de caja que el caso base ──
+  // · Costo de ventas variable: se recalcula sobre los ingresos estresados con el margen bruto
+  //   base menos el choque (pp).
+  // · OPEX se trata como fijo en el corto plazo: no baja con los ingresos y sube el % del choque.
+  // · Tasa: +bps sobre el saldo promedio de TODA la deuda (supuesto conservador: tasa variable).
+  // · Se mide sobre CFADS estresado (EBITDA − impuesto − capex mant. − ΔKT), igual que el DSCR base.
+  const saldoProm = saldoDeuda.map((d,i)=>((i===0?deudaInicial:saldoDeuda[i-1]) + d)/2)
+  function cfadsStress(i, {sI=0, sMBpp=0, sBps=0, sOp=0, costoExtra=0}={}){
+    const ingS  = ingresos[i]*(1+sI)
+    const mb    = ingresos[i]>0 ? (ingresos[i]-costos[i])/ingresos[i] : 0
+    const costS = ingS*(1-(mb - sMBpp)) + costoExtra
+    const ebS   = ingS - costS - opex[i]*(1+sOp)
+    const intS  = intereses[i] + saldoProm[i]*sBps
+    const uaiS  = ebS - depreciacion[i] - intS
+    const cfS   = ebS - (uaiS>0?uaiS*isr:0) - capexMant - dkt
+    return { cfS, sdS: intS + capital[i] }
+  }
+  function stressDscr(sI,sMBpp,sBps,sOp){
+    return ingresos.map((_,i)=>{
+      if(servDeuda[i]<=0) return null
+      const {cfS, sdS} = cfadsStress(i,{sI,sMBpp,sBps,sOp})
+      return +(cfS/sdS).toFixed(3)
     })
   }
 
   // ── LLCR (Loan Life Coverage Ratio) ──
-  // LLCR = NPV(CFADS durante vida del crédito) / Saldo deuda actual
+  // LLCR = VPN(CFADS desde el año i hasta el último año con deuda) / saldo de deuda al inicio del año i
   const wacc = tasa_na  // usar tasa del crédito como tasa descuento
   const llcr = cfads.map((_, i) => {
     // Saldo de deuda consolidada al inicio del año i
     const pagado = capital.slice(0,i).reduce((a,b)=>a+b,0)
     const saldoRestante = Math.max(0, deudaInicial - pagado)
-    if(saldoRestante <= 0) return null
-    // NPV of remaining CFADS from year i onwards
+    if(saldoRestante <= 0 || i > lastDebtYear) return null
     let npv = 0
-    for(let j=i; j<n; j++){
+    for(let j=i; j<=lastDebtYear; j++){
       npv += cfads[j] / Math.pow(1+wacc, j-i+1)
     }
-    return saldoRestante > 0 ? +(npv/saldoRestante).toFixed(3) : null
+    return +(npv/saldoRestante).toFixed(3)
   })
 
   // ── PUNTO DE EQUILIBRIO FINANCIERO ──
-  // ¿En qué % de caída de ingresos el DSCR = 1.0x?
-  const breakeven = cfads.map((cf, i) => {
-    if(!servDeuda[i] || servDeuda[i]<=0) return null
-    // DSCR=1 cuando CFADS = ServDeuda → cuánto puede caer CFADS
-    const margen = (cf - servDeuda[i]) / (ingresos[i]>0 ? ingresos[i] : 1)
-    return +(margen*100).toFixed(1) // % de ingresos de holgura
+  // % de caída de ingresos que lleva el DSCR consolidado a 1.0x (con la misma lógica de costos
+  // del estrés). Negativo = los ingresos tendrían que SUBIR ese % para llegar a 1.0x.
+  const breakeven = ingresos.map((ing, i) => {
+    if(servDeuda[i]<=0 || ing<=0) return null
+    const dscrAt = x => { const s=cfadsStress(i,{sI:-x}); return s.cfS/s.sdS }
+    let lo = -2, hi = 1                    // de +200% a −100% de ingresos
+    if(dscrAt(lo) < 1) return -200         // ni triplicando ingresos alcanza 1.0x
+    if(dscrAt(hi) >= 1) return 100
+    for(let k=0;k<60;k++){ const mid=(lo+hi)/2; if(dscrAt(mid)>=1) lo=mid; else hi=mid }
+    return +(lo*100).toFixed(1)
   })
 
   // ── STRESS TRM (+20%, +40% devaluación) ──
-  // Asume que 30% de costos son en USD (típico logística/manufactura)
+  // Asume que 30% del costo de ventas es en USD (típico logística/manufactura)
   const pctCostoUSD = 0.30
   function stressTRM(devalPct){
-    return cfads.map((c,i) => {
-      const costoAdicional = costos[i] * pctCostoUSD * devalPct
-      const ebS = ebitda[i] - costoAdicional
-      const isrS = ebS > 0 ? ebS * isr : 0
-      const cfS = ebS - isrS
-      return servDeuda[i]>0 ? +(cfS/servDeuda[i]).toFixed(3) : null
+    return ingresos.map((_,i) => {
+      if(servDeuda[i]<=0) return null
+      const {cfS, sdS} = cfadsStress(i,{costoExtra: costos[i]*pctCostoUSD*devalPct})
+      return +(cfS/sdS).toFixed(3)
     })
   }
 
@@ -1591,8 +1612,8 @@ function calcModel(){
     params: {monto, tasa_na, plazo, gracia, isr},
     stress: {
       base:     dscr,
-      moderate: stressDscr(-0.10,-0.05,0.02,0.10),
-      severe:   stressDscr(-0.20,-0.10,0.04,0.20),
+      moderate: stressDscr(-0.10,0.05,0.02,0.10),
+      severe:   stressDscr(-0.20,0.10,0.04,0.20),
       trm20:    stressTRM(0.20),
       trm40:    stressTRM(0.40),
     }
@@ -2179,10 +2200,12 @@ function renderBreakeven(R){
     const ing = R.ingresos[i]
     const ingBE = ing * (1 - be/100)
     const color = be >= 15 ? 'var(--ok)' : be >= 5 ? 'var(--warn)' : 'var(--danger)'
+    const txt = be >= 0
+      ? `DSCR cae a 1.0x si ingresos bajan a <strong>$${(ingBE/1e6).toFixed(1)}M ${mon}</strong>`
+      : `DSCR ya está bajo 1.0x — los ingresos tendrían que subir a <strong>$${(ingBE/1e6).toFixed(1)}M ${mon}</strong>`
     return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)">
       <span>${yr}</span>
-      <span>Holgura: <strong style="color:${color}">${be.toFixed(1)}%</strong> de ingresos — 
-      DSCR cae a 1.0x si ingresos bajan a <strong>$${(ingBE/1e6).toFixed(1)}M ${mon}</strong></span>
+      <span>Holgura: <strong style="color:${color}">${be.toFixed(1)}%</strong> de ingresos — ${txt}</span>
     </div>`
   }).filter(Boolean).join('')
   el.innerHTML = beLines || '<span style="color:var(--text3)">Calcular modelo primero</span>'
@@ -2215,10 +2238,10 @@ function renderResults(){
   document.getElementById('r-monto').textContent   = fmt(monto,'M')
   document.getElementById('r-dscr').textContent    = fmt(R.dscrMin,'x')
   document.getElementById('r-dscr').className      = 'result-value '+(R.dscrMin>=1.3?'c-ok':R.dscrMin>=1.0?'c-warn':'c-danger')
-  // Cobertura EBITDA / Servicio deuda (mínimo) y Deuda / EBITDA (máximo) — mismos 6 años que el DSCR mínimo
-  const cobVals = (R.cobEbitda||[]).slice(0,6).filter(v=>v!==null)
+  // Cobertura EBITDA / Servicio deuda (mínimo) y Deuda / EBITDA (máximo) — toda la vida de la deuda
+  const cobVals = (R.cobEbitda||[]).filter(v=>v!==null)
   const cobMin  = cobVals.length ? Math.min(...cobVals) : null
-  const deVals  = (R.deudaEbitda||[]).slice(0,6).filter(v=>v!==null)
+  const deVals  = (R.deudaEbitda||[]).filter((v,i)=>v!==null&&R.servDeuda[i]>0)
   const deMax   = deVals.length ? Math.max(...deVals) : null
   const rCob = document.getElementById('r-cobebitda')
   if(rCob){ rCob.textContent = fmt(cobMin,'x'); rCob.className = 'result-value '+(cobMin===null?'':cobMin>=1.5?'c-ok':cobMin>=1.2?'c-warn':'c-danger') }
